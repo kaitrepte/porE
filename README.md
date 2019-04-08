@@ -8,6 +8,6 @@ This tool provides asimple way to study porosities in e.g. metal-organic framewo
 All that is needed is an xyz-file of the coordinates of the structure and the corresponding cell vectors (see structures_xyz for examples). 
 
 
-
+# find_pores
 An additional tool is provided, called find_pores.f90 . 
 This can be used to determine the pore sizes in a structure and get an estimate of the pore size distribution.
