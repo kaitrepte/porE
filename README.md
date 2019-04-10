@@ -2,6 +2,7 @@
 PORosity Evaluation tool
 
 Main developer: Kai Trepte
+Coding language: FOTRAN 
 
 
 This tool provides a simple way to study porosities in e.g. metal-organic frameworks (MOFs).
