@@ -1,9 +1,12 @@
 # porE
 PORosity Evaluation tool  
 
-Main developer:  
+Main developer: 
+
 * Kai Trepte 
-Sidekick:   
+
+Sidekick:  
+
 * Sebastian Schwalbe 
 Coding language: FORTRAN   
 
