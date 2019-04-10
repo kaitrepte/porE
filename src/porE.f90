@@ -1,6 +1,6 @@
 program porosity
 
-! POROsity Whole Analysis Tool (porowat)
+! porE porosity evaluation tool 
 ! Author Kai Trepte
 ! Version January 23, 2019
 
