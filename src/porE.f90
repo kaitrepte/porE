@@ -321,7 +321,7 @@ else if (eval_method == 2) then                                                 
           n_access = n_access + 1                                                                  ! increase assignment counter for the accessible list
           list_access(n_access,:) = grid_points(running_n,:)
         end if
-        if (counter_noOccu == number_of_atoms .and. counter_access .ne. number_of_atoms) then      ! if the counter for the 'NOT occupied' points increased for all atoms -> add to list
+        if (counter_noOccu == number_of_atoms .and. counter_access .ne. number_of_atoms) then      ! if the counter for the 'NOT occupied' points increased for all atoms -> add to list if it is not immediately accessible
           n_noOccu = n_noOccu + 1                                                                  ! increase assignment counter for the list
           list_noOccu(n_noOccu,:) = grid_points(running_n,:)
         end if
