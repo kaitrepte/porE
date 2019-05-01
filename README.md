@@ -22,6 +22,6 @@ More will be done in the future.
 
 
 # find_pores
-An additional tool is provided, called find_pores.f90 . 
+An independent tool is provided, called find_pores.f90 . 
 It can be used to determine the pore sizes in a structure and get an estimate of the pore size distribution.
 This tool is in a developer version and should be used with care.
