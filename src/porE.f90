@@ -5,6 +5,7 @@ program porosity
 ! Version January 23, 2019
 
 character(2)                        :: struct
+character(len=25)                   :: name_struct
 integer                             :: eval_method
 
 integer                             :: number_of_atoms
@@ -89,32 +90,46 @@ read(5,*) eval_method
 ! Define the structure (cell vectors are the second line of the given xyz file)
 if (struct == 'do') then                                                                      ! if the initial DUT-8(Ni) open structure is choosen
   open(unit=15,file='../structures_xyz/dut_8_open.xyz',status='old',action='read')               ! read in the xyz file
+  name_struct = 'DUT-8(Ni) open, exp'
 else if (struct == 'vo') then                                                                 ! if the relaxed DUT-8(Ni) open structure is choosen 
   open(unit=15,file='../structures_xyz/dut_8_open_vcrelax.xyz',status='old',action='read')       ! read in the xyz file
+  name_struct = 'DUT-8(Ni) open, vc'
 else if (struct == 'dc') then                                                                 ! if the initial DUT-8(Ni) closed structure is choosen
   open(unit=15,file='../structures_xyz/dut_8_closed.xyz',status='old',action='read')             ! read in the xyz file
+  name_struct = 'DUT-8(Ni) closed, exp'
 else if (struct == 'vc') then                                                                 ! if the relaxed DUT-8(Ni) closed structure is choosen
   open(unit=15,file='../structures_xyz/dut_8_closed_vcrelax.xyz',status='old',action='read')     ! read in the xyz file
+  name_struct = 'DUT-8(Ni) closed, vc'
 else if (struct == 'u6') then                                                                 ! if UiO-66 (primitive cell) is choosen
   open(unit=15,file='../structures_xyz/uio66.xyz',status='old',action='read')                    ! read in the xyz file
+  name_struct = 'UiO-66'
 else if (struct == 'u7') then                                                                 ! if UiO-67 (primitive cell) is choosen
   open(unit=15,file='../structures_xyz/uio67.xyz',status='old',action='read')                    ! read in the xyz file
+  name_struct = 'UiO-67'
 else if (struct == 'm5') then                                                                 ! if MOF-5 (unit cell) is choosen
   open(unit=15,file='../structures_xyz/mof5.xyz',status='old',action='read')                     ! read in the xyz file
+  name_struct = 'MOF-5'
 else if (struct == 'ir') then                                                                 ! if IRMOF-10 (unit cell) is choosen
   open(unit=15,file='../structures_xyz/irmof10.xyz',status='old',action='read')                  ! read in the xyz file
+  name_struct = 'IRMOF10'
 else if (struct == 'm2') then                                                                 ! if MOF210 (primitive cell) is choosen
   open(unit=15,file='../structures_xyz/mof210.xyz',status='old',action='read')                   ! read in the xyz file
+  name_struct = 'MOF-210'
 else if (struct == 'h1') then                                                                 ! if HKUST-1 (primitive cell) is choosen
   open(unit=15,file='../structures_xyz/hkust1.xyz',status='old',action='read')                   ! read in the xyz file
+  name_struct = 'HKUST-1'
 else if (struct == 'be') then                                                                 ! if benzene (arbitrary cell) is choosen
   open(unit=15,file='../structures_xyz/benzene.xyz',status='old',action='read')                  ! read in the xyz file
+  name_struct = 'Benzene, opt'
 else if (struct == 'b2') then                                                                 ! if benzene, experimental structure (arbitrary cell) is choosen
   open(unit=15,file='../structures_xyz/benzene_exp.xyz',status='old',action='read')              ! read in the xyz file
+  name_struct = 'Benzene, exp'
 else if (struct == 'bc') then                                                                 ! if benzene, only C atoms (arbitrary cell) is choosen
   open(unit=15,file='../structures_xyz/benzene_Conly.xyz',status='old',action='read')            ! read in the xyz file
+  name_struct = 'Benzene, C only'
 else if (struct == 'ha') then                                                                 ! if H atom (cubic cell) is choosen
   open(unit=15,file='../structures_xyz/h_atom.xyz',status='old',action='read')                   ! read in the xyz file
+  name_struct = 'H atom'
 end if
 ! Read in the corresponding values
 read(unit=15,fmt='(I13.0)') number_of_atoms                                                   ! first entry is the number of atoms
@@ -174,22 +189,40 @@ if (eval_method == 1) then
     end do
   end do
 
+!  
+! Write to screen
+!
+  write(6,*) name_struct
   write(6,fmt='(1X a,f10.3,1X a)') 'V_total     = ',V_total,'A^3'
   write(6,fmt='(1X a,f10.3,1X a)') 'V_vdW,atoms = ',V_occupied,'A^3'
   write(6,fmt='(1X a,f10.3,1X a)') 'V_overlap   = ',V_overlap,'A^3'
   write(6,fmt='(1X a,f10.3,1X a)') 'V_occupied  = ',V_occupied - V_overlap,'A^3'
   write(6,fmt='(1X a,f10.3,1X a)') 'V_void      = ',V_total - (V_occupied - V_overlap),'A^3'
   write(6,fmt='(1X a,f10.3,1X a)') 'Porosity    = ',(V_total - (V_occupied - V_overlap))/V_total*100,' %'
-
   write(6,fmt='(1X a,f10.3,1X a)') 'Density of the structure is (m_total/V_total)   : ',m_total*u/V_total*10**3,'kg/m^3'
   write(6,fmt='(1X a,f10.3,1X a)') 'Inverse pore volume density is (V_void/m_total) : ' &
              ,(V_total - (V_occupied - V_overlap))/(m_total*u)*10**(0),'cm^3/g'
   write(6,fmt='(1X a,f10.3,1X a)') 'The mass of unit cell is                        : ',m_total*u,'10**-27 kg'
-
   call cpu_time(finish)
   write(6,*) 'Total CPU time: ',finish-start,'s'
 
-
+!
+! Write to file
+!
+  open(unit=19,file='output',status='unknown',action='write')
+  write(19,*) name_struct
+  write(19,fmt='(1X a,f10.3,1X a)') 'V_total     = ',V_total,'A^3'
+  write(19,fmt='(1X a,f10.3,1X a)') 'V_vdW,atoms = ',V_occupied,'A^3'
+  write(19,fmt='(1X a,f10.3,1X a)') 'V_overlap   = ',V_overlap,'A^3'
+  write(19,fmt='(1X a,f10.3,1X a)') 'V_occupied  = ',V_occupied - V_overlap,'A^3'
+  write(19,fmt='(1X a,f10.3,1X a)') 'V_void      = ',V_total - (V_occupied - V_overlap),'A^3'
+  write(19,fmt='(1X a,f10.3,1X a)') 'Porosity    = ',(V_total - (V_occupied - V_overlap))/V_total*100,' %'
+  write(19,fmt='(1X a,f10.3,1X a)') 'Density of the structure is (m_total/V_total)   : ',m_total*u/V_total*10**3,'kg/m^3'
+  write(19,fmt='(1X a,f10.3,1X a)') 'Inverse pore volume density is (V_void/m_total) : ' &
+             ,(V_total - (V_occupied - V_overlap))/(m_total*u)*10**(0),'cm^3/g'
+  write(19,fmt='(1X a,f10.3,1X a)') 'The mass of unit cell is                        : ',m_total*u,'10**-27 kg'
+  write(19,*) 'Total CPU time: ',finish-start,'s'
+  close(19)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -456,12 +489,13 @@ else if (eval_method == 2) then                                                 
   write(6,*) 'N_acc after 2nd loop      ', n_access
 
  !
- ! WRITE OUTPUT
+ ! Write to screen
  !
   write(6,*) ' '
   write(6,*) '#######################################################################################################'
   write(6,*) '###############################################  OUTPUT ###############################################'
   write(6,*) '#######################################################################################################'
+  write(6,*) 'Structure : ',name_struct
   write(6,fmt='(1X a,7X I4,1X a,1X I4,1X a,1x I4)') 'Grid which was used:         ',grid_a,'x',grid_b,'x',grid_c                              ! 1X -> 1 space, 7X -> 7 spaces
   write(6,fmt='(1X,a,2X,I15)') 'Total number of grid points: ',grid_a*grid_b*grid_c
   write(6,fmt='(1X,a,f15.3,a,3(f10.3,2X,a),a)') 'Grid point density:         ',grid_a*grid_b*grid_c/V_total, &
@@ -491,6 +525,46 @@ else if (eval_method == 2) then                                                 
   call cpu_time(finish)
   write(6,*) ' '
   write(6,*) 'Total CPU time was ',finish-start,'s'
+
+!
+! Write to file
+! 
+  open(unit=19,file='output',status='unknown',action='write')
+  write(19,*) ' '
+  write(19,*) '#######################################################################################################'
+  write(19,*) '###############################################  OUTPUT ###############################################'
+  write(19,*) '#######################################################################################################'
+  write(19,*) 'Structure : ',name_struct
+  write(19,fmt='(1X a,7X I4,1X a,1X I4,1X a,1x I4)') 'Grid which was used:         ',grid_a,'x',grid_b,'x',grid_c                              ! 1X -> 1 space, 7X -> 7 spaces
+  write(19,fmt='(1X,a,2X,I15)') 'Total number of grid points: ',grid_a*grid_b*grid_c
+  write(19,fmt='(1X,a,f15.3,a,3(f10.3,2X,a),a)') 'Grid point density:         ',grid_a*grid_b*grid_c/V_total, &
+              ' grid points per A^3, with ',grid_per_A_x,' x ',grid_per_A_y,' x ',grid_per_A_z,' grid points per A'                           ! (grid_a*grid_b*grid_c/V_total)**(1./3.)
+  write(19,*) 'Points OCCUPIED:             ',n_occ
+  write(19,*) 'Points NOT OCCUPIED (void):  ',grid_a*grid_b*grid_c - n_occ
+  write(19,*) 'Points ACCESSIBLE:           ',n_access
+  write(19,fmt='(1X a,7X f7.3,1X a)') 'probe radius:                ',probe_r,'A'
+  write(19,*) ' '
+ 
+  write(19,*) 'Porosity (void):             ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100,'%'
+  write(19,*) 'Porosity (accessible):       ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+ 
+  V_void       = (real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*V_total
+  V_accessible = real(n_access)/(real(grid_a*grid_b*grid_c))*V_total 
+ 
+  write(19,*) 'Volume (void):               ',V_void,'A^3'
+  write(19,*) 'Volume (accessible):         ',V_accessible,'A^3'
+  write(19,*) ' '
+ 
+  write(19,fmt='(1X a,f10.3,a)') 'Unit cell volume (V_total)                   : ',V_total,' A^3'
+  write(19,fmt='(1X a,f10.3,a)') 'Mass of unit cell (m_total)                  : ',m_total*u,' 10**-27 kg'
+  write(19,fmt='(1X a,f10.3,a)') 'Density of the structure (m_total/V_total)   : ',m_total*u/V_total*10**3,' kg/m^3'
+  write(19,fmt='(1X a,f10.3,a)') 'Inverse pore volume density (V_void/m_total) : ',V_void/(m_total*u)*10**(0),' cm^3/g'
+  write(19,fmt='(1X a,f10.3,a)') 'Inverse pore volume density (V_acc/m_total)  : ',V_accessible/(m_total*u)*10**(0),' cm^3/g'
+ 
+  write(19,*) ' '
+  write(19,*) 'Total CPU time was ',finish-start,'s'
+  close(19)
+
 
   deallocate(grid_points)
   deallocate(list_access)
