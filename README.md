@@ -17,6 +17,7 @@ All that is needed is an xyz-file of the coordinates of the structure and the co
 
 Limitations: So far, only the vdW radii of the following elements are implemented:
 H, C, N, O, Ni, Cu, Zn, Zr
+
 More will be done in the future.
 
 
