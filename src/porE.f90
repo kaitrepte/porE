@@ -88,33 +88,33 @@ read(5,*) eval_method
 
 ! Define the structure (cell vectors are the second line of the given xyz file)
 if (struct == 'do') then                                                                      ! if the initial DUT-8(Ni) open structure is choosen
-  open(unit=15,file='structures_xyz/dut_8_open.xyz',status='old',action='read')               ! read in the xyz file
+  open(unit=15,file='../structures_xyz/dut_8_open.xyz',status='old',action='read')               ! read in the xyz file
 else if (struct == 'vo') then                                                                 ! if the relaxed DUT-8(Ni) open structure is choosen 
-  open(unit=15,file='structures_xyz/dut_8_open_vcrelax.xyz',status='old',action='read')       ! read in the xyz file
+  open(unit=15,file='../structures_xyz/dut_8_open_vcrelax.xyz',status='old',action='read')       ! read in the xyz file
 else if (struct == 'dc') then                                                                 ! if the initial DUT-8(Ni) closed structure is choosen
-  open(unit=15,file='structures_xyz/dut_8_closed.xyz',status='old',action='read')             ! read in the xyz file
+  open(unit=15,file='../structures_xyz/dut_8_closed.xyz',status='old',action='read')             ! read in the xyz file
 else if (struct == 'vc') then                                                                 ! if the relaxed DUT-8(Ni) closed structure is choosen
-  open(unit=15,file='structures_xyz/dut_8_closed_vcrelax.xyz',status='old',action='read')     ! read in the xyz file
+  open(unit=15,file='../structures_xyz/dut_8_closed_vcrelax.xyz',status='old',action='read')     ! read in the xyz file
 else if (struct == 'u6') then                                                                 ! if UiO-66 (primitive cell) is choosen
-  open(unit=15,file='structures_xyz/uio66.xyz',status='old',action='read')                    ! read in the xyz file
+  open(unit=15,file='../structures_xyz/uio66.xyz',status='old',action='read')                    ! read in the xyz file
 else if (struct == 'u7') then                                                                 ! if UiO-67 (primitive cell) is choosen
-  open(unit=15,file='structures_xyz/uio67.xyz',status='old',action='read')                    ! read in the xyz file
+  open(unit=15,file='../structures_xyz/uio67.xyz',status='old',action='read')                    ! read in the xyz file
 else if (struct == 'm5') then                                                                 ! if MOF-5 (unit cell) is choosen
-  open(unit=15,file='structures_xyz/mof5.xyz',status='old',action='read')                     ! read in the xyz file
+  open(unit=15,file='../structures_xyz/mof5.xyz',status='old',action='read')                     ! read in the xyz file
 else if (struct == 'ir') then                                                                 ! if IRMOF-10 (unit cell) is choosen
-  open(unit=15,file='structures_xyz/irmof10.xyz',status='old',action='read')                  ! read in the xyz file
+  open(unit=15,file='../structures_xyz/irmof10.xyz',status='old',action='read')                  ! read in the xyz file
 else if (struct == 'm2') then                                                                 ! if MOF210 (primitive cell) is choosen
-  open(unit=15,file='structures_xyz/mof210.xyz',status='old',action='read')                   ! read in the xyz file
+  open(unit=15,file='../structures_xyz/mof210.xyz',status='old',action='read')                   ! read in the xyz file
 else if (struct == 'h1') then                                                                 ! if HKUST-1 (primitive cell) is choosen
-  open(unit=15,file='structures_xyz/hkust1.xyz',status='old',action='read')                   ! read in the xyz file
+  open(unit=15,file='../structures_xyz/hkust1.xyz',status='old',action='read')                   ! read in the xyz file
 else if (struct == 'be') then                                                                 ! if benzene (arbitrary cell) is choosen
-  open(unit=15,file='structures_xyz/benzene.xyz',status='old',action='read')                  ! read in the xyz file
+  open(unit=15,file='../structures_xyz/benzene.xyz',status='old',action='read')                  ! read in the xyz file
 else if (struct == 'b2') then                                                                 ! if benzene, experimental structure (arbitrary cell) is choosen
-  open(unit=15,file='structures_xyz/benzene_exp.xyz',status='old',action='read')              ! read in the xyz file
+  open(unit=15,file='../structures_xyz/benzene_exp.xyz',status='old',action='read')              ! read in the xyz file
 else if (struct == 'bc') then                                                                 ! if benzene, only C atoms (arbitrary cell) is choosen
-  open(unit=15,file='structures_xyz/benzene_Conly.xyz',status='old',action='read')            ! read in the xyz file
+  open(unit=15,file='../structures_xyz/benzene_Conly.xyz',status='old',action='read')            ! read in the xyz file
 else if (struct == 'ha') then                                                                 ! if H atom (cubic cell) is choosen
-  open(unit=15,file='structures_xyz/h_atom.xyz',status='old',action='read')                   ! read in the xyz file
+  open(unit=15,file='../structures_xyz/h_atom.xyz',status='old',action='read')                   ! read in the xyz file
 end if
 ! Read in the corresponding values
 read(unit=15,fmt='(I13.0)') number_of_atoms                                                   ! first entry is the number of atoms
