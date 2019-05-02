@@ -142,6 +142,10 @@ do n = 1,number_of_atoms                                                        
 end do
 close(unit=15)                                                                                ! close the file (no longer necessary)
 
+! Output file
+open(unit=19,file='output',status='unknown',action='write')
+
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Calculate the total unit cell volume using the triple product V = a . (b x c) . In A^3 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -185,6 +189,7 @@ if (eval_method == 1) then
 
       if (sub_overlap > 0.0) then
        write(6,*) a,elements(a),b,elements(b),' d =', distance_ab,' V_overlap = ', sub_overlap,' A^3'
+       write(19,*) a,elements(a),b,elements(b),' d =', distance_ab,' V_overlap = ', sub_overlap,' A^3'
       end if
     end do
   end do
@@ -209,7 +214,6 @@ if (eval_method == 1) then
 !
 ! Write to file
 !
-  open(unit=19,file='output',status='unknown',action='write')
   write(19,*) name_struct
   write(19,fmt='(1X a,f10.3,1X a)') 'V_total     = ',V_total,'A^3'
   write(19,fmt='(1X a,f10.3,1X a)') 'V_vdW,atoms = ',V_occupied,'A^3'
@@ -1021,6 +1025,8 @@ subroutine porefinder(structure)      ! subroutine porefinder(structure,all_pore
   deallocate(elements)
   deallocate(all_distances)
   deallocate(all_distances2)
+
+  close(20)
 
   return
 end subroutine porefinder
