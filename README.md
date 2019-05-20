@@ -20,8 +20,9 @@ To run the code, type
 	./porE
 
 
-This tool provides a simple way to study porosities in e.g. metal-organic frameworks (MOFs). In addition, there is the possibility to evaluate the pore size distribution (beta version).
+This tool provides a simple way to study porosities in e.g. metal-organic frameworks (MOFs). 
 All that is needed is an xyz-file of the coordinates of the structure and the corresponding cell vectors (see structures_xyz for examples). 
+In addition, there is the possibility to evaluate the pore size distribution (beta version).
 
 Limitations: So far, only the vdW radii of the following elements are implemented: H, C, N, O, Ni, Cu, Zn, Zr
 
