@@ -25,4 +25,5 @@ Just uncomment the corresponding line in run.sh and comment out the others.
 
 
 Limitations: So far, only the vdW radii of the following elements are implemented: H, C, N, O, Ni, Cu, Zn, Zr
+
 More will be done in the future.
