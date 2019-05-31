@@ -5,6 +5,7 @@ implicit none
 ! pore_finder
 
 character(2)                        :: struct
+character(len=25)                   :: name_struct
 
 real(8)                             :: start, finish       ! timing
 
@@ -42,9 +43,85 @@ call random_seed(put=seed)
 ! Read in the xyz coordinates and the cell vectors !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-call cpu_time(start)
+!!!!!!!!!!!!!!!!!!
+! Initialization !
+!!!!!!!!!!!!!!!!!!
 
-open(unit=15,file='structures_xyz/mof5.xyz',status='old',action='read')
+! Define which structure shall be evaluated
+write(6,*) '########## STRUCTURE ########'
+write(6,*) 'DUT-8(Ni) open           - do'
+write(6,*) 'DUT-8(Ni) open vcrelax   - vo'
+write(6,*) 'DUT-8(Ni) closed         - dc'
+write(6,*) 'DUT-8(Ni) closed vcrelax - vc'
+write(6,*) 'UiO-66                   - u6'
+write(6,*) 'UiO-67                   - u7'
+write(6,*) 'MOF-5                    - m5'
+write(6,*) 'IRMOF-10                 - ir'
+write(6,*) 'MOF210                   - m2'
+write(6,*) 'HKUST-1                  - h1'
+write(6,*) 'Benzene, opt             - be'
+write(6,*) 'Benzene, exp             - b2'
+write(6,*) 'Benzene, C only          - bc'
+write(6,*) 'H atom                   - ha'
+write(6,*) '#############################'
+read(5,*) struct
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Read in the xyz coordinates and the cell vectors !
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Define the structure (cell vectors are the second line of the given xyz file)
+if (struct == 'do') then                                                                      ! if the initial DUT-8(Ni) open structure is choosen
+  open(unit=15,file='../structures_xyz/dut_8_open.xyz',status='old',action='read')               ! read in the xyz file
+  name_struct = 'DUT-8(Ni) open, exp'
+else if (struct == 'vo') then                                                                 ! if the relaxed DUT-8(Ni) open structure is choosen 
+  open(unit=15,file='../structures_xyz/dut_8_open_vcrelax.xyz',status='old',action='read')       ! read in the xyz file
+  name_struct = 'DUT-8(Ni) open, vc'
+else if (struct == 'dc') then                                                                 ! if the initial DUT-8(Ni) closed structure is choosen
+  open(unit=15,file='../structures_xyz/dut_8_closed.xyz',status='old',action='read')             ! read in the xyz file
+  name_struct = 'DUT-8(Ni) closed, exp'
+else if (struct == 'vc') then                                                                 ! if the relaxed DUT-8(Ni) closed structure is choosen
+  open(unit=15,file='../structures_xyz/dut_8_closed_vcrelax.xyz',status='old',action='read')     ! read in the xyz file
+  name_struct = 'DUT-8(Ni) closed, vc'
+else if (struct == 'u6') then                                                                 ! if UiO-66 (primitive cell) is choosen
+  open(unit=15,file='../structures_xyz/uio66.xyz',status='old',action='read')                    ! read in the xyz file
+  name_struct = 'UiO-66'
+else if (struct == 'u7') then                                                                 ! if UiO-67 (primitive cell) is choosen
+  open(unit=15,file='../structures_xyz/uio67.xyz',status='old',action='read')                    ! read in the xyz file
+  name_struct = 'UiO-67'
+else if (struct == 'm5') then                                                                 ! if MOF-5 (unit cell) is choosen
+  open(unit=15,file='../structures_xyz/mof5.xyz',status='old',action='read')                     ! read in the xyz file
+  name_struct = 'MOF-5'
+else if (struct == 'ir') then                                                                 ! if IRMOF-10 (unit cell) is choosen
+  open(unit=15,file='../structures_xyz/irmof10.xyz',status='old',action='read')                  ! read in the xyz file
+  name_struct = 'IRMOF10'
+else if (struct == 'm2') then                                                                 ! if MOF210 (primitive cell) is choosen
+  open(unit=15,file='../structures_xyz/mof210.xyz',status='old',action='read')                   ! read in the xyz file
+  name_struct = 'MOF-210'
+else if (struct == 'h1') then                                                                 ! if HKUST-1 (primitive cell) is choosen
+  open(unit=15,file='../structures_xyz/hkust1.xyz',status='old',action='read')                   ! read in the xyz file
+  name_struct = 'HKUST-1'
+else if (struct == 'be') then                                                                 ! if benzene (arbitrary cell) is choosen
+  open(unit=15,file='../structures_xyz/benzene.xyz',status='old',action='read')                  ! read in the xyz file
+  name_struct = 'Benzene, opt'
+else if (struct == 'b2') then                                                                 ! if benzene, experimental structure (arbitrary cell) is choosen
+  open(unit=15,file='../structures_xyz/benzene_exp.xyz',status='old',action='read')              ! read in the xyz file
+  name_struct = 'Benzene, exp'
+else if (struct == 'bc') then                                                                 ! if benzene, only C atoms (arbitrary cell) is choosen
+  open(unit=15,file='../structures_xyz/benzene_Conly.xyz',status='old',action='read')            ! read in the xyz file
+  name_struct = 'Benzene, C only'
+else if (struct == 'ha') then                                                                 ! if H atom (cubic cell) is choosen
+  open(unit=15,file='../structures_xyz/h_atom.xyz',status='old',action='read')                   ! read in the xyz file
+  name_struct = 'H atom'
+end if
+
+! Initialize stuff
+write(6,*) 'How many starting points (recommended: >= 100)?'
+read(5,*) start_points
+write(6,*) 'How many Monte-Carlo steps (recommended: >= 10000)?'
+read(5,*) cycles
+
+
+call cpu_time(start)
 
 ! Read in the corresponding values
 read(unit=15,fmt='(I13.0)') number_of_atoms                     ! first entry is the number of atoms
@@ -62,9 +139,6 @@ close(unit=15)                                                  ! close the file
 !! Monte-Carlo to get pore sizes !!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Initialize stuff
-start_points = 100
-cycles       = 10000
 stepsize     = 0.01
 allocate(all_distances(start_points))
 allocate(all_distances2(start_points))
@@ -127,10 +201,10 @@ do a = 1, start_points
 
 ! Get probe diameter
   if (distance1 > distance2) then
-    write(6,*) "Start ",a," Final distance ",distance1*2.0   ! write diameter, not radius
+!    write(6,*) "Start ",a," Final distance ",distance1*2.0   ! write diameter, not radius
     all_distances(a) = distance1*2.0
   else
-    write(6,*) "Start ",a," Final distance ",distance2*2.0   ! write diameter, not radius
+!    write(6,*) "Start ",a," Final distance ",distance2*2.0   ! write diameter, not radius
     all_distances(a) = distance2*2.0
   end if
 end do      ! end starting points
@@ -140,7 +214,7 @@ all_distances2(:) = all_distances(:)
 
 ! Get distribution
 write(6,*) ' '
-write(6,*) 'Pore size distribution'
+write(6,*) 'Pore size distribution for ',name_struct
 
 do a = 1, start_points
   c = 0

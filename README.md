@@ -15,21 +15,12 @@ To compile the code, go to the *src* directory and type
 
         bash compile.sh
 
-To run the code, type
+To run the code, go to the *run* folder. The file run.sh includes three options
+	- use porE: This is the standard code. Includes OSA, standard GPA and an evaluation of the PSD (beta version
+	- use pore_subgrid: A modified version of the GPA (GPA_sub-grid)). Includes OSA as well, but not the PSD evaluation
+	- use get_PSD: A tool to analyze the PSD in any porous material. Currently in a developer version. Ifyou want to modify the numerrical parameters, you need to do it in the code and recompile.
+Just uncomment the corresponding line in run.sh and comment out the others.
 
-	./porE
-
-
-This tool provides a simple way to study porosities in e.g. metal-organic frameworks (MOFs). 
-All that is needed is an xyz-file of the coordinates of the structure and the corresponding cell vectors (see structures_xyz for examples). 
-In addition, there is the possibility to evaluate the pore size distribution (beta version).
 
 Limitations: So far, only the vdW radii of the following elements are implemented: H, C, N, O, Ni, Cu, Zn, Zr
-
 More will be done in the future.
-
-
-# find_pores
-An independent tool is provided, called find_pores.f90 . 
-It can be used to determine the pore sizes in a structure and get an estimate of the pore size distribution.
-This tool is in a developer version and should be used with care.
