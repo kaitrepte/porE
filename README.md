@@ -17,9 +17,9 @@ To compile the code, go to the *src* directory and type
 
 To run the code, go to the *run* folder. The file run.sh includes three options
 
-* use porE: This is the standard code. Includes OSA, standard GPA and an evaluation of the PSD (beta version)
-* use porE_subgrid: A modified version of the GPA (GPA_sub-grid). Includes OSA as well, but not the PSD evaluation
-* use get_PSD: Analyze the PSD in any MOF. One needs to be careful with choosing proper numerical parameters
+* porE: This is the standard code. Includes OSA, standard GPA and an evaluation of the PSD (beta version)
+* porE_subgrid: A modified version of the GPA (GPA_sub-grid). Includes OSA as well, but not the PSD evaluation
+* get_PSD: Analyze the PSD in any MOF. One needs to be careful with choosing proper numerical parameters
 
 Just uncomment the corresponding line in run.sh and comment out the others.
 
