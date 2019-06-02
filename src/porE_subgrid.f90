@@ -48,10 +48,10 @@ real(8), allocatable, dimension(3)  :: list_check_acc(:,:)               ! empty
 !real(8), allocatable, dimension(3)  :: list_all_access(:,:)              ! empty list for all accessible points. Final evaluation (take points inside the probe radius sphere into account)
 
 !
-! IDEA: Subdivide grid into sub-grids per atom. Then, only evalaute the grid points necessary. 
-! Thus, exclude grid points whcih are very far away. 
-! - Introduce new array, dimensions are number_of_atoms AND a specific number according to the specific atom (needs to be counted somehow, maybe need two loops over the grid points. Should still be cheap)
-! - When looping, choose grid point for an atom if it is closest to this grid point -> store grid point for the sub-grid for the atom 
+! IDEA: Subdivide grid into sub-grids per atom. Then, only evaluate the necessary grid points.
+! Thus, exclude grid points which are very far away. 
+! - Introduce new array, dimensions are number_of_atoms AND a specific number according to the specific atom (needs to be counted, need two loops over the grid points. Should still be cheap)
+! - When looping, choose grid point for an atom if it is close to this grid point -> store grid point for the sub-grid for the atom 
 !
 ! For sub-grid generation, one needs a variable array which is allocatable
 type global_array
