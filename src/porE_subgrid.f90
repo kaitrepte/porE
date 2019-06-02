@@ -1,5 +1,7 @@
 program porosity
 
+implicit none
+
 ! POROsity Whole Analysis Tool (porowat)
 ! Author Kai Trepte
 ! Version January 23, 2019
@@ -27,11 +29,11 @@ real(8)     :: sub_overlap                                               ! overl
 real(8)     :: V_occupied, V_overlap, m_total, distance_ab, new_distance ! volume occupied by vdw spheres, total overlap volume, total mass of unit cell, distance between two atoms, distance evaluated due to PBC
 real(8)     :: r_vdw1, r_vdw2                                            ! vdW radii of two species. Needed for evaluation (makes it easier)
 integer     :: a,b,c,d,e,f,n,t                                           ! loop parameter
-real(8)     :: g                                                         ! if grid size is suppossed to be determined automatically -> use real, not integer
 
 ! Evaluation method 2
 real(8)     :: probe_r, grid_point_x, grid_point_y, grid_point_z, factor ! probe radius, grid point coordinates for any specific grid point (x,y,z), grid density (grid points per A^3)
 integer     :: grid_a, grid_b, grid_c, aa, bb, cc, running_n             ! number of grid points along cell vectors (a,b,c), loop variables to write grid points, running variable for the loop (assign grid_points correctly)
+real(8)     :: g                                                         ! if grid size is suppossed to be determined automatically -> use real, not integer
 integer     :: check_grid, n_coords                                      ! loop counter for the actual evaluation (grid) and for the coordinates (coords)
 integer     :: counter_access, counter_check_acc, counter_noOccu         ! counter to evaluate whether a point is accessible, check accessible, or NOT occupied
 integer     :: n_access, n_occ, n_check, n_check_acc, n_noOccu           ! counter for list assignment -> accessible, occupied, used loop variable (store accessible points), counter for accessibility check list, not occupied
@@ -522,40 +524,40 @@ else if (eval_method == 2) then                                                 
 
   do a = 1, n_noOccu
 
-      loop1: do n_coords = 1,number_of_atoms                                                   ! go through all atoms and evaluate grid points
-        dist_point_atom = sqrt(sum((list_noOccu(a,:) - coordinates(n_coords,:))**2))           ! initial distance between grid point and atom
-        do c = 1,3                                                                             ! PBCs in all direction. Here for cell_a (-1,0,+1)
-          do d = 1,3                                                                           ! here for cell_b
-            do e = 1,3                                                                         ! here for cell_c. Taking all surrounding unit cells into account
-              new_point_atom = sqrt(sum((list_noOccu(a,:) - coordinates(n_coords,:) + &
-                                  (c-2)*cell_a(:) + (d-2)*cell_b(:) + (e-2)*cell_c(:))**2))    ! evaluate new distance due to PBC
-              if (new_point_atom < dist_point_atom) then                                       ! if distance is smaller -> use this one !
-                dist_point_atom = new_point_atom
-              end if
-            end do
-          end do
-        end do
-
-        ! condition for NOT occpupied, but not necessarily accessible
-        if ((elements(n_coords) == 'H'  .and. dist_point_atom < 1.20 + probe_r) .or. &         ! If grid point is outside an atom (see last if statement), but within a length of the probe radius
-            (elements(n_coords) == 'C'  .and. dist_point_atom < 1.70 + probe_r) .or. &    
-            (elements(n_coords) == 'N'  .and. dist_point_atom < 1.55 + probe_r) .or. &
-            (elements(n_coords) == 'O'  .and. dist_point_atom < 1.52 + probe_r) .or. &
-            (elements(n_coords) == 'Ni' .and. dist_point_atom < 1.63 + probe_r) .or. &
-            (elements(n_coords) == 'Cu' .and. dist_point_atom < 1.40 + probe_r) .or. &
-            (elements(n_coords) == 'Zn' .and. dist_point_atom < 1.39 + probe_r) .or. &
-            (elements(n_coords) == 'Zr' .and. dist_point_atom < 2.36 + probe_r)) then
-          do f = 1, sub_division(n_coords)%sub_grid_points                                     ! Go through the 'check accessibility' points (which have been determined before)
-            dist_point_point = sqrt(sum((sub_division(n_coords)%sub_grids(f,:) - &
-                                         list_noOccu(a,:))**2)) ! determine the distance to any accessible point
-            if (dist_point_point < probe_r) then                                               ! if the distance to any accessible point is smaller than the probe radius -> NEW ACCESSIBLE POINT
-              n_access = n_access + 1                                                          ! increase accessible counter
-              exit loop1                                                                       ! Stop looping once this is confirmed (i.e. stop looping over the atoms)
+    loop1: do n_coords = 1,number_of_atoms                                                   ! go through all atoms and evaluate grid points
+      dist_point_atom = sqrt(sum((list_noOccu(a,:) - coordinates(n_coords,:))**2))           ! initial distance between grid point and atom
+      do c = 1,3                                                                             ! PBCs in all direction. Here for cell_a (-1,0,+1)
+        do d = 1,3                                                                           ! here for cell_b
+          do e = 1,3                                                                         ! here for cell_c. Taking all surrounding unit cells into account
+            new_point_atom = sqrt(sum((list_noOccu(a,:) - coordinates(n_coords,:) + &
+                                (c-2)*cell_a(:) + (d-2)*cell_b(:) + (e-2)*cell_c(:))**2))    ! evaluate new distance due to PBC
+            if (new_point_atom < dist_point_atom) then                                       ! if distance is smaller -> use this one !
+              dist_point_atom = new_point_atom
             end if
           end do
-        end if
+        end do
+      end do
 
-      end do loop1                                                                             ! end do atoms
+      ! condition for NOT occpupied, but not necessarily accessible
+      if ((elements(n_coords) == 'H'  .and. dist_point_atom < 1.20 + probe_r) .or. &         ! If grid point is outside an atom (see last if statement), but within a length of the probe radius
+          (elements(n_coords) == 'C'  .and. dist_point_atom < 1.70 + probe_r) .or. &    
+          (elements(n_coords) == 'N'  .and. dist_point_atom < 1.55 + probe_r) .or. &
+          (elements(n_coords) == 'O'  .and. dist_point_atom < 1.52 + probe_r) .or. &
+          (elements(n_coords) == 'Ni' .and. dist_point_atom < 1.63 + probe_r) .or. &
+          (elements(n_coords) == 'Cu' .and. dist_point_atom < 1.40 + probe_r) .or. &
+          (elements(n_coords) == 'Zn' .and. dist_point_atom < 1.39 + probe_r) .or. &
+          (elements(n_coords) == 'Zr' .and. dist_point_atom < 2.36 + probe_r)) then
+        do f = 1, sub_division(n_coords)%sub_grid_points                                     ! Go through the 'check accessibility' points (which have been determined before)
+          dist_point_point = sqrt(sum((sub_division(n_coords)%sub_grids(f,:) - &
+                                       list_noOccu(a,:))**2)) ! determine the distance to any accessible point
+          if (dist_point_point < probe_r) then                                               ! if the distance to any accessible point is smaller than the probe radius -> NEW ACCESSIBLE POINT
+            n_access = n_access + 1                                                          ! increase accessible counter
+            exit loop1                                                                       ! Stop looping once this is confirmed (i.e. stop looping over the atoms)
+          end if
+        end do
+      end if
+
+    end do loop1                                                                             ! end do atoms
   end do                                                                                     ! end do full grid
 
   write(6,*) 'N_acc after 2nd loop                ', n_access

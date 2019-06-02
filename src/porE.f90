@@ -28,11 +28,11 @@ real(8)     :: sub_overlap                                               ! overl
 real(8)     :: V_occupied, V_overlap, m_total, distance_ab, new_distance ! volume occupied by vdw spheres, total overlap volume, total mass of unit cell, distance between two atoms, distance evaluated due to PBC
 real(8)     :: r_vdw1, r_vdw2                                            ! vdW radii of two species. Needed for evaluation (makes it easier)
 integer     :: a,b,c,d,e,f,n,t                                           ! loop parameter
-real(8)     :: g                                                         ! if grid size is suppossed to be determined automatically -> use real, not integer
 
 ! Evaluation method 2
 real(8)     :: probe_r, grid_point_x, grid_point_y, grid_point_z, factor ! probe radius, grid point coordinates for any specific grid point (x,y,z), grid density (grid points per A^3)
 integer     :: grid_a, grid_b, grid_c, aa, bb, cc, running_n             ! number of grid points along cell vectors (a,b,c), loop variables to write grid points, running variable for the loop (assign grid_points correctly)
+real(8)     :: g                                                         ! if grid size is suppossed to be determined automatically -> use real, not integer
 integer     :: check_grid, n_coords                                      ! loop counter for the actual evaluation (grid) and for the coordinates (coords)
 integer     :: counter_access, counter_check_acc, counter_noOccu         ! counter to evaluate whether a point is accessible, check accessible, or NOT occupied
 integer     :: n_access, n_occ, n_check, n_check_acc, n_noOccu           ! counter for list assignment -> accessible, occupied, used loop variable (store accessible points), counter for accessibility check list, not occupied
