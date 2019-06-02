@@ -224,7 +224,7 @@ do a = 1, start_points
       all_distances2(b) = 1000.0                  ! do not evaluate this point again
     end if
   end do
-  if (c == 0) then
+  if (c < 0.05*start_points) then
   else
     write(6,*) all_distances(a), c
   end if

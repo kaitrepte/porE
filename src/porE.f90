@@ -1,5 +1,7 @@
 program porosity
 
+implicit none
+
 ! POROsity Whole Analysis Tool (porowat)
 ! Author Kai Trepte
 ! Version January 23, 2019
@@ -983,7 +985,7 @@ subroutine porefinder(structure)      ! subroutine porefinder(structure,all_pore
         all_distances2(b) = 1000.0                  ! do not evaluate this point again
       end if
     end do
-    if (c <= 5) then                                ! only pores with more than 5 % contribution will be handled
+    if (c <= 0.05*start_points) then                ! only pores with more than 5 % contribution will be handled
     else
       write(6,*) all_distances(a)*2.0, c   ! print diameter instead of the radius
 
