@@ -268,7 +268,7 @@ else if (eval_method == 2) then                                                 
     write(6,*) 'How many grid points per angstroem (1 real) ?'                              ! ask for the number of grid points per angstroem for each unit cell vector
     write(6,*) '#############################################'
     read(5,*) g
-    grid_a = ceiling(g*sqrt(cell_a(1)**2 + cell_a(2)**2 + cell_a(3)**2))                       ! ceiling -> round to the next higher integer. Use t * len_unit_cell_vector as the number of grid points
+    grid_a = ceiling(g*sqrt(cell_a(1)**2 + cell_a(2)**2 + cell_a(3)**2))                       ! ceiling -> round to the next higher integer. Use g * len_unit_cell_vector as the number of grid points
     grid_b = ceiling(g*sqrt(cell_b(1)**2 + cell_b(2)**2 + cell_b(3)**2))
     grid_c = ceiling(g*sqrt(cell_c(1)**2 + cell_c(2)**2 + cell_c(3)**2))
   end if
