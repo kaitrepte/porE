@@ -220,9 +220,9 @@ if (eval_method == 1) then
   write(6,fmt='(1X a,f10.3,1X a)') 'V_void      = ',V_total - (V_occupied - V_overlap),'A^3'
   write(6,fmt='(1X a,f10.3,1X a)') 'Porosity    = ',(V_total - (V_occupied - V_overlap))/V_total*100,' %'
   write(6,fmt='(1X a,f10.3,1X a)') 'Density of the structure is (m_total/V_total)   : ',m_total*u/V_total*10**3,'kg/m^3'
-  write(6,fmt='(1X a,f10.3,1X a)') 'Inverse pore volume density is (V_void/m_total) : ' &
+  write(6,fmt='(1X a,f10.3,1X a)') 'Pore volume density is (V_void/m_total)         : ' &
              ,(V_total - (V_occupied - V_overlap))/(m_total*u)*10**(0),'cm^3/g'
-  write(6,fmt='(1X a,f10.3,1X a)') 'The mass of unit cell is                        : ',m_total*u,'10**-27 kg'
+  write(6,fmt='(1X a,f10.3,1X a)') 'Mass of the unit cell is                        : ',m_total*u,'10**-27 kg'
   call cpu_time(finish)
   write(6,*) 'Total CPU time: ',finish-start,'s'
 
@@ -237,9 +237,9 @@ if (eval_method == 1) then
   write(19,fmt='(1X a,f10.3,1X a)') 'V_void      = ',V_total - (V_occupied - V_overlap),'A^3'
   write(19,fmt='(1X a,f10.3,1X a)') 'Porosity    = ',(V_total - (V_occupied - V_overlap))/V_total*100,' %'
   write(19,fmt='(1X a,f10.3,1X a)') 'Density of the structure is (m_total/V_total)   : ',m_total*u/V_total*10**3,'kg/m^3'
-  write(19,fmt='(1X a,f10.3,1X a)') 'Inverse pore volume density is (V_void/m_total) : ' &
+  write(19,fmt='(1X a,f10.3,1X a)') 'Pore volume density is (V_void/m_total)         : ' &
              ,(V_total - (V_occupied - V_overlap))/(m_total*u)*10**(0),'cm^3/g'
-  write(19,fmt='(1X a,f10.3,1X a)') 'The mass of unit cell is                        : ',m_total*u,'10**-27 kg'
+  write(19,fmt='(1X a,f10.3,1X a)') 'Mass of the unit cell is                        : ',m_total*u,'10**-27 kg'
   write(19,*) 'Total CPU time: ',finish-start,'s'
   close(19)
 
@@ -267,7 +267,7 @@ else if (eval_method == 2) then                                                 
   write(6,*) ' '
   write(6,*) '########## METHOD TO DEFINE GRID POINTS ##########################'
   write(6,*) '(1) Grid points per unit cell vector                  (3 integers)'
-  write(6,*) '(2) Grid points per angstroem (uniform grid)              (1 real)'
+  write(6,*) '(2) Grid points per angstrom (uniform grid)               (1 real)'
   write(6,*) '##################################################################'
   read(5,*) t                                                                                  ! t serves as a temporary variable
   if (t == 1) then
@@ -279,7 +279,7 @@ else if (eval_method == 2) then                                                 
   else if (t == 2) then
     write(6,*) ' '
     write(6,*) '########## CHOOSE NUMBER OF GRID POINTS #####'
-    write(6,*) 'How many grid points per angstroem (1 real) ?'                              ! ask for the number of grid points per angstroem for each unit cell vector
+    write(6,*) 'How many grid points per angstrom  (1 real) ?'                              ! ask for the number of grid points per angstroem for each unit cell vector
     write(6,*) '#############################################'
     read(5,*) g
     grid_a = ceiling(g*sqrt(cell_a(1)**2 + cell_a(2)**2 + cell_a(3)**2))                       ! ceiling -> round to the next higher integer. Use g * len_unit_cell_vector as the number of grid points
@@ -594,8 +594,8 @@ else if (eval_method == 2) then                                                 
   write(6,fmt='(1X a,f10.3,a)') 'Unit cell volume (V_total)                   : ',V_total,' A^3'
   write(6,fmt='(1X a,f10.3,a)') 'Mass of unit cell (m_total)                  : ',m_total*u,' 10**-27 kg'
   write(6,fmt='(1X a,f10.3,a)') 'Density of the structure (m_total/V_total)   : ',m_total*u/V_total*10**3,' kg/m^3'
-  write(6,fmt='(1X a,f10.3,a)') 'Inverse pore volume density (V_void/m_total) : ',V_void/(m_total*u)*10**(0),' cm^3/g'
-  write(6,fmt='(1X a,f10.3,a)') 'Inverse pore volume density (V_acc/m_total)  : ',V_accessible/(m_total*u)*10**(0),' cm^3/g'
+  write(6,fmt='(1X a,f10.3,a)') 'Pore volume density (V_void/m_total)         : ',V_void/(m_total*u)*10**(0),' cm^3/g'
+  write(6,fmt='(1X a,f10.3,a)') 'Pore volume density (V_acc/m_total)          : ',V_accessible/(m_total*u)*10**(0),' cm^3/g'
  
   call cpu_time(finish)
   write(6,*) ' '
@@ -634,8 +634,8 @@ else if (eval_method == 2) then                                                 
   write(19,fmt='(1X a,f10.3,a)') 'Unit cell volume (V_total)                   : ',V_total,' A^3'
   write(19,fmt='(1X a,f10.3,a)') 'Mass of unit cell (m_total)                  : ',m_total*u,' 10**-27 kg'
   write(19,fmt='(1X a,f10.3,a)') 'Density of the structure (m_total/V_total)   : ',m_total*u/V_total*10**3,' kg/m^3'
-  write(19,fmt='(1X a,f10.3,a)') 'Inverse pore volume density (V_void/m_total) : ',V_void/(m_total*u)*10**(0),' cm^3/g'
-  write(19,fmt='(1X a,f10.3,a)') 'Inverse pore volume density (V_acc/m_total)  : ',V_accessible/(m_total*u)*10**(0),' cm^3/g'
+  write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_void/m_total)         : ',V_void/(m_total*u)*10**(0),' cm^3/g'
+  write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_acc/m_total)          : ',V_accessible/(m_total*u)*10**(0),' cm^3/g'
 
   write(19,*) ' '
   write(19,*) 'Total CPU time was ',finish-start,'s'
