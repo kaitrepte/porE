@@ -20,7 +20,8 @@ integer                             :: a,b,c,d,e,f,n,t         ! loop parameter
 real(8)                             :: rand1, rand2, rand3     ! random numbers to get new coordinates
 
 real(8)                             :: coords1(3), coords2(3)  ! coordinates of point before and after MC step
-real(8), allocatable                :: coords_all(:,:)         ! all coordinates of point after MC
+real(8), allocatable                :: coords_all_cart(:,:)    ! all coordinates of point after MC, cartesian
+real(8), allocatable                :: coords_all_frac(:,:)    ! all coordinates of point after MC, fractional
 real(8)                             :: distance1, distance2    ! corresponding minimum distance to any atom
 real(8)                             :: tmp_dist, vdw           ! temporary distance, vdW radius of the atom
 real(8)                             :: distribution            ! final PSD distribution for a given radius
@@ -150,7 +151,8 @@ write(19,*) ' '
 stepsize     = 0.01
 allocate(all_distances(start_points))
 allocate(all_distances2(start_points))
-allocate(coords_all(start_points,3))
+allocate(coords_all_cart(start_points,3))
+allocate(coords_all_frac(start_points,3))
 
 ! LOOP OVER START POINTS
 do a = 1, start_points
@@ -212,27 +214,36 @@ do a = 1, start_points
   if (distance1 > distance2) then
 !    write(6,*) "Start ",a," Final distance ",distance1*2.0   ! write diameter, not radius. Store position as well
     all_distances(a) = distance1*2.0
-    coords_all(a,:) = coords2(:)       
+    coords_all_cart(a,:) = coords2(:)       
   else
 !    write(6,*) "Start ",a," Final distance ",distance2*2.0   ! write diameter, not radius. Store position as well
     all_distances(a) = distance2*2.0
-    coords_all(a,:) = coords1(:)
+    coords_all_cart(a,:) = coords1(:)
   end if
 end do      ! end starting points
 
+!
+! Get proper cartesian coordinates (within the unit cell, not outside) and fractional coordinates for the pore centers
+! 
+do a = 1, start_points
+  call cart_to_frac(cell_a,cell_b,cell_c,coords_all_cart(a,:),coords_all_frac(a,:))
+end do
+!
+! store all distances in a second array -> use for double-checking
+!
+all_distances2(:) = all_distances(:)
 
-all_distances2(:) = all_distances(:) ! store original positions once more. Get PSD
 
 ! Get distribution
 write(6,*) ' '
 write(6,*) 'Pore size distribution for ',name_struct
 write(6,*) ' '
-write(6,*) '  Pore size,  Distribution [%],  coordinate of pore center'
+write(6,*) '  Pore size   Distribution [%]   coordinate (cartesian)                 coordinate (fractional)'
 
 write(19,*) ' '
 write(19,*) 'Pore size distribution for ',name_struct
 write(19,*) ' '
-write(19,*) '  Pore size,  Distribution [%],  coordinate of pore center'
+write(19,*) '  Pore size   Distribution [%]   coordinate (cartesian)                coordinate (fractional)'
 
 do a = 1, start_points
   distribution = 0.0
@@ -245,8 +256,8 @@ do a = 1, start_points
   distribution = distribution/start_points*100.D0  ! distribution in %
   if (distribution < 5.0) then      ! if less than 5 % -> do not evaluate
   else
-    write(6,fmt='(F12.6,F8.2,11X,3F15.8)') all_distances(a), distribution, coords_all(a,:)
-    write(19,fmt='(F12.6,F8.2,11X,3F15.8)') all_distances(a), distribution, coords_all(a,:)
+    write(6,fmt='(F12.6,F8.2,11X,3F12.6,2X,3F12.6)') all_distances(a), distribution, coords_all_cart(a,:), coords_all_frac(a,:)
+    write(19,fmt='(F12.6,F8.2,11X,3F15.8,2X,3F12.6)') all_distances(a), distribution, coords_all_cart(a,:), coords_all_frac(a,:)
   end if
 end do
 
@@ -263,5 +274,65 @@ deallocate(coordinates)
 deallocate(elements)
 deallocate(all_distances)
 deallocate(all_distances2)
+deallocate(coords_all_cart)
+deallocate(coords_all_frac)
 
 end program porefinder
+
+
+subroutine cart_to_frac(vecA,vecB,vecC,pos_cart,pos_frac)
+! Transform cart to fractional. Make sure that point are within the unit cell. Transform back to cartesian. Return both cart and frac
+real(8), intent(in)    :: vecA(3), vecB(3), vecC(3)
+real(8), intent(inout) :: pos_cart(3)
+real(8), intent(inout) :: pos_frac(3)
+real(8)                :: trans_matrix(3,3)
+real(8)                :: determinant
+real(8)                :: lenA, lenB, lenC, angleBC, angleAC, angleAB
+integer                :: t,f
+real(8), parameter     :: pi = 3.14159265358979323846
+
+lenA    = sqrt(vecA(1)**2+vecA(2)**2+vecA(3)**2)
+lenB    = sqrt(vecB(1)**2+vecB(2)**2+vecB(3)**2)
+lenC    = sqrt(vecC(1)**2+vecC(2)**2+vecC(3)**2)
+angleBC = ACOS((vecB(1)*vecC(1) + vecB(2)*vecC(2) + vecB(3)*vecC(3))/(lenB*lenC))*180.0/pi
+angleAC = ACOS((vecA(1)*vecC(1) + vecA(2)*vecC(2) + vecA(3)*vecC(3))/(lenA*lenC))*180.0/pi
+angleAB = ACOS((vecA(1)*vecB(1) + vecA(2)*vecB(2) + vecA(3)*vecB(3))/(lenA*lenB))*180.0/pi
+! deteminant of the matrix comntaining the cell vectors
+determinant = vecA(1)*vecB(2)*vecC(3)+vecB(1)*vecC(2)*vecA(3)+vecC(1)*vecA(2)*vecB(3) - &
+              vecA(3)*vecB(2)*vecC(1)-vecB(3)*vecC(2)*vecA(1)-vecC(3)*vecA(2)*vecB(1)
+! transformation matrix to get fractional coordinates. It is the inverse of the matrix containing the cell vectors
+trans_matrix(1,1) = (vecB(2)*vecC(3)-vecB(3)*vecC(2))/determinant
+trans_matrix(1,2) = (vecA(3)*vecC(2)-vecA(2)*vecC(3))/determinant
+trans_matrix(1,3) = (vecA(2)*vecB(3)-vecA(3)*vecB(2))/determinant
+trans_matrix(2,1) = (vecB(3)*vecC(1)-vecB(1)*vecC(3))/determinant
+trans_matrix(2,2) = (vecA(1)*vecC(3)-vecA(3)*vecC(1))/determinant
+trans_matrix(2,3) = (vecA(3)*vecB(1)-vecA(1)*vecB(3))/determinant
+trans_matrix(3,1) = (vecB(1)*vecC(2)-vecB(2)*vecC(1))/determinant
+trans_matrix(3,2) = (vecA(2)*vecC(1)-vecA(1)*vecC(2))/determinant
+trans_matrix(3,3) = (vecA(1)*vecB(2)-vecA(2)*vecB(1))/determinant
+! frac = cart*trans_matrix
+pos_frac(1) = pos_cart(1)*trans_matrix(1,1) + pos_cart(2)*trans_matrix(2,1) + pos_cart(3)*trans_matrix(3,1)
+pos_frac(2) = pos_cart(1)*trans_matrix(1,2) + pos_cart(2)*trans_matrix(2,2) + pos_cart(3)*trans_matrix(3,2)
+pos_frac(3) = pos_cart(1)*trans_matrix(1,3) + pos_cart(2)*trans_matrix(2,3) + pos_cart(3)*trans_matrix(3,3)
+! make sure that all fractional coordinates are within 0 and 1
+do f = 1, 3
+  t = 0
+  do while (t < 1)
+    if (pos_frac(f) > 1) then
+      pos_frac(f) = pos_frac(f) - 1
+    end if
+    if (pos_frac(f) < 0) then
+      pos_frac(f) = pos_frac(f) + 1
+    end if
+    if ((0 <= pos_frac(f)) .and. (pos_frac(f) <= 1)) then
+      t = 1
+    end if
+  end do
+end do
+! Transfrom back to cartesian. This ensures that all FODs are inside the unit cell
+pos_cart(1) = pos_frac(1)*vecA(1) + pos_frac(2)*vecB(1) + pos_frac(3)*vecC(1)
+pos_cart(2) = pos_frac(1)*vecA(2) + pos_frac(2)*vecB(2) + pos_frac(3)*vecC(2)
+pos_cart(3) = pos_frac(1)*vecA(3) + pos_frac(2)*vecB(3) + pos_frac(3)*vecC(3)
+
+return
+end subroutine cart_to_frac
