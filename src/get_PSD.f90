@@ -231,7 +231,7 @@ do a = 1, start_points
   end do
   if (c < 0.05*start_points) then
   else
-    write(6,fmt='(F12.6,I4,15X,3F15.8)') all_distances(a), c, coords_all(a,:)
+    write(6,fmt='(F12.6,1X,I4,15X,3F15.8)') all_distances(a), c, coords_all(a,:)
   end if
 end do
 
