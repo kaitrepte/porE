@@ -23,6 +23,7 @@ real(8)                             :: coords1(3), coords2(3)  ! coordinates of 
 real(8), allocatable                :: coords_all(:,:)         ! all coordinates of point after MC
 real(8)                             :: distance1, distance2    ! corresponding minimum distance to any atom
 real(8)                             :: tmp_dist, vdw           ! temporary distance, vdW radius of the atom
+real(8)                             :: distribution            ! final PSD distribution for a given radius
 
 integer                             :: start_points, cycles    ! number of starting points, number of MC cycles
 real(8)                             :: stepsize                ! step size for MC steps
@@ -135,6 +136,12 @@ do n = 1,number_of_atoms                                        ! go through all
 end do
 close(unit=15)                                                  ! close the file (no longer necessary)
 
+! Output file
+open(unit=19,file='output',status='unknown',action='write')
+write(19,*) 'Starting points   (recommended: >= 100)   : ',start_points
+write(19,*) 'Monte-Carlo steps (recommended: >= 10000) : ',cycles
+write(19,*) ' '
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! Monte-Carlo to get pore sizes !!
@@ -219,25 +226,38 @@ all_distances2(:) = all_distances(:) ! store original positions once more. Get P
 ! Get distribution
 write(6,*) ' '
 write(6,*) 'Pore size distribution for ',name_struct
+write(6,*) ' '
 write(6,*) '  Pore size,  Distribution [%],  coordinate of pore center'
 
+write(19,*) ' '
+write(19,*) 'Pore size distribution for ',name_struct
+write(19,*) ' '
+write(19,*) '  Pore size,  Distribution [%],  coordinate of pore center'
+
 do a = 1, start_points
-  c = 0
+  distribution = 0.0
   do b = 1, start_points
     if (abs(all_distances(a) - all_distances2(b)) < 0.10) then    ! collect data which is within this range of the value
-      c = c + 1
+      distribution = distribution + 1.0
       all_distances2(b) = 1000.0                  ! do not evaluate this point again
     end if
   end do
-  if (c < 0.05*start_points) then
+  distribution = distribution/start_points*100.D0  ! distribution in %
+  if (distribution < 5.0) then      ! if less than 5 % -> do not evaluate
   else
-    write(6,fmt='(F12.6,1X,I4,15X,3F15.8)') all_distances(a), c, coords_all(a,:)
+    write(6,fmt='(F12.6,F8.2,11X,3F15.8)') all_distances(a), distribution, coords_all(a,:)
+    write(19,fmt='(F12.6,F8.2,11X,3F15.8)') all_distances(a), distribution, coords_all(a,:)
   end if
 end do
 
 call cpu_time(finish)
+write(6,*) ' '
 write(6,*) 'Total time ',finish-start,' s'
 
+write(19,*) ' '
+write(19,*) 'Total time ',finish-start,' s'
+
+close(19)
 
 deallocate(coordinates)
 deallocate(elements)
