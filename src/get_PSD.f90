@@ -20,6 +20,7 @@ integer                             :: a,b,c,d,e,f,n,t         ! loop parameter
 real(8)                             :: rand1, rand2, rand3     ! random numbers to get new coordinates
 
 real(8)                             :: coords1(3), coords2(3)  ! coordinates of point before and after MC step
+real(8), allocatable                :: coords_all(:,:)         ! all coordinates of point after MC
 real(8)                             :: distance1, distance2    ! corresponding minimum distance to any atom
 real(8)                             :: tmp_dist, vdw           ! temporary distance, vdW radius of the atom
 
@@ -142,6 +143,7 @@ close(unit=15)                                                  ! close the file
 stepsize     = 0.01
 allocate(all_distances(start_points))
 allocate(all_distances2(start_points))
+allocate(coords_all(start_points,3))
 
 ! LOOP OVER START POINTS
 do a = 1, start_points
@@ -201,20 +203,23 @@ do a = 1, start_points
 
 ! Get probe diameter
   if (distance1 > distance2) then
-!    write(6,*) "Start ",a," Final distance ",distance1*2.0   ! write diameter, not radius
+!    write(6,*) "Start ",a," Final distance ",distance1*2.0   ! write diameter, not radius. Store position as well
     all_distances(a) = distance1*2.0
+    coords_all(a,:) = coords2(:)       
   else
-!    write(6,*) "Start ",a," Final distance ",distance2*2.0   ! write diameter, not radius
+!    write(6,*) "Start ",a," Final distance ",distance2*2.0   ! write diameter, not radius. Store position as well
     all_distances(a) = distance2*2.0
+    coords_all(a,:) = coords1(:)
   end if
 end do      ! end starting points
 
 
-all_distances2(:) = all_distances(:)
+all_distances2(:) = all_distances(:) ! store original positions once more. Get PSD
 
 ! Get distribution
 write(6,*) ' '
 write(6,*) 'Pore size distribution for ',name_struct
+write(6,*) '  Pore size,  Distribution [%],  coordinate of pore center'
 
 do a = 1, start_points
   c = 0
@@ -226,7 +231,7 @@ do a = 1, start_points
   end do
   if (c < 0.05*start_points) then
   else
-    write(6,*) all_distances(a), c
+    write(6,fmt='(F12.6,I4,15X,3F15.8)') all_distances(a), c, coords_all(a,:)
   end if
 end do
 
