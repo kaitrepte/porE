@@ -62,6 +62,7 @@ write(6,*) 'MOF-5                    - m5'
 write(6,*) 'IRMOF-10                 - ir'
 write(6,*) 'MOF210                   - m2'
 write(6,*) 'HKUST-1                  - h1'
+write(6,*) 'C60@MOF                  - c6'
 write(6,*) 'Benzene, opt             - be'
 write(6,*) 'Benzene, exp             - b2'
 write(6,*) 'Benzene, C only          - bc'
@@ -103,6 +104,9 @@ else if (struct == 'm2') then                                                   
 else if (struct == 'h1') then                                                                 ! if HKUST-1 (primitive cell) is choosen
   open(unit=15,file='../structures_xyz/hkust1.xyz',status='old',action='read')                   ! read in the xyz file
   name_struct = 'HKUST-1'
+else if (struct == 'c6') then                                                                 ! if HKUST-1 (primitive cell) is choosen
+  open(unit=15,file='../structures_xyz/c60_MOF.xyz',status='old',action='read')                   ! read in the xyz file
+  name_struct = 'C60@MOF'
 else if (struct == 'be') then                                                                 ! if benzene (arbitrary cell) is choosen
   open(unit=15,file='../structures_xyz/benzene.xyz',status='old',action='read')                  ! read in the xyz file
   name_struct = 'Benzene, opt'
@@ -182,6 +186,7 @@ do a = 1, start_points
       if (elements(n) == 'C')  vdw = 1.70
       if (elements(n) == 'N')  vdw = 1.55
       if (elements(n) == 'O')  vdw = 1.52
+      if (elements(n) == 'Co') vdw = 1.92 ! Los Alamos value
       if (elements(n) == 'Ni') vdw = 1.63
       if (elements(n) == 'Cu') vdw = 1.40
       if (elements(n) == 'Zn') vdw = 1.39
@@ -243,7 +248,7 @@ write(6,*) '  Pore size   Distribution [%]   coordinate (cartesian)             
 write(19,*) ' '
 write(19,*) 'Pore size distribution for ',name_struct
 write(19,*) ' '
-write(19,*) '  Pore size   Distribution [%]   coordinate (cartesian)                coordinate (fractional)'
+write(19,*) '  Pore size   Distribution [%]   coordinate (cartesian)                 coordinate (fractional)'
 
 do a = 1, start_points
   distribution = 0.0
@@ -257,7 +262,7 @@ do a = 1, start_points
   if (distribution < 5.0) then      ! if less than 5 % -> do not evaluate
   else
     write(6,fmt='(F12.6,F8.2,11X,3F12.6,2X,3F12.6)') all_distances(a), distribution, coords_all_cart(a,:), coords_all_frac(a,:)
-    write(19,fmt='(F12.6,F8.2,11X,3F15.8,2X,3F12.6)') all_distances(a), distribution, coords_all_cart(a,:), coords_all_frac(a,:)
+    write(19,fmt='(F12.6,F8.2,11X,3F12.6,2X,3F12.6)') all_distances(a), distribution, coords_all_cart(a,:), coords_all_frac(a,:)
   end if
 end do
 
