@@ -5,10 +5,11 @@ implicit none
 ! POROsity Whole Analysis Tool (porowat)
 ! Author Kai Trepte
 ! Version January 23, 2019
-! Version April 29th, 2019 -- try to implement sub-division of grid
+! Version April 29th, 2019 -- implement sub-grid division
+! Version August 23rd, 2019 -- add many more elements, vdW and covalent radii
 
 character(2)                        :: struct
-character(len=25)                   :: name_struct
+character(len=100)                  :: name_struct
 integer                             :: eval_method
 
 integer                             :: number_of_atoms
@@ -59,6 +60,16 @@ type global_array
   real(8), allocatable :: sub_grids(:,:)                        ! dimensions: n_atoms, sub_grid_points(atom), 3
 end type global_array
 type(global_array), dimension(:), allocatable :: sub_division
+
+! Some arrays for easier handling of vdW radii
+character(2)           :: pse(25)                               ! Elements
+real(8)                :: vdW_radii(25)                         ! vdW radii
+pse = (/ 'H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne',&
+         'Na', 'Mg', 'Al', 'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca',&
+         'Co', 'Ni', 'Cu', 'Zn', 'Zr' /)
+vdW_radii = (/ 1.20, 1.40, 1.82, 1.53, 1.92, 1.70, 1.55, 1.52, 1.47, 1.54,&
+               2.27, 1.73, 1.84, 2.10, 1.80, 1.80, 1.75, 1.88, 2.75, 2.31,& 
+               1.92, 1.63, 1.40, 1.39, 2.36 /)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Script to evaluate the porosity of a crystal structure. Taking information from xyz file and cell parameters.                                 !
@@ -361,33 +372,20 @@ else if (eval_method == 2) then                                                 
   !
   ! Evaluate whether point is occupied or accessible
   !
-          if ((elements(n_coords) == 'H'  .and. dist_point_atom <= 1.20) .or. &                    ! if the grid point is inside any atom (distance is smaller than the vdW radius of the respective atom)
-              (elements(n_coords) == 'C'  .and. dist_point_atom <= 1.70) .or. &                    ! add this point to the occupied list
-              (elements(n_coords) == 'N'  .and. dist_point_atom <= 1.55) .or. &
-              (elements(n_coords) == 'O'  .and. dist_point_atom <= 1.52) .or. &
-              (elements(n_coords) == 'Co' .and. dist_point_atom <= 1.92) .or. &
-              (elements(n_coords) == 'Ni' .and. dist_point_atom <= 1.63) .or. &
-              (elements(n_coords) == 'Cu' .and. dist_point_atom <= 1.40) .or. &
-              (elements(n_coords) == 'Zn' .and. dist_point_atom <= 1.39) .or. &
-              (elements(n_coords) == 'Zr' .and. dist_point_atom <= 2.36)) then
-            n_occ = n_occ + 1                                                                      ! increase assignemnt counter for the occupied list
-            exit loop14                                                                            ! stop looping through the atoms at this point. The point is already determined as occupied. Avoid double counting!
-
-          else if ((elements(n_coords) == 'H'  .and. dist_point_atom >= 1.20 + probe_r) .or. &     ! if grid point is outside an atom + the probe radius -> Clearly accessible
-                   (elements(n_coords) == 'C'  .and. dist_point_atom >= 1.70 + probe_r) .or. &     ! add +1 to the counter 'counter_acc' AND to counter_noOccu
-                   (elements(n_coords) == 'N'  .and. dist_point_atom >= 1.55 + probe_r) .or. &
-                   (elements(n_coords) == 'O'  .and. dist_point_atom >= 1.52 + probe_r) .or. &
-                   (elements(n_coords) == 'Co' .and. dist_point_atom >= 1.92 + probe_r) .or. &
-                   (elements(n_coords) == 'Ni' .and. dist_point_atom >= 1.63 + probe_r) .or. &
-                   (elements(n_coords) == 'Cu' .and. dist_point_atom >= 1.40 + probe_r) .or. &
-                   (elements(n_coords) == 'Zn' .and. dist_point_atom >= 1.39 + probe_r) .or. &
-                   (elements(n_coords) == 'Zr' .and. dist_point_atom >= 2.36 + probe_r)) then
-            counter_access = counter_access + 1
-            counter_noOccu = counter_noOccu + 1
-          else                                                                                     ! If outside an atom -> not occupied
-            counter_noOccu = counter_noOccu + 1
-          end if
-        end do loop14                                                                                    ! end do for all atoms
+          do n = 1, 25
+            if (elements(n_coords) == pse(n)) then
+              if (dist_point_atom <= vdW_radii(n)) then                            ! if the grid point is inside any atom (distance is smaller than the vdW radius of the respective atom)
+                n_occ = n_occ + 1                                                  ! increase assignemnt counter for the occupied list
+                exit loop14                                                        ! stop looping through the atoms at this point. The point is already determined as occupied. Avoid double counting!
+              else if (dist_point_atom >= vdW_radii(n) + probe_r) then             ! if grid point is outside an atom + the probe radius -> Immediately accessible
+                counter_access = counter_access + 1                                ! add +1 to the counter 'counter_acc' AND to counter_noOccu
+                counter_noOccu = counter_noOccu + 1
+              else                                                                 ! If outside an atom -> not occupied
+                counter_noOccu = counter_noOccu + 1
+              end if
+            end if
+          end do
+        end do loop14
 
         if (counter_access == number_of_atoms) then                                                ! if the counter for the accessible points increased for all atoms -> add to list
           n_access = n_access + 1                                                                  ! increase assignment counter for the accessible list
@@ -438,7 +436,7 @@ else if (eval_method == 2) then                                                 
 !
 ! HERE: Idea -> include the firstloop here into the very first loop over the grid points -> avoid looping over all accessible points twice
 !! I.e. do the counting part in the very first loop. Then, in the second loop write grid points
-
+!
   do n = 1, n_access                                                                           ! go through all accessible points
     loop13: do n_coords = 1,number_of_atoms                                                    ! go through all atoms and evaluate grid points
       dist_point_atom = sqrt(sum((list_access(n,:) - coordinates(n_coords,:))**2))             ! initial distance
@@ -453,18 +451,14 @@ else if (eval_method == 2) then                                                 
           end do
         end do
       end do
-      if ((elements(n_coords) == 'H'  .and. dist_point_atom < 1.20 + probe_r*factor) .or. &             ! if grid point is outside an atom + the probe radius, but close by -> get this point
-          (elements(n_coords) == 'C'  .and. dist_point_atom < 1.70 + probe_r*factor) .or. &             ! to check accessibility later on
-          (elements(n_coords) == 'N'  .and. dist_point_atom < 1.55 + probe_r*factor) .or. &             ! take only points in between vdW+probe_r AND vdw+probe_r*factor
-          (elements(n_coords) == 'O'  .and. dist_point_atom < 1.52 + probe_r*factor) .or. &
-          (elements(n_coords) == 'Co' .and. dist_point_atom < 1.92 + probe_r*factor) .or. &
-          (elements(n_coords) == 'Ni' .and. dist_point_atom < 1.63 + probe_r*factor) .or. &
-          (elements(n_coords) == 'Cu' .and. dist_point_atom < 1.40 + probe_r*factor) .or. &
-          (elements(n_coords) == 'Zn' .and. dist_point_atom < 1.39 + probe_r*factor) .or. &
-          (elements(n_coords) == 'Zr' .and. dist_point_atom < 2.36 + probe_r*factor)) then
-        sub_division(n_coords)%sub_grid_points = sub_division(n_coords)%sub_grid_points + 1
-!        exit loop13  ! TEST: include double counting of points. Should matter for this
-      end if
+
+      do a = 1, 25
+        if (elements(n_coords) == pse(a)) then
+          if (dist_point_atom < vdW_radii(a) + probe_r*factor) then                             ! if grid point is outside an atom + the probe radius, but close by -> get this point
+            sub_division(n_coords)%sub_grid_points = sub_division(n_coords)%sub_grid_points + 1 ! to check accessibility later on
+          end if                                                                                ! take only points in between vdW+probe_r AND vdw+probe_r*factor
+        end if
+      end do
     end do loop13
   end do
 
@@ -495,19 +489,15 @@ else if (eval_method == 2) then                                                 
           end do
         end do
       end do
-      if ((elements(n_coords) == 'H'  .and. dist_point_atom < 1.20 + probe_r*factor) .or. &             ! if grid point is outside an atom + the probe radius, but close by -> get this point
-          (elements(n_coords) == 'C'  .and. dist_point_atom < 1.70 + probe_r*factor) .or. &             ! to check accessibility later on
-          (elements(n_coords) == 'N'  .and. dist_point_atom < 1.55 + probe_r*factor) .or. &             ! take only points in between vdW+probe_r AND vdw+probe_r*factor
-          (elements(n_coords) == 'O'  .and. dist_point_atom < 1.52 + probe_r*factor) .or. &
-          (elements(n_coords) == 'Co' .and. dist_point_atom < 1.92 + probe_r*factor) .or. &
-          (elements(n_coords) == 'Ni' .and. dist_point_atom < 1.63 + probe_r*factor) .or. &
-          (elements(n_coords) == 'Cu' .and. dist_point_atom < 1.40 + probe_r*factor) .or. &
-          (elements(n_coords) == 'Zn' .and. dist_point_atom < 1.39 + probe_r*factor) .or. &
-          (elements(n_coords) == 'Zr' .and. dist_point_atom < 2.36 + probe_r*factor)) then
-        sub_division(n_coords)%sub_grid_points = sub_division(n_coords)%sub_grid_points + 1
-        sub_division(n_coords)%sub_grids(sub_division(n_coords)%sub_grid_points,:) = list_access(n,:)
-!        exit loop15   ! TEST
-      end if
+
+      do a = 1, 25
+        if (elements(n_coords) == pse(a)) then
+          if (dist_point_atom < vdW_radii(a) + probe_r*factor) then                             ! if grid point is outside an atom + the probe radius, but close by -> get this point
+            sub_division(n_coords)%sub_grid_points = sub_division(n_coords)%sub_grid_points + 1
+            sub_division(n_coords)%sub_grids(sub_division(n_coords)%sub_grid_points,:) = list_access(n,:)
+          end if                                                                                ! take only points in between vdW+probe_r AND vdw+probe_r*factor
+        end if
+      end do
     end do loop15
   end do
 
@@ -557,26 +547,21 @@ else if (eval_method == 2) then                                                 
         end do
       end do
 
-      ! condition for NOT occpupied, but not necessarily accessible
-      if ((elements(n_coords) == 'H'  .and. dist_point_atom < 1.20 + probe_r) .or. &         ! If grid point is outside an atom (see last if statement), but within a length of the probe radius
-          (elements(n_coords) == 'C'  .and. dist_point_atom < 1.70 + probe_r) .or. &    
-          (elements(n_coords) == 'N'  .and. dist_point_atom < 1.55 + probe_r) .or. &
-          (elements(n_coords) == 'O'  .and. dist_point_atom < 1.52 + probe_r) .or. &
-          (elements(n_coords) == 'Co' .and. dist_point_atom < 1.92 + probe_r) .or. &
-          (elements(n_coords) == 'Ni' .and. dist_point_atom < 1.63 + probe_r) .or. &
-          (elements(n_coords) == 'Cu' .and. dist_point_atom < 1.40 + probe_r) .or. &
-          (elements(n_coords) == 'Zn' .and. dist_point_atom < 1.39 + probe_r) .or. &
-          (elements(n_coords) == 'Zr' .and. dist_point_atom < 2.36 + probe_r)) then
-        do f = 1, sub_division(n_coords)%sub_grid_points                                     ! Go through the 'check accessibility' points (which have been determined before)
-          dist_point_point = sqrt(sum((sub_division(n_coords)%sub_grids(f,:) - &
-                                       list_noOccu(a,:))**2)) ! determine the distance to any accessible point
-          if (dist_point_point < probe_r) then                                               ! if the distance to any accessible point is smaller than the probe radius -> NEW ACCESSIBLE POINT
-            n_access = n_access + 1                                                          ! increase accessible counter
-            exit loop1                                                                       ! Stop looping once this is confirmed (i.e. stop looping over the atoms)
+      ! Get the points which are initially unoccupied, but are accessible
+      do n = 1, 25
+        if (elements(n_coords) == pse(n)) then
+          if (dist_point_atom < vdW_radii(n) + probe_r) then                                ! If grid point is outside an atom (see last if statement), but within a length of the probe radius
+            do f = 1, sub_division(n_coords)%sub_grid_points                                ! Go through the 'check accessibility' points (which have been determined before)
+              dist_point_point = sqrt(sum((sub_division(n_coords)%sub_grids(f,:) - &
+                                           list_noOccu(a,:))**2))                           ! determine the distance to any accessible point
+              if (dist_point_point < probe_r) then                                          ! if the distance to any accessible point is smaller than the probe radius -> NEW ACCESSIBLE POINT
+                n_access = n_access + 1                                                     ! increase accessible counter
+                exit loop1                                                                  ! Stop looping once this is confirmed (i.e. stop looping over the atoms)
+              end if
+            end do
           end if
-        end do
-      end if
-
+        end if
+      end do
     end do loop1                                                                             ! end do atoms
   end do                                                                                     ! end do full grid
 
@@ -735,211 +720,34 @@ subroutine eval_overlap(element_a, element_b, dist_ab, sub_over)   ! evaluate th
   real(8)                  :: r_vdw1, r_vdw2                       ! vdW radii of the atoms
   real(8), intent(out)     :: sub_over                             ! overlap volume (evaluated within the subroutine 'overlap')
  
-                                                                                              ! Evaluate, if distance between the atoms is smaller than the sum of the covalent radii
-  if ((element_a == 'H' .and. element_b == 'H') .and. (dist_ab < 0.33 + 0.33)) then           ! two H
-   r_vdw1 = 1.20
-   r_vdw2 = 1.20
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if ((element_a == 'C'  .and. element_b == 'C')  .and. (dist_ab < 0.76 + 0.76)) then    ! two C
-   r_vdw1 = 1.70
-   r_vdw2 = 1.70
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if ((element_a == 'N'  .and. element_b == 'N')  .and. (dist_ab < 0.71 + 0.71)) then    ! two N
-   r_vdw1 = 1.55
-   r_vdw2 = 1.55
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if ((element_a == 'O'  .and. element_b == 'O')  .and. (dist_ab < 0.66 + 0.66)) then    ! two O
-   r_vdw1 = 1.52
-   r_vdw2 = 1.52
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if ((element_a == 'Co' .and. element_b == 'Co') .and. (dist_ab < 1.26 + 1.26)) then    ! two Co
-   r_vdw1 = 1.92
-   r_vdw2 = 1.92
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if ((element_a == 'Ni' .and. element_b == 'Ni') .and. (dist_ab < 1.24 + 1.24)) then    ! two Ni
-   r_vdw1 = 1.63
-   r_vdw2 = 1.63
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if ((element_a == 'Cu' .and. element_b == 'Cu') .and. (dist_ab < 1.30 + 1.30)) then    ! two Cu
-   r_vdw1 = 1.40
-   r_vdw2 = 1.40
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if ((element_a == 'Zn' .and. element_b == 'Zn') .and. (dist_ab < 1.33 + 1.33)) then    ! two Zn
-   r_vdw1 = 1.39
-   r_vdw2 = 1.39
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if ((element_a == 'Zr' .and. element_b == 'Zr') .and. (dist_ab < 1.48 + 1.48)) then    ! two Zr
-   r_vdw1 = 2.36
-   r_vdw2 = 2.36
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
- ! ALL PAIRS WITH H
-  else if (((element_a == 'H'  .and. element_b == 'C')  .or. &
-            (element_a == 'C'  .and. element_b == 'H')) .and. (dist_ab < 0.33 + 0.76)) then   ! one H, one C
-   r_vdw1 = 1.20
-   r_vdw2 = 1.70
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'H'  .and. element_b == 'N')  .or. &
-            (element_a == 'N'  .and. element_b == 'H')) .and. (dist_ab < 0.33 + 0.71)) then   ! one H, one N
-   r_vdw1 = 1.20
-   r_vdw2 = 1.55
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'H'  .and. element_b == 'O')  .or. &
-            (element_a == 'O'  .and. element_b == 'H')) .and. (dist_ab < 0.33 + 0.66)) then   ! one H, one O
-   r_vdw1 = 1.20
-   r_vdw2 = 1.52
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'H'  .and. element_b == 'Co') .or. &
-            (element_a == 'Co' .and. element_b == 'H')) .and. (dist_ab < 0.33 + 1.26)) then   ! one H, one Ni
-   r_vdw1 = 1.20
-   r_vdw2 = 1.92
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'H'  .and. element_b == 'Ni') .or. &
-            (element_a == 'Ni' .and. element_b == 'H')) .and. (dist_ab < 0.33 + 1.24)) then   ! one H, one Ni
-   r_vdw1 = 1.20
-   r_vdw2 = 1.63
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'H'  .and. element_b == 'Cu') .or. &
-            (element_a == 'Cu' .and. element_b == 'H')) .and. (dist_ab < 0.33 + 1.30)) then   ! one H, one Cu
-   r_vdw1 = 1.20
-   r_vdw2 = 1.40
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'H'  .and. element_b == 'Zn') .or. &
-            (element_a == 'Zn' .and. element_b == 'H')) .and. (dist_ab < 0.33 + 1.33)) then   ! one H, one Zn
-   r_vdw1 = 1.20
-   r_vdw2 = 1.39
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'H'  .and. element_b == 'Zr') .or. &
-            (element_a == 'Zr' .and. element_b == 'H')) .and. (dist_ab < 0.33 + 1.48)) then   ! one H, one Zr
-   r_vdw1 = 1.20
-   r_vdw2 = 2.36
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
- ! ALL PAIRS WITH C
-  else if (((element_a == 'C'  .and. element_b == 'N')  .or. &
-            (element_a == 'N'  .and. element_b == 'C')) .and. (dist_ab < 0.76 + 0.71)) then   ! one C, one N
-   r_vdw1 = 1.70
-   r_vdw2 = 1.55
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'C'  .and. element_b == 'O')  .or. &
-            (element_a == 'O'  .and. element_b == 'C')) .and. (dist_ab < 0.76 + 0.66)) then   ! one C, one O
-   r_vdw1 = 1.70
-   r_vdw2 = 1.52
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'C'  .and. element_b == 'Co') .or. &
-            (element_a == 'Co' .and. element_b == 'C')) .and. (dist_ab < 0.76 + 1.26)) then   ! one C, one Ni
-   r_vdw1 = 1.70
-   r_vdw2 = 1.92
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'C'  .and. element_b == 'Ni') .or. &
-            (element_a == 'Ni' .and. element_b == 'C')) .and. (dist_ab < 0.76 + 1.24)) then   ! one C, one Ni
-   r_vdw1 = 1.70
-   r_vdw2 = 1.63
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'C'  .and. element_b == 'Cu') .or. &
-            (element_a == 'Cu' .and. element_b == 'C')) .and. (dist_ab < 0.76 + 1.24)) then   ! one C, one Cu
-   r_vdw1 = 1.70
-   r_vdw2 = 1.40
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'C'  .and. element_b == 'Zn') .or. &
-            (element_a == 'Zn' .and. element_b == 'C')) .and. (dist_ab < 0.76 + 1.33)) then   ! one C, one Zn
-   r_vdw1 = 1.70
-   r_vdw2 = 1.39
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'C'  .and. element_b == 'Zr') .or. &
-            (element_a == 'Zr' .and. element_b == 'C')) .and. (dist_ab < 0.76 + 1.48)) then   ! one C, one Zr
-   r_vdw1 = 1.70
-   r_vdw2 = 2.36
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
- ! ALL PAIRS WITH N
-  else if (((element_a == 'N'  .and. element_b == 'O')  .or. &
-            (element_a == 'O'  .and. element_b == 'N')) .and. (dist_ab < 0.71 + 0.66)) then   ! one N, one O
-   r_vdw1 = 1.55
-   r_vdw2 = 1.52
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'N'  .and. element_b == 'Co') .or. &
-            (element_a == 'Co' .and. element_b == 'N')) .and. (dist_ab < 0.71 + 1.26)) then   ! one N, one Ni
-   r_vdw1 = 1.55
-   r_vdw2 = 1.92
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'N'  .and. element_b == 'Ni') .or. &
-            (element_a == 'Ni' .and. element_b == 'N')) .and. (dist_ab < 0.71 + 1.24)) then   ! one N, one Ni
-   r_vdw1 = 1.55
-   r_vdw2 = 1.63
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'N'  .and. element_b == 'Cu') .or. &
-            (element_a == 'Cu' .and. element_b == 'N')) .and. (dist_ab < 0.71 + 1.30)) then   ! one N, one Cu
-   r_vdw1 = 1.55
-   r_vdw2 = 1.40
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'N'  .and. element_b == 'Zn') .or. &
-            (element_a == 'Zn' .and. element_b == 'N')) .and. (dist_ab < 0.71 + 1.33)) then   ! one C, one Zn
-   r_vdw1 = 1.55
-   r_vdw2 = 1.39
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'N' .and. element_b == 'Zr') .or. &
-            (element_a == 'Zr' .and. element_b == 'N')) .and. (dist_ab < 0.71 + 1.48)) then   ! one C, one Zr
-   r_vdw1 = 1.55
-   r_vdw2 = 2.36
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
- ! ALL PAIRS WITH O
-  else if (((element_a == 'O'  .and. element_b == 'Co') .or. &
-            (element_a == 'Co' .and. element_b == 'O')) .and. (dist_ab < 0.66 + 1.26)) then   ! one O, one Co
-   r_vdw1 = 1.52
-   r_vdw2 = 1.92
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'O'  .and. element_b == 'Ni') .or. &
-            (element_a == 'Ni' .and. element_b == 'O')) .and. (dist_ab < 0.66 + 1.24)) then   ! one O, one Ni
-   r_vdw1 = 1.52
-   r_vdw2 = 1.63
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'O'  .and. element_b == 'Cu') .or. &
-            (element_a == 'Cu' .and. element_b == 'O')) .and. (dist_ab < 0.66 + 1.30)) then   ! one O, one Cu
-   r_vdw1 = 1.52
-   r_vdw2 = 1.40
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'O'  .and. element_b == 'Zn') .or. &
-            (element_a == 'Zn' .and. element_b == 'O')) .and. (dist_ab < 0.66 + 1.33)) then   ! one O, one Zn
-   r_vdw1 = 1.52
-   r_vdw2 = 1.39
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'O'  .and. element_b == 'Zr') .or. &
-            (element_a == 'Zr' .and. element_b == 'O')) .and. (dist_ab < 0.66 + 1.48)) then   ! one O, one Zr
-   r_vdw1 = 1.52
-   r_vdw2 = 2.36
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-!  end if
-! ALL PAIRS WITH Co
-  else if (((element_a == 'Co' .and. element_b == 'Ni') .or. &
-            (element_a == 'Ni' .and. element_b == 'Co')) .and. (dist_ab < 1.24 + 1.26)) then
-   r_vdw1 = 1.92
-   r_vdw2 = 1.63
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'Co' .and. element_b == 'Zn') .or. &
-            (element_a == 'Zn' .and. element_b == 'Co')) .and. (dist_ab < 1.24 + 1.33)) then
-   r_vdw1 = 1.92
-   r_vdw2 = 1.39
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'Co' .and. element_b == 'Zr') .or. &
-            (element_a == 'Zr' .and. element_b == 'Co')) .and. (dist_ab < 1.24 + 1.48)) then
-   r_vdw1 = 1.92
-   r_vdw2 = 2.36
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-! ALL PAIRS WITH Ni
-  else if (((element_a == 'Ni' .and. element_b == 'Zn') .or. &
-            (element_a == 'Zn' .and. element_b == 'Ni')) .and. (dist_ab < 1.26 + 1.33)) then 
-   r_vdw1 = 1.63
-   r_vdw2 = 1.39
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  else if (((element_a == 'Ni' .and. element_b == 'Zr') .or. &
-            (element_a == 'Zr' .and. element_b == 'Ni')) .and. (dist_ab < 1.26 + 1.48)) then
-   r_vdw1 = 1.63
-   r_vdw2 = 2.36
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-! ALL PAIRS WITH Zn
-  else if (((element_a == 'Zn' .and. element_b == 'Zr') .or. &
-            (element_a == 'Zr' .and. element_b == 'Zn')) .and. (dist_ab < 1.33 + 1.48)) then
-   r_vdw1 = 1.39
-   r_vdw2 = 2.36
-   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
-  end if
+  ! Some arrays for easier handling of vdW and covalent radii
+  character(2)           :: pse(25)                               ! Elements
+  real(8)                :: vdW_radii(25)                         ! vdW radii
+  real(8)                :: cov_radii(25)                         ! cov radii
+  integer                :: a, b                                  ! loop variables
+  
+  pse = (/ 'H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne',&
+           'Na', 'Mg', 'Al', 'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca',&
+           'Co', 'Ni', 'Cu', 'Zn', 'Zr' /)
+  vdW_radii = (/ 1.20, 1.40, 1.82, 1.53, 1.92, 1.70, 1.55, 1.52, 1.47, 1.54,&
+                 2.27, 1.73, 1.84, 2.10, 1.80, 1.80, 1.75, 1.88, 2.75, 2.31,&
+                 1.92, 1.63, 1.40, 1.39, 2.36 /)
+  cov_radii = (/ 0.33, 0.28, 1.28, 0.96, 0.84, 0.76, 0.71, 0.66, 0.57, 0.58,&
+                 1.67, 1.42, 1.21, 1.11, 1.07, 1.05, 1.02, 1.06, 2.03, 1.76,&
+                 1.26, 1.24, 1.30, 1.33, 1.48 /)
+
+  do a = 1, 25
+    if (element_a == pse(a)) then
+      do b = 1, 25
+        if (element_b == pse(b)) then
+          if (dist_ab < cov_radii(a)+cov_radii(b)) then                                       ! Evaluate, if distance between the atoms is smaller than the sum of the covalent radii
+            r_vdw1 = vdW_radii(a)
+            r_vdw2 = vdW_radii(b)
+            call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)                                   ! evaluate overlap between the vdW spheres
+          end if
+        end if
+      end do
+    end if
+  end do
   return
 end subroutine eval_overlap
