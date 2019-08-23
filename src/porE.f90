@@ -70,7 +70,9 @@ write(6,*) 'UiO-67                   - u7'
 write(6,*) 'MOF-5                    - m5'
 write(6,*) 'IRMOF-10                 - ir'
 write(6,*) 'MOF210                   - m2'
-write(6,*) 'HKUST-1                  - h1'
+write(6,*) 'HKUST-1, open Cu sites   - h1'
+write(6,*) 'HKUST-1, O-Cu-Cu-O       - ho'
+write(6,*) 'C60@MOF                  - c6'
 write(6,*) 'Benzene, opt             - be'
 write(6,*) 'Benzene, exp             - b2'
 write(6,*) 'Benzene, C only          - bc'
@@ -120,6 +122,12 @@ else if (struct == 'm2') then                                                   
 else if (struct == 'h1') then                                                                 ! if HKUST-1 (primitive cell) is choosen
   open(unit=15,file='../structures_xyz/hkust1.xyz',status='old',action='read')                   ! read in the xyz file
   name_struct = 'HKUST-1'
+else if (struct == 'ho') then                                                                 ! if HKUST-1 (primitive cell) is choosen
+  open(unit=15,file='../structures_xyz/hkust1_with_O.xyz',status='old',action='read')             ! read in the xyz file
+  name_struct = 'HKUST-1'
+else if (struct == 'c6') then                                                                 ! if C60@MOF (primitive cell) is choosen
+  open(unit=15,file='../structures_xyz/c60_MOF.xyz',status='old',action='read')                   ! read in the xyz file
+  name_struct = 'C60@MOF'
 else if (struct == 'be') then                                                                 ! if benzene (arbitrary cell) is choosen
   open(unit=15,file='../structures_xyz/benzene.xyz',status='old',action='read')                  ! read in the xyz file
   name_struct = 'Benzene, opt'
@@ -346,6 +354,7 @@ else if (eval_method == 2) then                                                 
               (elements(n_coords) == 'C'  .and. dist_point_atom <= 1.70) .or. &                    ! add this point to the occupied list
               (elements(n_coords) == 'N'  .and. dist_point_atom <= 1.55) .or. &
               (elements(n_coords) == 'O'  .and. dist_point_atom <= 1.52) .or. &
+              (elements(n_coords) == 'Co' .and. dist_point_atom <= 1.92) .or. &
               (elements(n_coords) == 'Ni' .and. dist_point_atom <= 1.63) .or. &
               (elements(n_coords) == 'Cu' .and. dist_point_atom <= 1.40) .or. &
               (elements(n_coords) == 'Zn' .and. dist_point_atom <= 1.39) .or. &
@@ -357,6 +366,7 @@ else if (eval_method == 2) then                                                 
                    (elements(n_coords) == 'C'  .and. dist_point_atom >= 1.70 + probe_r) .or. &     ! add +1 to the counter 'counter_acc' AND to counter_noOccu
                    (elements(n_coords) == 'N'  .and. dist_point_atom >= 1.55 + probe_r) .or. &
                    (elements(n_coords) == 'O'  .and. dist_point_atom >= 1.52 + probe_r) .or. &
+                   (elements(n_coords) == 'Co' .and. dist_point_atom >= 1.92 + probe_r) .or. &
                    (elements(n_coords) == 'Ni' .and. dist_point_atom >= 1.63 + probe_r) .or. &
                    (elements(n_coords) == 'Cu' .and. dist_point_atom >= 1.40 + probe_r) .or. &
                    (elements(n_coords) == 'Zn' .and. dist_point_atom >= 1.39 + probe_r) .or. &
@@ -419,6 +429,7 @@ else if (eval_method == 2) then                                                 
           (elements(n_coords) == 'C'  .and. dist_point_atom < 1.70 + probe_r*factor) .or. &    ! to check accessibility later on
           (elements(n_coords) == 'N'  .and. dist_point_atom < 1.55 + probe_r*factor) .or. &    ! take only points in between vdW+probe_r AND vdw+probe_r*factor
           (elements(n_coords) == 'O'  .and. dist_point_atom < 1.52 + probe_r*factor) .or. &
+          (elements(n_coords) == 'Co' .and. dist_point_atom < 1.92 + probe_r*factor) .or. &
           (elements(n_coords) == 'Ni' .and. dist_point_atom < 1.63 + probe_r*factor) .or. &
           (elements(n_coords) == 'Cu' .and. dist_point_atom < 1.40 + probe_r*factor) .or. &
           (elements(n_coords) == 'Zn' .and. dist_point_atom < 1.39 + probe_r*factor) .or. &
@@ -480,6 +491,7 @@ else if (eval_method == 2) then                                                 
           (elements(n_coords) == 'C'  .and. dist_point_atom < 1.70 + probe_r) .or. &    
           (elements(n_coords) == 'N'  .and. dist_point_atom < 1.55 + probe_r) .or. &
           (elements(n_coords) == 'O'  .and. dist_point_atom < 1.52 + probe_r) .or. &
+          (elements(n_coords) == 'Co' .and. dist_point_atom < 1.92 + probe_r) .or. &
           (elements(n_coords) == 'Ni' .and. dist_point_atom < 1.63 + probe_r) .or. &
           (elements(n_coords) == 'Cu' .and. dist_point_atom < 1.40 + probe_r) .or. &
           (elements(n_coords) == 'Zn' .and. dist_point_atom < 1.39 + probe_r) .or. &
@@ -610,6 +622,9 @@ subroutine eval_vol_mass(element,vocc,m)           ! element as input, V_occ and
   else if (element == 'O') then                    ! if a oxygen is found,    use r_vdw = 1.52 A and m_atom = 15.999 (in u)
    vocc = vocc + 4.0/3.0*pi*(1.52)**3
    m    = m    + 15.999
+  else if (element == 'Co') then                   ! if a cobalt is found,    use r_vdw = 1.92 A and m_atom = 58.933 (in u)
+   vocc = vocc + 4.0/3.0*pi*(1.92)**3
+   m    = m    + 58.933
   else if (element == 'Ni') then                   ! if a nickel is found,    use r_vdw = 1.63 A and m_atom = 58.693 (in u)
    vocc = vocc + 4.0/3.0*pi*(1.63)**3
    m    = m    + 58.693
@@ -661,6 +676,10 @@ subroutine eval_overlap(element_a, element_b, dist_ab, sub_over)   ! evaluate th
    r_vdw1 = 1.52
    r_vdw2 = 1.52
    call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
+  else if ((element_a == 'Co' .and. element_b == 'Co') .and. (dist_ab < 1.26 + 1.26)) then    ! two Co
+   r_vdw1 = 1.92
+   r_vdw2 = 1.92
+   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
   else if ((element_a == 'Ni' .and. element_b == 'Ni') .and. (dist_ab < 1.24 + 1.24)) then    ! two Ni
    r_vdw1 = 1.63
    r_vdw2 = 1.63
@@ -693,6 +712,11 @@ subroutine eval_overlap(element_a, element_b, dist_ab, sub_over)   ! evaluate th
    r_vdw1 = 1.20
    r_vdw2 = 1.52
    call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
+  else if (((element_a == 'H'  .and. element_b == 'Co') .or. &
+            (element_a == 'Co' .and. element_b == 'H')) .and. (dist_ab < 0.33 + 1.26)) then   ! one H, one Ni
+   r_vdw1 = 1.20
+   r_vdw2 = 1.92
+   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
   else if (((element_a == 'H'  .and. element_b == 'Ni') .or. &
             (element_a == 'Ni' .and. element_b == 'H')) .and. (dist_ab < 0.33 + 1.24)) then   ! one H, one Ni
    r_vdw1 = 1.20
@@ -724,6 +748,11 @@ subroutine eval_overlap(element_a, element_b, dist_ab, sub_over)   ! evaluate th
    r_vdw1 = 1.70
    r_vdw2 = 1.52
    call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
+  else if (((element_a == 'C'  .and. element_b == 'Co') .or. &
+            (element_a == 'Co' .and. element_b == 'C')) .and. (dist_ab < 0.76 + 1.26)) then   ! one C, one Ni
+   r_vdw1 = 1.70
+   r_vdw2 = 1.92
+   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
   else if (((element_a == 'C'  .and. element_b == 'Ni') .or. &
             (element_a == 'Ni' .and. element_b == 'C')) .and. (dist_ab < 0.76 + 1.24)) then   ! one C, one Ni
    r_vdw1 = 1.70
@@ -750,6 +779,11 @@ subroutine eval_overlap(element_a, element_b, dist_ab, sub_over)   ! evaluate th
    r_vdw1 = 1.55
    r_vdw2 = 1.52
    call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
+  else if (((element_a == 'N'  .and. element_b == 'Co') .or. &
+            (element_a == 'Co' .and. element_b == 'N')) .and. (dist_ab < 0.71 + 1.26)) then   ! one N, one Ni
+   r_vdw1 = 1.55
+   r_vdw2 = 1.92
+   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
   else if (((element_a == 'N'  .and. element_b == 'Ni') .or. &
             (element_a == 'Ni' .and. element_b == 'N')) .and. (dist_ab < 0.71 + 1.24)) then   ! one N, one Ni
    r_vdw1 = 1.55
@@ -771,6 +805,11 @@ subroutine eval_overlap(element_a, element_b, dist_ab, sub_over)   ! evaluate th
    r_vdw2 = 2.36
    call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
  ! ALL PAIRS WITH O
+  else if (((element_a == 'O'  .and. element_b == 'Co') .or. &
+            (element_a == 'Co' .and. element_b == 'O')) .and. (dist_ab < 0.66 + 1.26)) then   ! one O, one Co
+   r_vdw1 = 1.52
+   r_vdw2 = 1.92
+   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
   else if (((element_a == 'O'  .and. element_b == 'Ni') .or. &
             (element_a == 'Ni' .and. element_b == 'O')) .and. (dist_ab < 0.66 + 1.24)) then   ! one O, one Ni
    r_vdw1 = 1.52
@@ -789,6 +828,40 @@ subroutine eval_overlap(element_a, element_b, dist_ab, sub_over)   ! evaluate th
   else if (((element_a == 'O'  .and. element_b == 'Zr') .or. &
             (element_a == 'Zr' .and. element_b == 'O')) .and. (dist_ab < 0.66 + 1.48)) then   ! one O, one Zr
    r_vdw1 = 1.52
+   r_vdw2 = 2.36
+   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
+!  end if
+! ALL PAIRS WITH Co
+  else if (((element_a == 'Co' .and. element_b == 'Ni') .or. &
+            (element_a == 'Ni' .and. element_b == 'Co')) .and. (dist_ab < 1.24 + 1.26)) then
+   r_vdw1 = 1.92
+   r_vdw2 = 1.63
+   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
+  else if (((element_a == 'Co' .and. element_b == 'Zn') .or. &
+            (element_a == 'Zn' .and. element_b == 'Co')) .and. (dist_ab < 1.24 + 1.33)) then
+   r_vdw1 = 1.92
+   r_vdw2 = 1.39
+   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
+  else if (((element_a == 'Co' .and. element_b == 'Zr') .or. &
+            (element_a == 'Zr' .and. element_b == 'Co')) .and. (dist_ab < 1.24 + 1.48)) then
+   r_vdw1 = 1.92
+   r_vdw2 = 2.36
+   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
+! ALL PAIRS WITH Ni
+  else if (((element_a == 'Ni' .and. element_b == 'Zn') .or. &
+            (element_a == 'Zn' .and. element_b == 'Ni')) .and. (dist_ab < 1.26 + 1.33)) then 
+   r_vdw1 = 1.63
+   r_vdw2 = 1.39
+   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
+  else if (((element_a == 'Ni' .and. element_b == 'Zr') .or. &
+            (element_a == 'Zr' .and. element_b == 'Ni')) .and. (dist_ab < 1.26 + 1.48)) then
+   r_vdw1 = 1.63
+   r_vdw2 = 2.36
+   call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
+! ALL PAIRS WITH Zn
+  else if (((element_a == 'Zn' .and. element_b == 'Zr') .or. &
+            (element_a == 'Zr' .and. element_b == 'Zn')) .and. (dist_ab < 1.33 + 1.48)) then
+   r_vdw1 = 1.39
    r_vdw2 = 2.36
    call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)
   end if

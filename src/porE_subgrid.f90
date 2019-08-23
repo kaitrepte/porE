@@ -83,7 +83,8 @@ write(6,*) 'UiO-67                   - u7'
 write(6,*) 'MOF-5                    - m5'
 write(6,*) 'IRMOF-10                 - ir'
 write(6,*) 'MOF210                   - m2'
-write(6,*) 'HKUST-1                  - h1'
+write(6,*) 'HKUST-1, open Cu sites   - h1'
+write(6,*) 'HKUST-1, O-Cu-Cu-O       - ho'
 write(6,*) 'C60@MOF                  - c6'
 write(6,*) 'Benzene, opt             - b1'
 write(6,*) 'Benzene, exp             - b2'
@@ -134,6 +135,9 @@ else if (struct == 'm2') then                                                   
   name_struct = 'MOF-210'
 else if (struct == 'h1') then                                                                 ! if HKUST-1 (primitive cell) is choosen
   open(unit=15,file='../structures_xyz/hkust1.xyz',status='old',action='read')                   ! read in the xyz file
+  name_struct = 'HKUST-1'
+else if (struct == 'ho') then                                                                 ! if HKUST-1 (primitive cell) is choosen
+  open(unit=15,file='../structures_xyz/hkust1_with_O.xyz',status='old',action='read')             ! read in the xyz file
   name_struct = 'HKUST-1'
 else if (struct == 'c6') then                                                                 ! if C60@MOF (primitive cell) is choosen
   open(unit=15,file='../structures_xyz/c60_MOF.xyz',status='old',action='read')                   ! read in the xyz file
