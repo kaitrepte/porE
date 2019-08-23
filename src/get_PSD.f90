@@ -5,7 +5,7 @@ implicit none
 ! pore_finder
 
 character(2)                        :: struct
-character(len=25)                   :: name_struct
+character(len=100)                  :: name_struct
 
 real(8)                             :: start, finish       ! timing
 
@@ -68,6 +68,7 @@ write(6,*) 'Benzene, opt             - be'
 write(6,*) 'Benzene, exp             - b2'
 write(6,*) 'Benzene, C only          - bc'
 write(6,*) 'H atom                   - ha'
+write(6,*) 'User-defined xyz         - ud'
 write(6,*) '#############################'
 read(5,*) struct
 
@@ -123,6 +124,12 @@ else if (struct == 'bc') then                                                   
 else if (struct == 'ha') then                                                                 ! if H atom (cubic cell) is choosen
   open(unit=15,file='../structures_xyz/h_atom.xyz',status='old',action='read')                   ! read in the xyz file
   name_struct = 'H atom'
+else if (struct == 'ud') then                                                                 ! if user-defined cell is choosen
+  write(6,*) 'Provide the path and the name of the xyz file (e.g. "../structures_xyz/test.xyz")'
+  read(5,*) name_struct 
+  open(unit=15,file=name_struct,status='old',action='read')                                  ! read in the xyz file
+  write(6,*) 'Provide a name for you structure'
+  read(5,*) name_struct
 end if
 
 ! Initialize stuff
