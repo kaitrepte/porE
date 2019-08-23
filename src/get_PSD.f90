@@ -194,9 +194,25 @@ do a = 1, start_points
     distance2 = 100.0
     do n = 1,number_of_atoms                                                                   ! go through all atoms
       if (elements(n) == 'H')  vdw = 1.20
+      if (elements(n) == 'He') vdw = 1.40
+      if (elements(n) == 'Li') vdw = 1.82
+      if (elements(n) == 'Be') vdw = 1.53
+      if (elements(n) == 'B')  vdw = 1.92
       if (elements(n) == 'C')  vdw = 1.70
       if (elements(n) == 'N')  vdw = 1.55
       if (elements(n) == 'O')  vdw = 1.52
+      if (elements(n) == 'F')  vdw = 1.47
+      if (elements(n) == 'Ne') vdw = 1.54
+      if (elements(n) == 'Na') vdw = 2.27
+      if (elements(n) == 'Mg') vdw = 1.73
+      if (elements(n) == 'Al') vdw = 1.84
+      if (elements(n) == 'Si') vdw = 2.10
+      if (elements(n) == 'P')  vdw = 1.80
+      if (elements(n) == 'S')  vdw = 1.80
+      if (elements(n) == 'Cl') vdw = 1.75
+      if (elements(n) == 'Ar') vdw = 1.88
+      if (elements(n) == 'K')  vdw = 2.75
+      if (elements(n) == 'Ca') vdw = 2.31
       if (elements(n) == 'Co') vdw = 1.92 ! Los Alamos value
       if (elements(n) == 'Ni') vdw = 1.63
       if (elements(n) == 'Cu') vdw = 1.40
