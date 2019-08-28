@@ -205,7 +205,7 @@ do a = 1, all_elements                                                          
     end if
   end do
 end do
-
+deallocate(tmp_pse)
 ! Output file
 open(unit=19,file='output',status='unknown',action='write')
 
