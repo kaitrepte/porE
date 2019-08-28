@@ -651,34 +651,30 @@ subroutine eval_vol_mass(element,vocc,m)           ! element as input, V_occ and
   real(8), intent(inout)        :: vocc            ! occupied volume of the atoms (according to their vdW radii)
   real(8), intent(inout)        :: m               ! mass of all atoms
   real(8), parameter            :: pi = 3.14159265358979323846  ! define pi
-  if (element == 'H') then                         ! if a hydrogen is found,  use r_vdw = 1.20 A and m_atom = 1.0079 (in u)
-   vocc = vocc + 4.0/3.0*pi*(1.20)**3
-   m    = m    + 1.0079
-  else if (element == 'C') then                    ! if a carbon is found,    use r_vdw = 1.70 A and m_atom = 12.011 (in u)
-   vocc = vocc + 4.0/3.0*pi*(1.70)**3
-   m    = m    + 12.011
-  else if (element == 'N') then                    ! if a nitrogen is found,  use r_vdw = 1.55 A and m_atom = 14.007 (in u)
-   vocc = vocc + 4.0/3.0*pi*(1.55)**3
-   m    = m    + 14.007
-  else if (element == 'O') then                    ! if a oxygen is found,    use r_vdw = 1.52 A and m_atom = 15.999 (in u)
-   vocc = vocc + 4.0/3.0*pi*(1.52)**3
-   m    = m    + 15.999
-  else if (element == 'Co') then                   ! if a cobalt is found,    use r_vdw = 1.92 A and m_atom = 58.933 (in u)
-   vocc = vocc + 4.0/3.0*pi*(1.92)**3
-   m    = m    + 58.933
-  else if (element == 'Ni') then                   ! if a nickel is found,    use r_vdw = 1.63 A and m_atom = 58.693 (in u)
-   vocc = vocc + 4.0/3.0*pi*(1.63)**3
-   m    = m    + 58.693
-  else if (element == 'Cu') then                   ! if a copper is found,    use r_vdw = 1.40 A and m_atom = 63.546 (in u)
-   vocc = vocc + 4.0/3.0*pi*(1.40)**3
-   m    = m    + 63.546
-  else if (element == 'Zr') then                   ! if a zirconium is found, use r_vdw = 2.36 A and m_atom = 91.224 (in u)
-   vocc = vocc + 4.0/3.0*pi*(2.36)**3
-   m    = m    + 91.224
-  else if (element == 'Zn') then                   ! if a zinc is found,      use r_vdw = 1.39 A and m_atom = 65.390 (in u)
-   vocc = vocc + 4.0/3.0*pi*(1.39)**3
-   m    = m    + 65.390
-  end if
+
+  character(2)           :: pse(25)                               ! Elements
+  real(8)                :: vdW_radii(25)                         ! vdW radii
+  real(8)                :: mass(25)                              ! atomic mass
+  integer                :: a                                     ! loop variables
+
+  pse = (/ 'H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne',&
+           'Na', 'Mg', 'Al', 'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca',&
+           'Co', 'Ni', 'Cu', 'Zn', 'Zr' /)
+  vdW_radii = (/ 1.20, 1.40, 1.82, 1.53, 1.92, 1.70, 1.55, 1.52, 1.47, 1.54,&
+                 2.27, 1.73, 1.84, 2.10, 1.80, 1.80, 1.75, 1.88, 2.75, 2.31,&
+                 1.92, 1.63, 1.40, 1.39, 2.36 /)
+  mass = (/ 1.0079,  4.003,  6.941,  9.012, 10.811, 12.011, 14.007, 15.999, 18.998, 20.180,&
+            22.990, 24.305, 26.982, 28.086, 30.974, 32.066, 35.453, 39.948, 39.099, 40.078,&
+            58.933, 58.693, 63.546, 65.390, 91.224 /)
+
+  loop99: do a = 1, 25
+    if (element == pse(a)) then
+      vocc = vocc + 4.0/3.0*pi*vdW_radii(a)**(3.0)
+      m    = m    + mass(a)
+      exit loop99
+    end if
+  end do loop99
+
   return
 end subroutine eval_vol_mass
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
