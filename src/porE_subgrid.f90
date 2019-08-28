@@ -62,14 +62,21 @@ end type global_array
 type(global_array), dimension(:), allocatable :: sub_division
 
 ! Some arrays for easier handling of vdW radii
-character(2)           :: pse(25)                               ! Elements
-real(8)                :: vdW_radii(25)                         ! vdW radii
-pse = (/ 'H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne',&
-         'Na', 'Mg', 'Al', 'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca',&
-         'Co', 'Ni', 'Cu', 'Zn', 'Zr' /)
-vdW_radii = (/ 1.20, 1.40, 1.82, 1.53, 1.92, 1.70, 1.55, 1.52, 1.47, 1.54,&
-               2.27, 1.73, 1.84, 2.10, 1.80, 1.80, 1.75, 1.88, 2.75, 2.31,& 
-               1.92, 1.63, 1.40, 1.39, 2.36 /)
+character(2)              :: all_pse(25)                        ! all currently available elements
+real(8)                   :: all_vdW_radii(25)                  ! the respective vdW radii
+integer                   :: all_elements                       ! number of all different elements
+character(2), allocatable :: tmp_pse(:)                         ! temporary list to evaluate the used elements
+character(2), allocatable :: pse(:)                             ! used elements
+real(8), allocatable      :: vdW_radii(:)                       ! used vdW radii
+integer                   :: no_elements                        ! number of different elements
+
+all_elements = 25
+all_pse = (/ 'H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne',&
+             'Na', 'Mg', 'Al', 'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca',&
+             'Co', 'Ni', 'Cu', 'Zn', 'Zr' /)
+all_vdW_radii = (/ 1.20, 1.40, 1.82, 1.53, 1.92, 1.70, 1.55, 1.52, 1.47, 1.54,&
+                   2.27, 1.73, 1.84, 2.10, 1.80, 1.80, 1.75, 1.88, 2.75, 2.31,& 
+                   1.92, 1.63, 1.40, 1.39, 2.36 /)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Script to evaluate the porosity of a crystal structure. Taking information from xyz file and cell parameters.                                 !
@@ -179,11 +186,39 @@ read(unit=15,fmt=*) cell_a(1:3), cell_b(1:3), cell_c(1:3)                       
 
 allocate(elements(number_of_atoms))                                                           ! allocate (number_of_atoms) fields for elements. There is one elements each. As many elements as number_of_atoms (makes sense :))
 allocate(coordinates(number_of_atoms,3))                                                      ! allocate (number_of_atoms) fields for coordinates. There are 3 coordinates per entry. 
+allocate(tmp_pse(number_of_atoms))                                                            ! allocate tmp_pse, dummy
+no_elements = 0                                                                               ! number of different atoms
+
 do n = 1,number_of_atoms                                                                      ! go through all atoms 
   read(unit=15,fmt=*) elements(n), coordinates(n,1:3)                                         ! storing element and coordinates
+  !
+  ! Determine what kind of different atoms there are -> use later for the evaluation of the vdW radii
+  !
+  c = 0                                                                                       ! counter for each entry 
+  do a = 1, number_of_atoms
+    if (elements(n) == tmp_pse(a)) then                                                       ! if the elements is already in the tmp_pse list -> ignore
+      c = 1
+    end if
+  end do
+  if (c == 0) then                                                                            ! if the element is new -> put it into the new list
+    no_elements = no_elements + 1
+    tmp_pse(no_elements) = elements(n)
+  end if
 end do
 close(unit=15)                                                                                ! close the file (no longer necessary)
-
+!
+! Write the correct number of atoms and their vdW radii for alter evaluations
+!
+allocate(pse(no_elements))
+allocate(vdW_radii(no_elements))
+do a = 1, all_elements                                                                        ! go through all possible elements
+  do b = 1, no_elements                                                                       ! go through the ones that are actually there
+    if (all_pse(a) == tmp_pse(b)) then                                                        ! once a new elements has been found
+      pse(b)       = all_pse(a)
+      vdW_radii(b) = all_vdW_radii(a)
+    end if
+  end do
+end do
 ! Output file
 open(unit=19,file='output',status='unknown',action='write')
 
@@ -372,7 +407,7 @@ else if (eval_method == 2) then                                                 
   !
   ! Evaluate whether point is occupied or accessible
   !
-          do n = 1, 25
+          loop66: do n = 1, no_elements
             if (elements(n_coords) == pse(n)) then
               if (dist_point_atom <= vdW_radii(n)) then                            ! if the grid point is inside any atom (distance is smaller than the vdW radius of the respective atom)
                 n_occ = n_occ + 1                                                  ! increase assignemnt counter for the occupied list
@@ -380,11 +415,13 @@ else if (eval_method == 2) then                                                 
               else if (dist_point_atom >= vdW_radii(n) + probe_r) then             ! if grid point is outside an atom + the probe radius -> Immediately accessible
                 counter_access = counter_access + 1                                ! add +1 to the counter 'counter_acc' AND to counter_noOccu
                 counter_noOccu = counter_noOccu + 1
+                exit loop66
               else                                                                 ! If outside an atom -> not occupied
                 counter_noOccu = counter_noOccu + 1
+                exit loop66
               end if
             end if
-          end do
+          end do loop66
         end do loop14
 
         if (counter_access == number_of_atoms) then                                                ! if the counter for the accessible points increased for all atoms -> add to list
@@ -452,13 +489,14 @@ else if (eval_method == 2) then                                                 
         end do
       end do
 
-      do a = 1, 25
+      loop67: do a = 1, no_elements
         if (elements(n_coords) == pse(a)) then
           if (dist_point_atom < vdW_radii(a) + probe_r*factor) then                             ! if grid point is outside an atom + the probe radius, but close by -> get this point
             sub_division(n_coords)%sub_grid_points = sub_division(n_coords)%sub_grid_points + 1 ! to check accessibility later on
+            exit loop67
           end if                                                                                ! take only points in between vdW+probe_r AND vdw+probe_r*factor
         end if
-      end do
+      end do loop67
     end do loop13
   end do
 
@@ -490,14 +528,15 @@ else if (eval_method == 2) then                                                 
         end do
       end do
 
-      do a = 1, 25
+      loop68: do a = 1, no_elements
         if (elements(n_coords) == pse(a)) then
           if (dist_point_atom < vdW_radii(a) + probe_r*factor) then                             ! if grid point is outside an atom + the probe radius, but close by -> get this point
             sub_division(n_coords)%sub_grid_points = sub_division(n_coords)%sub_grid_points + 1
             sub_division(n_coords)%sub_grids(sub_division(n_coords)%sub_grid_points,:) = list_access(n,:)
+            exit loop68
           end if                                                                                ! take only points in between vdW+probe_r AND vdw+probe_r*factor
         end if
-      end do
+      end do loop68
     end do loop15
   end do
 
@@ -548,7 +587,7 @@ else if (eval_method == 2) then                                                 
       end do
 
       ! Get the points which are initially unoccupied, but are accessible
-      do n = 1, 25
+      loop69: do n = 1, no_elements
         if (elements(n_coords) == pse(n)) then
           if (dist_point_atom < vdW_radii(n) + probe_r) then                                ! If grid point is outside an atom (see last if statement), but within a length of the probe radius
             do f = 1, sub_division(n_coords)%sub_grid_points                                ! Go through the 'check accessibility' points (which have been determined before)
@@ -559,9 +598,10 @@ else if (eval_method == 2) then                                                 
                 exit loop1                                                                  ! Stop looping once this is confirmed (i.e. stop looping over the atoms)
               end if
             end do
+            exit loop69
           end if
         end if
-      end do
+      end do loop69
     end do loop1                                                                             ! end do atoms
   end do                                                                                     ! end do full grid
 
