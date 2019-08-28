@@ -628,21 +628,21 @@ else if (eval_method == 2) then                                                 
   write(6,fmt='(1X a,7X f7.3,1X a)') 'probe radius:                ',probe_r,'A'
   write(6,*) ' '
  
-  write(6,*) 'Porosity (void):             ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100,'%'
-  write(6,*) 'Porosity (accessible):       ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+  write(6,777) 'Porosity (void):       ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100,'%'
+  write(6,777) 'Porosity (accessible): ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
  
   V_void       = (real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*V_total
   V_accessible = real(n_access)/(real(grid_a*grid_b*grid_c))*V_total 
  
-  write(6,*) 'Volume (void):               ',V_void,'A^3'
-  write(6,*) 'Volume (accessible):         ',V_accessible,'A^3'
+  write(6,777) 'Volume (void):         ',V_void,'A^3'
+  write(6,777) 'Volume (accessible):   ',V_accessible,'A^3'
   write(6,*) ' '
  
-  write(6,fmt='(1X a,f10.3,a)') 'Unit cell volume (V_total)                   : ',V_total,' A^3'
-  write(6,fmt='(1X a,f10.3,a)') 'Mass of unit cell (m_total)                  : ',m_total*u,' 10**-27 kg'
-  write(6,fmt='(1X a,f10.3,a)') 'Density of the structure (m_total/V_total)   : ',m_total*u/V_total*10**3,' kg/m^3'
-  write(6,fmt='(1X a,f10.3,a)') 'Pore volume density (V_void/m_total)         : ',V_void/(m_total*u)*10**(0),' cm^3/g'
-  write(6,fmt='(1X a,f10.3,a)') 'Pore volume density (V_acc/m_total)          : ',V_accessible/(m_total*u)*10**(0),' cm^3/g'
+  write(6,fmt='(1X a,f10.3,a)') 'Unit cell volume (V_total):                   ',V_total,' A^3'
+  write(6,fmt='(1X a,f10.3,a)') 'Mass of unit cell (m_total):                  ',m_total*u,' 10**-27 kg'
+  write(6,fmt='(1X a,f10.3,a)') 'Density of the structure (m_total/V_total):   ',m_total*u/V_total*10**3,' kg/m^3'
+  write(6,fmt='(1X a,f10.3,a)') 'Pore volume density (V_void/m_total):         ',V_void/(m_total*u)*10**(0),' cm^3/g'
+  write(6,fmt='(1X a,f10.3,a)') 'Pore volume density (V_acc/m_total):          ',V_accessible/(m_total*u)*10**(0),' cm^3/g'
  
   call cpu_time(finish)
   write(6,*) ' '
@@ -668,21 +668,21 @@ else if (eval_method == 2) then                                                 
   write(19,fmt='(1X a,7X f7.3,1X a)') 'probe radius:                ',probe_r,'A'
   write(19,*) ' '
 
-  write(19,*) 'Porosity (void):             ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100,'%'
-  write(19,*) 'Porosity (accessible):       ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+  write(19,777) 'Porosity (void):       ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100,'%'
+  write(19,777) 'Porosity (accessible): ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
 
   V_void       = (real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*V_total
   V_accessible = real(n_access)/(real(grid_a*grid_b*grid_c))*V_total
 
-  write(19,*) 'Volume (void):               ',V_void,'A^3'
-  write(19,*) 'Volume (accessible):         ',V_accessible,'A^3'
+  write(19,777) 'Volume (void):         ',V_void,'A^3'
+  write(19,777) 'Volume (accessible):   ',V_accessible,'A^3'
   write(19,*) ' '
 
-  write(19,fmt='(1X a,f10.3,a)') 'Unit cell volume (V_total)                   : ',V_total,' A^3'
-  write(19,fmt='(1X a,f10.3,a)') 'Mass of unit cell (m_total)                  : ',m_total*u,' 10**-27 kg'
-  write(19,fmt='(1X a,f10.3,a)') 'Density of the structure (m_total/V_total)   : ',m_total*u/V_total*10**3,' kg/m^3'
-  write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_void/m_total)         : ',V_void/(m_total*u)*10**(0),' cm^3/g'
-  write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_acc/m_total)          : ',V_accessible/(m_total*u)*10**(0),' cm^3/g'
+  write(19,fmt='(1X a,f10.3,a)') 'Unit cell volume (V_total):                   ',V_total,' A^3'
+  write(19,fmt='(1X a,f10.3,a)') 'Mass of unit cell (m_total):                  ',m_total*u,' 10**-27 kg'
+  write(19,fmt='(1X a,f10.3,a)') 'Density of the structure (m_total/V_total):   ',m_total*u/V_total*10**3,' kg/m^3'
+  write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_void/m_total):         ',V_void/(m_total*u)*10**(0),' cm^3/g'
+  write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_acc/m_total):          ',V_accessible/(m_total*u)*10**(0),' cm^3/g'
 
   write(19,*) ' '
   write(19,fmt='(A,2X,F12.3,1X,A)') 'Total CPU time: ',finish-start,'s'
@@ -695,6 +695,9 @@ else if (eval_method == 2) then                                                 
   deallocate(list_noOccu)
   deallocate(sub_division)
 end if           ! global end if (second method ends here)
+
+777 format(1X,A,F20.5,1X,A)
+
 
 deallocate(elements)
 deallocate(coordinates)
