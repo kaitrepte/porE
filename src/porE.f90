@@ -633,6 +633,8 @@ end if           ! global end if (second method ends here)
 
 deallocate(elements)
 deallocate(coordinates)
+deallocate(pse)
+deallocate(vdW_radii)
 
 end program porosity
 
