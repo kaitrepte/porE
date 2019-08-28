@@ -265,8 +265,8 @@ if (eval_method == 1) then
       V_overlap = V_overlap + sub_overlap
 
       if (sub_overlap > 0.0) then
-       write(6,*) a,elements(a),b,elements(b),' d =', distance_ab,' V_overlap = ', sub_overlap,' A^3'
-       write(19,*) a,elements(a),b,elements(b),' d =', distance_ab,' V_overlap = ', sub_overlap,' A^3'
+       write(6,666) a,elements(a),b,elements(b),'  d =', distance_ab,' A    with V_overlap = ', sub_overlap,' A^3'
+       write(19,666) a,elements(a),b,elements(b),'  d =', distance_ab,' A    with V_overlap = ', sub_overlap,' A^3'
       end if
     end do
   end do
@@ -305,6 +305,7 @@ if (eval_method == 1) then
   write(19,*) 'Total CPU time: ',finish-start,'s'
   close(19)
 
+666 format(I5.0,1X,A,I5.0,1X,A,A,F10.5,A,F10.5,A)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
