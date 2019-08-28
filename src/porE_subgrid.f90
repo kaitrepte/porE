@@ -286,7 +286,7 @@ if (eval_method == 1) then
              ,(V_total - (V_occupied - V_overlap))/(m_total*u)*10**(0),'cm^3/g'
   write(6,fmt='(1X a,f10.3,1X a)') 'Mass of the unit cell is                        : ',m_total*u,'10**-27 kg'
   call cpu_time(finish)
-  write(6,*) 'Total CPU time: ',finish-start,'s'
+  write(6,fmt='(A,2X,F12.3,1X,A)') 'Total CPU time: ',finish-start,'s'
 
 !
 ! Write to file
@@ -302,7 +302,7 @@ if (eval_method == 1) then
   write(19,fmt='(1X a,f10.3,1X a)') 'Pore volume density is (V_void/m_total)         : ' &
              ,(V_total - (V_occupied - V_overlap))/(m_total*u)*10**(0),'cm^3/g'
   write(19,fmt='(1X a,f10.3,1X a)') 'Mass of the unit cell is                        : ',m_total*u,'10**-27 kg'
-  write(19,*) 'Total CPU time: ',finish-start,'s'
+  write(19,fmt='(A,2X,F12.3,1X,A)') 'Total CPU time: ',finish-start,'s'
   close(19)
 
 666 format(I5.0,1X,A,I5.0,1X,A,A,F10.5,A,F10.5,A)
@@ -646,7 +646,7 @@ else if (eval_method == 2) then                                                 
  
   call cpu_time(finish)
   write(6,*) ' '
-  write(6,*) 'Total CPU time was ',finish-start,'s'
+  write(6,fmt='(A,2X,F12.3,1X,A)') 'Total CPU time: ',finish-start,'s'
  
   ! 
   ! Write to file
@@ -685,7 +685,7 @@ else if (eval_method == 2) then                                                 
   write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_acc/m_total)          : ',V_accessible/(m_total*u)*10**(0),' cm^3/g'
 
   write(19,*) ' '
-  write(19,*) 'Total CPU time was ',finish-start,'s'
+  write(19,fmt='(A,2X,F12.3,1X,A)') 'Total CPU time: ',finish-start,'s'
   close(19)
 
   deallocate(grid_points)
