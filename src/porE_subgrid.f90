@@ -98,6 +98,7 @@ write(6,*) 'DUT-8(Ni) closed         - dc'
 write(6,*) 'DUT-8(Ni) closed vcrelax - vc'
 write(6,*) 'UiO-66                   - u6'
 write(6,*) 'UiO-67                   - u7'
+write(6,*) 'UiO-68                   - u8'
 write(6,*) 'MOF-5                    - m5'
 write(6,*) 'IRMOF-10                 - ir'
 write(6,*) 'MOF210                   - m2'
@@ -143,6 +144,9 @@ else if (struct == 'u6') then                                                   
 else if (struct == 'u7') then                                                                 ! if UiO-67 (primitive cell) is choosen
   open(unit=15,file='../structures_xyz/uio67.xyz',status='old',action='read')                    ! read in the xyz file
   name_struct = 'UiO-67'
+else if (struct == 'u8') then                                                                 ! if UiO-68 (primitive cell) is choosen
+  open(unit=15,file='../structures_xyz/uio68.xyz',status='old',action='read')                    ! read in the xyz file
+  name_struct = 'UiO-68'
 else if (struct == 'm5') then                                                                 ! if MOF-5 (unit cell) is choosen
   open(unit=15,file='../structures_xyz/mof5.xyz',status='old',action='read')                     ! read in the xyz file
   name_struct = 'MOF-5'
@@ -742,40 +746,6 @@ subroutine eval_vol_mass(element,vocc,m)           ! element as input, V_occ and
     end if
   end do loop99
 
-!!!  if (element == 'H') then                         ! if a hydrogen is found,  use r_vdw = 1.20 A and m_atom = 1.0079 (in u)
-!!!   vocc = vocc + 4.0/3.0*pi*(1.20)**3
-!!!   m    = m    + 1.0079
-!!!  else if (element == 'He') then                   ! if a helium is found,    use r_vdw = 1.40 A and m_atom = 4.0028 (in u)
-!!!   vocc = vocc + 4.0/3.0*pi*(1.40)**3
-!!!   m    = m    + 4.0028
-!!!  else if (element == 'Li') then                   ! if a lithium is found,    use r_vdw = 1.40 A and m_atom = 4.0028 (in u)
-!!!   vocc = vocc + 4.0/3.0*pi*(1.40)**3
-!!!   m    = m    + 4.0028
-!!!  else if (element == 'C') then                    ! if a carbon is found,    use r_vdw = 1.70 A and m_atom = 12.011 (in u)
-!!!   vocc = vocc + 4.0/3.0*pi*(1.70)**3
-!!!   m    = m    + 12.011
-!!!  else if (element == 'N') then                    ! if a nitrogen is found,  use r_vdw = 1.55 A and m_atom = 14.007 (in u)
-!!!   vocc = vocc + 4.0/3.0*pi*(1.55)**3
-!!!   m    = m    + 14.007
-!!!  else if (element == 'O') then                    ! if a oxygen is found,    use r_vdw = 1.52 A and m_atom = 15.999 (in u)
-!!!   vocc = vocc + 4.0/3.0*pi*(1.52)**3
-!!!   m    = m    + 15.999
-!!!  else if (element == 'Co') then                   ! if a cobalt is found,    use r_vdw = 1.92 A and m_atom = 58.933 (in u)
-!!!   vocc = vocc + 4.0/3.0*pi*(1.92)**3
-!!!   m    = m    + 58.933
-!!!  else if (element == 'Ni') then                   ! if a nickel is found,    use r_vdw = 1.63 A and m_atom = 58.693 (in u)
-!!!   vocc = vocc + 4.0/3.0*pi*(1.63)**3
-!!!   m    = m    + 58.693
-!!!  else if (element == 'Cu') then                   ! if a copper is found,    use r_vdw = 1.40 A and m_atom = 63.546 (in u)
-!!!   vocc = vocc + 4.0/3.0*pi*(1.40)**3
-!!!   m    = m    + 63.546
-!!!  else if (element == 'Zr') then                   ! if a zirconium is found, use r_vdw = 2.36 A and m_atom = 91.224 (in u)
-!!!   vocc = vocc + 4.0/3.0*pi*(2.36)**3
-!!!   m    = m    + 91.224
-!!!  else if (element == 'Zn') then                   ! if a zinc is found,      use r_vdw = 1.39 A and m_atom = 65.390 (in u)
-!!!   vocc = vocc + 4.0/3.0*pi*(1.39)**3
-!!!   m    = m    + 65.390
-!!!  end if
   return
 end subroutine eval_vol_mass
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
