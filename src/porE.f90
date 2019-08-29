@@ -85,6 +85,7 @@ write(6,*) 'DUT-8(Ni) closed         - dc'
 write(6,*) 'DUT-8(Ni) closed vcrelax - vc'
 write(6,*) 'UiO-66                   - u6'
 write(6,*) 'UiO-67                   - u7'
+write(6,*) 'UiO-68                   - u8'
 write(6,*) 'MOF-5                    - m5'
 write(6,*) 'IRMOF-10                 - ir'
 write(6,*) 'MOF210                   - m2'
@@ -129,6 +130,9 @@ else if (struct == 'u6') then                                                   
 else if (struct == 'u7') then                                                                 ! if UiO-67 (primitive cell) is choosen
   open(unit=15,file='../structures_xyz/uio67.xyz',status='old',action='read')                    ! read in the xyz file
   name_struct = 'UiO-67'
+else if (struct == 'u8') then                                                                 ! if UiO-68 (primitive cell) is choosen
+  open(unit=15,file='../structures_xyz/uio68.xyz',status='old',action='read')                    ! read in the xyz file
+  name_struct = 'UiO-68'
 else if (struct == 'm5') then                                                                 ! if MOF-5 (unit cell) is choosen
   open(unit=15,file='../structures_xyz/mof5.xyz',status='old',action='read')                     ! read in the xyz file
   name_struct = 'MOF-5'
