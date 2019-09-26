@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Author:  K. Trepte
 # Date: 31.05.2019 
 porE_dir="$(dirname "$(pwd)")"
