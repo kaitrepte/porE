@@ -13,7 +13,7 @@ Coding language: FORTRAN
 
 To compile the code, go to the *src* directory and type
 
-        bash compile.sh
+make
 
 To run the code, go to the *run* folder. The file run.sh includes three options
 
@@ -24,7 +24,10 @@ To run the code, go to the *run* folder. The file run.sh includes three options
 Just uncomment the corresponding line in run.sh and comment out the others.
 Type
 
-	bash run.sh
+Usage
+```should work with all shells
+./run.sh
+```
 
 and follow the screen prompts.
 
