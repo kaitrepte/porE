@@ -527,9 +527,9 @@ else if (eval_method == 2) then                                                 
   write(6,fmt='(1X,a,2X,I15)') 'Total number of grid points: ',grid_a*grid_b*grid_c
   write(6,fmt='(1X,a,f15.3,a,3(f10.3,2X,a),a)') 'Grid point density:         ',grid_a*grid_b*grid_c/V_total, &
               ' grid points per A^3, with ',grid_per_A_x,' x ',grid_per_A_y,' x ',grid_per_A_z,' grid points per A'                           ! (grid_a*grid_b*grid_c/V_total)**(1./3.)
-  write(6,*) 'Points OCCUPIED:             ',n_occ
-  write(6,*) 'Points NOT OCCUPIED (void):  ',grid_a*grid_b*grid_c - n_occ
-  write(6,*) 'Points ACCESSIBLE:           ',n_access
+  write(6,fmt='(1X a,I15)') 'Points OCCUPIED:             ',n_occ
+  write(6,fmt='(1X a,I15)') 'Points NOT OCCUPIED (void):  ',grid_a*grid_b*grid_c - n_occ
+  write(6,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
   write(6,fmt='(1X a,7X f7.3,1X a)') 'probe radius:                ',probe_r,'A'
   write(6,*) ' '
  
@@ -565,9 +565,9 @@ else if (eval_method == 2) then                                                 
   write(19,fmt='(1X,a,2X,I15)') 'Total number of grid points: ',grid_a*grid_b*grid_c
   write(19,fmt='(1X,a,f15.3,a,3(f10.3,2X,a),a)') 'Grid point density:         ',grid_a*grid_b*grid_c/V_total, &
               ' grid points per A^3, with ',grid_per_A_x,' x ',grid_per_A_y,' x ',grid_per_A_z,' grid points per A'                           ! (grid_a*grid_b*grid_c/V_total)**(1./3.)
-  write(19,*) 'Points OCCUPIED:             ',n_occ
-  write(19,*) 'Points NOT OCCUPIED (void):  ',grid_a*grid_b*grid_c - n_occ
-  write(19,*) 'Points ACCESSIBLE:           ',n_access
+  write(19,fmt='(1X a,I15)') 'Points OCCUPIED:             ',n_occ
+  write(19,fmt='(1X a,I15)') 'Points NOT OCCUPIED (void):  ',grid_a*grid_b*grid_c - n_occ
+  write(19,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
   write(19,fmt='(1X a,7X f7.3,1X a)') 'probe radius:                ',probe_r,'A'
   write(19,*) ' '
  
