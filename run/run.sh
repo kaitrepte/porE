@@ -1,11 +1,11 @@
 #!/bin/sh
 
 # Author:  K. Trepte
-# Date: 31.05.2019 
+# Date: 02.10.2019 
 porE_dir="$(dirname "$(pwd)")"
 
 ## Execute porE 
-## Functionalities: OSA, normal GPA, test version of PSD evaluation
+## Functionalities: OSA, normal GPA
 #$porE_dir/src/porE
 
 ## Execute porE_subgrid
