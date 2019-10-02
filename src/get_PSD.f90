@@ -9,7 +9,7 @@ character(len=100)                  :: name_struct
 
 real(8)                             :: start, finish       ! timing
 
-integer                             :: number_of_atoms
+integer(8)                          :: number_of_atoms
 real(8)                             :: cell_a(3)           ! array for the cell vector in the a direction. Vector.
 real(8)                             :: cell_b(3)           ! array for the cell vector in the b direction. Vector.
 real(8)                             :: cell_c(3)           ! array for the cell vector in the c direction. Vector.
@@ -26,7 +26,7 @@ real(8)                             :: distance1, distance2    ! corresponding m
 real(8)                             :: tmp_dist, vdw           ! temporary distance, vdW radius of the atom
 real(8)                             :: distribution            ! final PSD distribution for a given radius
 
-integer                             :: start_points, cycles    ! number of starting points, number of MC cycles
+integer(8)                          :: start_points, cycles    ! number of starting points, number of MC cycles
 real(8)                             :: stepsize                ! step size for MC steps
 real(8), allocatable                :: all_distances(:)        ! store all distances (maybe need another list to separate different distances which occur more often.. PSD and stuff)
 real(8), allocatable                :: all_distances2(:)       ! store all distances, to double check
@@ -50,104 +50,96 @@ call random_seed(put=seed)
 ! Initialization !
 !!!!!!!!!!!!!!!!!!
 
-! Define which structure shall be evaluated
-write(6,*) '########## STRUCTURE ########'
-write(6,*) 'DUT-8(Ni) open           - do'
-write(6,*) 'DUT-8(Ni) open vcrelax   - vo'
-write(6,*) 'DUT-8(Ni) closed         - dc'
-write(6,*) 'DUT-8(Ni) closed vcrelax - vc'
-write(6,*) 'UiO-66                   - u6'
-write(6,*) 'UiO-67                   - u7'
-write(6,*) 'UiO-68                   - u8'
-write(6,*) 'MOF-5                    - m5'
-write(6,*) 'IRMOF-10                 - ir'
-write(6,*) 'MOF210                   - m2'
-write(6,*) 'HKUST-1, open Cu sites   - h1'
-write(6,*) 'HKUST-1, O-Cu-Cu-O       - ho'
-write(6,*) 'C60@MOF                  - c6'
-write(6,*) 'Benzene, opt             - be'
-write(6,*) 'Benzene, exp             - b2'
-write(6,*) 'Benzene, C only          - bc'
-write(6,*) 'H atom                   - ha'
-write(6,*) 'User-defined xyz         - ud'
-write(6,*) '#############################'
-read(5,*) struct
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Read in the xyz coordinates and the cell vectors !
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Define the structure (cell vectors are the second line of the given xyz file)
-if (struct == 'do') then                                                                      ! if the initial DUT-8(Ni) open structure is choosen
-  open(unit=15,file='../structures_xyz/dut_8_open.xyz',status='old',action='read')               ! read in the xyz file
-  name_struct = 'DUT-8(Ni) open, exp'
-else if (struct == 'vo') then                                                                 ! if the relaxed DUT-8(Ni) open structure is choosen 
-  open(unit=15,file='../structures_xyz/dut_8_open_vcrelax.xyz',status='old',action='read')       ! read in the xyz file
-  name_struct = 'DUT-8(Ni) open, vc'
-else if (struct == 'dc') then                                                                 ! if the initial DUT-8(Ni) closed structure is choosen
-  open(unit=15,file='../structures_xyz/dut_8_closed.xyz',status='old',action='read')             ! read in the xyz file
-  name_struct = 'DUT-8(Ni) closed, exp'
-else if (struct == 'vc') then                                                                 ! if the relaxed DUT-8(Ni) closed structure is choosen
-  open(unit=15,file='../structures_xyz/dut_8_closed_vcrelax.xyz',status='old',action='read')     ! read in the xyz file
-  name_struct = 'DUT-8(Ni) closed, vc'
-else if (struct == 'u6') then                                                                 ! if UiO-66 (primitive cell) is choosen
-  open(unit=15,file='../structures_xyz/uio66.xyz',status='old',action='read')                    ! read in the xyz file
-  name_struct = 'UiO-66'
-else if (struct == 'u7') then                                                                 ! if UiO-67 (primitive cell) is choosen
-  open(unit=15,file='../structures_xyz/uio67.xyz',status='old',action='read')                    ! read in the xyz file
-  name_struct = 'UiO-67'
-else if (struct == 'u8') then                                                                 ! if UiO-68 (primitive cell) is choosen
-  open(unit=15,file='../structures_xyz/uio68.xyz',status='old',action='read')                    ! read in the xyz file
-  name_struct = 'UiO-68'
-else if (struct == 'm5') then                                                                 ! if MOF-5 (unit cell) is choosen
-  open(unit=15,file='../structures_xyz/mof5.xyz',status='old',action='read')                     ! read in the xyz file
-  name_struct = 'MOF-5'
-else if (struct == 'ir') then                                                                 ! if IRMOF-10 (unit cell) is choosen
-  open(unit=15,file='../structures_xyz/irmof10.xyz',status='old',action='read')                  ! read in the xyz file
-  name_struct = 'IRMOF10'
-else if (struct == 'm2') then                                                                 ! if MOF210 (primitive cell) is choosen
-  open(unit=15,file='../structures_xyz/mof210.xyz',status='old',action='read')                   ! read in the xyz file
-  name_struct = 'MOF-210'
-else if (struct == 'h1') then                                                                 ! if HKUST-1 (primitive cell) is choosen
-  open(unit=15,file='../structures_xyz/hkust1.xyz',status='old',action='read')                   ! read in the xyz file
-  name_struct = 'HKUST-1'
-else if (struct == 'ho') then                                                                 ! if HKUST-1 (primitive cell) is choosen
-  open(unit=15,file='../structures_xyz/hkust1_with_O.xyz',status='old',action='read')             ! read in the xyz file
-  name_struct = 'HKUST-1'
-else if (struct == 'c6') then                                                                 ! if HKUST-1 (primitive cell) is choosen
-  open(unit=15,file='../structures_xyz/c60_MOF.xyz',status='old',action='read')                   ! read in the xyz file
-  name_struct = 'C60@MOF'
-else if (struct == 'be') then                                                                 ! if benzene (arbitrary cell) is choosen
-  open(unit=15,file='../structures_xyz/benzene.xyz',status='old',action='read')                  ! read in the xyz file
-  name_struct = 'Benzene, opt'
-else if (struct == 'b2') then                                                                 ! if benzene, experimental structure (arbitrary cell) is choosen
-  open(unit=15,file='../structures_xyz/benzene_exp.xyz',status='old',action='read')              ! read in the xyz file
-  name_struct = 'Benzene, exp'
-else if (struct == 'bc') then                                                                 ! if benzene, only C atoms (arbitrary cell) is choosen
-  open(unit=15,file='../structures_xyz/benzene_Conly.xyz',status='old',action='read')            ! read in the xyz file
-  name_struct = 'Benzene, C only'
-else if (struct == 'ha') then                                                                 ! if H atom (cubic cell) is choosen
-  open(unit=15,file='../structures_xyz/h_atom.xyz',status='old',action='read')                   ! read in the xyz file
-  name_struct = 'H atom'
-else if (struct == 'ud') then                                                                 ! if user-defined cell is choosen
-  write(6,*) 'Provide the path and the name of the xyz file (e.g. "../structures_xyz/test.xyz")'
-  read(5,*) name_struct 
-  open(unit=15,file=name_struct,status='old',action='read')                                  ! read in the xyz file
-  write(6,*) 'Provide a name for you structure'
-  read(5,*) name_struct
+!!!!!!!!!!!!!!!!!!
+! Initialization !
+!!!!!!!!!!!!!!!!!!
+open(unit=16,file='input_PSD',status='old',action='read')           ! Read the input file
+read(16,*)                                                          ! ignore the first line
+read(16,*) struct
+if (struct == 'ud') then                                            ! if user-defined structure is choosen
+  read(16,*) name_struct                                            ! read the path to the xyz file
+  open(unit=15,file=name_struct,status='old',action='read')         ! read in the xyz file
+  read(16,*) name_struct                                            ! read name of the structure
+else
+  read(16,*)                                                        ! For any other input, ignore the next two lines
+  read(16,*)
+  !
+  ! Read in the xyz coordinates and the cell vectors
+  !
+  if (struct == 'do') then                                                                      ! if the initial DUT-8(Ni) open structure is choosen
+    open(unit=15,file='../structures_xyz/dut_8_open.xyz',status='old',action='read')               ! read in the xyz file
+    name_struct = 'DUT-8(Ni) open, exp'
+  else if (struct == 'vo') then                                                                 ! if the relaxed DUT-8(Ni) open structure is choosen 
+    open(unit=15,file='../structures_xyz/dut_8_open_vcrelax.xyz',status='old',action='read')       ! read in the xyz file
+    name_struct = 'DUT-8(Ni) open, vc'
+  else if (struct == 'dc') then                                                                 ! if the initial DUT-8(Ni) closed structure is choosen
+    open(unit=15,file='../structures_xyz/dut_8_closed.xyz',status='old',action='read')             ! read in the xyz file
+    name_struct = 'DUT-8(Ni) closed, exp'
+  else if (struct == 'vc') then                                                                 ! if the relaxed DUT-8(Ni) closed structure is choosen
+    open(unit=15,file='../structures_xyz/dut_8_closed_vcrelax.xyz',status='old',action='read')     ! read in the xyz file
+    name_struct = 'DUT-8(Ni) closed, vc'
+  else if (struct == 'u6') then                                                                 ! if UiO-66 (primitive cell) is choosen
+    open(unit=15,file='../structures_xyz/uio66.xyz',status='old',action='read')                    ! read in the xyz file
+    name_struct = 'UiO-66'
+  else if (struct == 'u7') then                                                                 ! if UiO-67 (primitive cell) is choosen
+    open(unit=15,file='../structures_xyz/uio67.xyz',status='old',action='read')                    ! read in the xyz file
+    name_struct = 'UiO-67'
+  else if (struct == 'u8') then                                                                 ! if UiO-68 (primitive cell) is choosen
+    open(unit=15,file='../structures_xyz/uio68.xyz',status='old',action='read')                    ! read in the xyz file
+    name_struct = 'UiO-68'
+  else if (struct == 'm5') then                                                                 ! if MOF-5 (unit cell) is choosen
+    open(unit=15,file='../structures_xyz/mof5.xyz',status='old',action='read')                     ! read in the xyz file
+    name_struct = 'MOF-5'
+  else if (struct == 'ir') then                                                                 ! if IRMOF-10 (unit cell) is choosen
+    open(unit=15,file='../structures_xyz/irmof10.xyz',status='old',action='read')                  ! read in the xyz file
+    name_struct = 'IRMOF10'
+  else if (struct == 'm2') then                                                                 ! if MOF210 (primitive cell) is choosen
+    open(unit=15,file='../structures_xyz/mof210.xyz',status='old',action='read')                   ! read in the xyz file
+    name_struct = 'MOF-210'
+  else if (struct == 'h1') then                                                                 ! if HKUST-1 (primitive cell) is choosen
+    open(unit=15,file='../structures_xyz/hkust1.xyz',status='old',action='read')                   ! read in the xyz file
+    name_struct = 'HKUST-1'
+  else if (struct == 'ho') then                                                                 ! if HKUST-1 (primitive cell) is choosen
+    open(unit=15,file='../structures_xyz/hkust1_with_O.xyz',status='old',action='read')             ! read in the xyz file
+    name_struct = 'HKUST-1'
+  else if (struct == 'c6') then                                                                 ! if C60@MOF (primitive cell) is choosen
+    open(unit=15,file='../structures_xyz/c60_MOF.xyz',status='old',action='read')                   ! read in the xyz file
+    name_struct = 'C60@MOF'
+  else if (struct == 'be') then                                                                 ! if benzene (arbitrary cell) is choosen
+    open(unit=15,file='../structures_xyz/benzene.xyz',status='old',action='read')                  ! read in the xyz file
+    name_struct = 'Benzene, opt'
+  else if (struct == 'b2') then                                                                 ! if benzene, experimental structure (arbitrary cell) is choosen
+    open(unit=15,file='../structures_xyz/benzene_exp.xyz',status='old',action='read')              ! read in the xyz file
+    name_struct = 'Benzene, exp'
+  else if (struct == 'bc') then                                                                 ! if benzene, only C atoms (arbitrary cell) is choosen
+    open(unit=15,file='../structures_xyz/benzene_Conly.xyz',status='old',action='read')            ! read in the xyz file
+    name_struct = 'Benzene, C only'
+  else if (struct == 'ha') then                                                                 ! if H atom (cubic cell) is choosen
+    open(unit=15,file='../structures_xyz/h_atom.xyz',status='old',action='read')                   ! read in the xyz file
+    name_struct = 'H atom'
+  else
+    write(6,*) '! Structure invalid !'
+    stop
+  end if
 end if
+!
+! Read in the number of atoms and cell vectors
+!
+read(unit=15,fmt='(I13.0)') number_of_atoms                                                 ! first entry is the number of atoms
+read(unit=15,fmt=*) cell_a(1:3), cell_b(1:3), cell_c(1:3)                                   ! second entry contains the cell vectors. Read them in individually (makes it easier later on)
+!
+! Calculation parameters
+!
+read(16,*)
+read(16,*)
+read(16,*) start_points
+read(16,*) cycles
+!
+! Approximate computational time
+!
+write(6,fmt='(A,2X,I15,A)') 'The calculation should take roughly ', &
+                             number_of_atoms*start_points*cycles/(10**6),' s'
 
-! Initialize stuff
-write(6,*) 'How many starting points (recommended: >= 100)?'
-read(5,*) start_points
-write(6,*) 'How many Monte-Carlo steps (recommended: >= 10000)?'
-read(5,*) cycles
-
-
-call cpu_time(start)
-
-! Read in the corresponding values
-read(unit=15,fmt='(I13.0)') number_of_atoms                     ! first entry is the number of atoms
-read(unit=15,fmt=*) cell_a(1:3), cell_b(1:3), cell_c(1:3)       ! second entry contains the cell vectors. Read them in individually (makes it easier later on)
 
 allocate(elements(number_of_atoms))                             ! allocate (number_of_atoms) fields for elements. There is one elements each. As many elements as number_of_atoms (makes sense :))
 allocate(coordinates(number_of_atoms,3))                        ! allocate (number_of_atoms) fields for coordinates. There are 3 coordinates per entry. 
@@ -157,11 +149,12 @@ end do
 close(unit=15)                                                  ! close the file (no longer necessary)
 
 ! Output file
-open(unit=19,file='output',status='unknown',action='write')
+open(unit=19,file='output_PSD',status='unknown',action='write')
 write(19,*) 'Starting points   (recommended: >= 100)   : ',start_points
 write(19,*) 'Monte-Carlo steps (recommended: >= 10000) : ',cycles
 write(19,*) ' '
 
+call cpu_time(start)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! Monte-Carlo to get pore sizes !!

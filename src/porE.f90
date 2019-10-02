@@ -76,115 +76,128 @@ all_vdW_radii = (/ 1.20, 1.40, 1.82, 1.53, 1.92, 1.70, 1.55, 1.52, 1.47, 1.54,&
 !!!!!!!!!!!!!!!!!!
 ! Initialization !
 !!!!!!!!!!!!!!!!!!
-
-! Define which structure shall be evaluated
-write(6,*) '########## STRUCTURE ########'
-write(6,*) 'DUT-8(Ni) open           - do'
-write(6,*) 'DUT-8(Ni) open vcrelax   - vo'
-write(6,*) 'DUT-8(Ni) closed         - dc'
-write(6,*) 'DUT-8(Ni) closed vcrelax - vc'
-write(6,*) 'UiO-66                   - u6'
-write(6,*) 'UiO-67                   - u7'
-write(6,*) 'UiO-68                   - u8'
-write(6,*) 'MOF-5                    - m5'
-write(6,*) 'IRMOF-10                 - ir'
-write(6,*) 'MOF210                   - m2'
-write(6,*) 'HKUST-1, open Cu sites   - h1'
-write(6,*) 'HKUST-1, O-Cu-Cu-O       - ho'
-write(6,*) 'C60@MOF                  - c6'
-write(6,*) 'Benzene, opt             - be'
-write(6,*) 'Benzene, exp             - b2'
-write(6,*) 'Benzene, C only          - bc'
-write(6,*) 'H atom                   - ha'
-write(6,*) 'User-defined xyz         - ud'
-write(6,*) '#############################'
-read(5,*) struct
-! Evaluation stategy
-write(6,*) ' '
-write(6,*) '########## METHOD OF EVALUATION #################'
-write(6,*) '(1) Overlapping sphere approach (OSA, analytical)'
-write(6,*) '(2) Grid point approach         (GPA, numerical) '
-write(6,*) '#################################################'
-read(5,*) eval_method
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Read in the xyz coordinates and the cell vectors !
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-! Define the structure (cell vectors are the second line of the given xyz file)
-if (struct == 'do') then                                                                      ! if the initial DUT-8(Ni) open structure is choosen
-  open(unit=15,file='../structures_xyz/dut_8_open.xyz',status='old',action='read')               ! read in the xyz file
-  name_struct = 'DUT-8(Ni) open, exp'
-else if (struct == 'vo') then                                                                 ! if the relaxed DUT-8(Ni) open structure is choosen 
-  open(unit=15,file='../structures_xyz/dut_8_open_vcrelax.xyz',status='old',action='read')       ! read in the xyz file
-  name_struct = 'DUT-8(Ni) open, vc'
-else if (struct == 'dc') then                                                                 ! if the initial DUT-8(Ni) closed structure is choosen
-  open(unit=15,file='../structures_xyz/dut_8_closed.xyz',status='old',action='read')             ! read in the xyz file
-  name_struct = 'DUT-8(Ni) closed, exp'
-else if (struct == 'vc') then                                                                 ! if the relaxed DUT-8(Ni) closed structure is choosen
-  open(unit=15,file='../structures_xyz/dut_8_closed_vcrelax.xyz',status='old',action='read')     ! read in the xyz file
-  name_struct = 'DUT-8(Ni) closed, vc'
-else if (struct == 'u6') then                                                                 ! if UiO-66 (primitive cell) is choosen
-  open(unit=15,file='../structures_xyz/uio66.xyz',status='old',action='read')                    ! read in the xyz file
-  name_struct = 'UiO-66'
-else if (struct == 'u7') then                                                                 ! if UiO-67 (primitive cell) is choosen
-  open(unit=15,file='../structures_xyz/uio67.xyz',status='old',action='read')                    ! read in the xyz file
-  name_struct = 'UiO-67'
-else if (struct == 'u8') then                                                                 ! if UiO-68 (primitive cell) is choosen
-  open(unit=15,file='../structures_xyz/uio68.xyz',status='old',action='read')                    ! read in the xyz file
-  name_struct = 'UiO-68'
-else if (struct == 'm5') then                                                                 ! if MOF-5 (unit cell) is choosen
-  open(unit=15,file='../structures_xyz/mof5.xyz',status='old',action='read')                     ! read in the xyz file
-  name_struct = 'MOF-5'
-else if (struct == 'ir') then                                                                 ! if IRMOF-10 (unit cell) is choosen
-  open(unit=15,file='../structures_xyz/irmof10.xyz',status='old',action='read')                  ! read in the xyz file
-  name_struct = 'IRMOF10'
-else if (struct == 'm2') then                                                                 ! if MOF210 (primitive cell) is choosen
-  open(unit=15,file='../structures_xyz/mof210.xyz',status='old',action='read')                   ! read in the xyz file
-  name_struct = 'MOF-210'
-else if (struct == 'h1') then                                                                 ! if HKUST-1 (primitive cell) is choosen
-  open(unit=15,file='../structures_xyz/hkust1.xyz',status='old',action='read')                   ! read in the xyz file
-  name_struct = 'HKUST-1'
-else if (struct == 'ho') then                                                                 ! if HKUST-1 (primitive cell) is choosen
-  open(unit=15,file='../structures_xyz/hkust1_with_O.xyz',status='old',action='read')             ! read in the xyz file
-  name_struct = 'HKUST-1'
-else if (struct == 'c6') then                                                                 ! if C60@MOF (primitive cell) is choosen
-  open(unit=15,file='../structures_xyz/c60_MOF.xyz',status='old',action='read')                   ! read in the xyz file
-  name_struct = 'C60@MOF'
-else if (struct == 'be') then                                                                 ! if benzene (arbitrary cell) is choosen
-  open(unit=15,file='../structures_xyz/benzene.xyz',status='old',action='read')                  ! read in the xyz file
-  name_struct = 'Benzene, opt'
-else if (struct == 'b2') then                                                                 ! if benzene, experimental structure (arbitrary cell) is choosen
-  open(unit=15,file='../structures_xyz/benzene_exp.xyz',status='old',action='read')              ! read in the xyz file
-  name_struct = 'Benzene, exp'
-else if (struct == 'bc') then                                                                 ! if benzene, only C atoms (arbitrary cell) is choosen
-  open(unit=15,file='../structures_xyz/benzene_Conly.xyz',status='old',action='read')            ! read in the xyz file
-  name_struct = 'Benzene, C only'
-else if (struct == 'ha') then                                                                 ! if H atom (cubic cell) is choosen
-  open(unit=15,file='../structures_xyz/h_atom.xyz',status='old',action='read')                   ! read in the xyz file
-  name_struct = 'H atom'
-else if (struct == 'ud') then                                                                 ! if user-defined cell is choosen
-  write(6,*) 'Provide the path and the name of the xyz file (e.g. "../structures_xyz/test.xyz")'
-  read(5,*) name_struct
-  open(unit=15,file=name_struct,status='old',action='read')                                  ! read in the xyz file
-  write(6,*) 'Provide a name for you structure'
-  read(5,*) name_struct
+!!!!!!!!!!!!!!!!!!
+! Initialization !
+!!!!!!!!!!!!!!!!!!
+open(unit=16,file='input_porosity',status='old',action='read')      ! Read the input file
+read(16,*)                                                          ! ignore the first line
+read(16,*) struct
+if (struct == 'ud') then                                            ! if user-defined structure is choosen
+  read(16,*) name_struct                                            ! read the path to the xyz file
+  open(unit=15,file=name_struct,status='old',action='read')         ! read in the xyz file
+  read(16,*) name_struct                                            ! read name of the structure
+else
+  read(16,*)                                                        ! For any other input, ignore the next two lines
+  read(16,*)
+  !
+  ! Read in the xyz coordinates and the cell vectors
+  !
+  if (struct == 'do') then                                                                      ! if the initial DUT-8(Ni) open structure is choosen
+    open(unit=15,file='../structures_xyz/dut_8_open.xyz',status='old',action='read')               ! read in the xyz file
+    name_struct = 'DUT-8(Ni) open, exp'
+  else if (struct == 'vo') then                                                                 ! if the relaxed DUT-8(Ni) open structure is choosen 
+    open(unit=15,file='../structures_xyz/dut_8_open_vcrelax.xyz',status='old',action='read')       ! read in the xyz file
+    name_struct = 'DUT-8(Ni) open, vc'
+  else if (struct == 'dc') then                                                                 ! if the initial DUT-8(Ni) closed structure is choosen
+    open(unit=15,file='../structures_xyz/dut_8_closed.xyz',status='old',action='read')             ! read in the xyz file
+    name_struct = 'DUT-8(Ni) closed, exp'
+  else if (struct == 'vc') then                                                                 ! if the relaxed DUT-8(Ni) closed structure is choosen
+    open(unit=15,file='../structures_xyz/dut_8_closed_vcrelax.xyz',status='old',action='read')     ! read in the xyz file
+    name_struct = 'DUT-8(Ni) closed, vc'
+  else if (struct == 'u6') then                                                                 ! if UiO-66 (primitive cell) is choosen
+    open(unit=15,file='../structures_xyz/uio66.xyz',status='old',action='read')                    ! read in the xyz file
+    name_struct = 'UiO-66'
+  else if (struct == 'u7') then                                                                 ! if UiO-67 (primitive cell) is choosen
+    open(unit=15,file='../structures_xyz/uio67.xyz',status='old',action='read')                    ! read in the xyz file
+    name_struct = 'UiO-67'
+  else if (struct == 'u8') then                                                                 ! if UiO-68 (primitive cell) is choosen
+    open(unit=15,file='../structures_xyz/uio68.xyz',status='old',action='read')                    ! read in the xyz file
+    name_struct = 'UiO-68'
+  else if (struct == 'm5') then                                                                 ! if MOF-5 (unit cell) is choosen
+    open(unit=15,file='../structures_xyz/mof5.xyz',status='old',action='read')                     ! read in the xyz file
+    name_struct = 'MOF-5'
+  else if (struct == 'ir') then                                                                 ! if IRMOF-10 (unit cell) is choosen
+    open(unit=15,file='../structures_xyz/irmof10.xyz',status='old',action='read')                  ! read in the xyz file
+    name_struct = 'IRMOF10'
+  else if (struct == 'm2') then                                                                 ! if MOF210 (primitive cell) is choosen
+    open(unit=15,file='../structures_xyz/mof210.xyz',status='old',action='read')                   ! read in the xyz file
+    name_struct = 'MOF-210'
+  else if (struct == 'h1') then                                                                 ! if HKUST-1 (primitive cell) is choosen
+    open(unit=15,file='../structures_xyz/hkust1.xyz',status='old',action='read')                   ! read in the xyz file
+    name_struct = 'HKUST-1'
+  else if (struct == 'ho') then                                                                 ! if HKUST-1 (primitive cell) is choosen
+    open(unit=15,file='../structures_xyz/hkust1_with_O.xyz',status='old',action='read')             ! read in the xyz file
+    name_struct = 'HKUST-1'
+  else if (struct == 'c6') then                                                                 ! if C60@MOF (primitive cell) is choosen
+    open(unit=15,file='../structures_xyz/c60_MOF.xyz',status='old',action='read')                   ! read in the xyz file
+    name_struct = 'C60@MOF'
+  else if (struct == 'be') then                                                                 ! if benzene (arbitrary cell) is choosen
+    open(unit=15,file='../structures_xyz/benzene.xyz',status='old',action='read')                  ! read in the xyz file
+    name_struct = 'Benzene, opt'
+  else if (struct == 'b2') then                                                                 ! if benzene, experimental structure (arbitrary cell) is choosen
+    open(unit=15,file='../structures_xyz/benzene_exp.xyz',status='old',action='read')              ! read in the xyz file
+    name_struct = 'Benzene, exp'
+  else if (struct == 'bc') then                                                                 ! if benzene, only C atoms (arbitrary cell) is choosen
+    open(unit=15,file='../structures_xyz/benzene_Conly.xyz',status='old',action='read')            ! read in the xyz file
+    name_struct = 'Benzene, C only'
+  else if (struct == 'ha') then                                                                 ! if H atom (cubic cell) is choosen
+    open(unit=15,file='../structures_xyz/h_atom.xyz',status='old',action='read')                   ! read in the xyz file
+    name_struct = 'H atom'
+  else
+    write(6,*) '! Structure invalid !'
+    stop
+  end if
 end if
-! Read in the corresponding values
-read(unit=15,fmt='(I13.0)') number_of_atoms                                                   ! first entry is the number of atoms
-read(unit=15,fmt=*) cell_a(1:3), cell_b(1:3), cell_c(1:3)                                     ! second entry contains the cell vectors. Read them in individually (makes it easier later on)
+!
+! Read in the number of atoms and cell vectors
+!
+read(unit=15,fmt='(I13.0)') number_of_atoms                                                 ! first entry is the number of atoms
+read(unit=15,fmt=*) cell_a(1:3), cell_b(1:3), cell_c(1:3)                                   ! second entry contains the cell vectors. Read them in individually (makes it easier later on)
+!
+! Read evaluation method
+!
+read(16,*)
+read(16,*)
+read(16,*) eval_method
+if ((eval_method /= 1) .and. (eval_method /= 2)) then
+  write(6,*) '! Evaluation method invalid !'
+  stop
+end if
+!
+! For GPA, read additional values
+!
+if (eval_method == 2) then
+  read(16,*)
+  read(16,*)
+  read(16,*) probe_r                            ! probe radius
+  read(16,*) t                                  ! define which way the grid shall be initialized
+  if (t == 1) then                              ! if grid points per unit cell vector -> read number of grid points (3 integers)
+    read(16,*) grid_a, grid_b, grid_c
+  else if (t == 2) then
+    read(16,*) g                                ! if grid point density per angstrom (1 real) -> define grid here
+      grid_a = ceiling(g*sqrt(cell_a(1)**2 + cell_a(2)**2 + cell_a(3)**2))                       ! ceiling -> round to the next higher integer. Use g * len_unit_cell_vector as the number of grid points
+      grid_b = ceiling(g*sqrt(cell_b(1)**2 + cell_b(2)**2 + cell_b(3)**2))
+      grid_c = ceiling(g*sqrt(cell_c(1)**2 + cell_c(2)**2 + cell_c(3)**2))
+  else
+    write(6,*) '! Grid initialization invalid !'
+    stop
+  end if
+end if
+close(16)                                       ! close input file
+!
+! Store elements and coordinates
+!
+allocate(elements(number_of_atoms))                                                         ! allocate (number_of_atoms) fields for elements. There is one elements each.
+allocate(coordinates(number_of_atoms,3))                                                    ! allocate (number_of_atoms) fields for coordinates. There are 3 coordinates per entry.
+allocate(tmp_pse(number_of_atoms))                                                          ! allocate tmp_pse, dummy
+no_elements = 0                                                                             ! number of different atoms
 
-allocate(elements(number_of_atoms))                                                           ! allocate (number_of_atoms) fields for elements. There is one elements each. As many elements as number_of_atoms (makes sense :))
-allocate(coordinates(number_of_atoms,3))                                                      ! allocate (number_of_atoms) fields for coordinates. There are 3 coordinates per entry. 
-allocate(tmp_pse(number_of_atoms))                                                            ! allocate tmp_pse, dummy
-no_elements = 0                                                                               ! number of different atoms
-
-do n = 1,number_of_atoms                                                                      ! go through all atoms 
+do n = 1,number_of_atoms                                                                      ! go through all atoms
   read(unit=15,fmt=*) elements(n), coordinates(n,1:3)                                         ! storing element and coordinates
   !
   ! Determine what kind of different atoms there are -> use later for the evaluation of the vdW radii
   !
-  c = 0                                                                                       ! counter for each entry 
+  c = 0                                                                                       ! counter for each entry
   do a = 1, number_of_atoms
     if (elements(n) == tmp_pse(a)) then                                                       ! if the elements is already in the tmp_pse list -> ignore
       c = 1
@@ -210,9 +223,10 @@ do a = 1, all_elements                                                          
   end do
 end do
 deallocate(tmp_pse)
+!
 ! Output file
-open(unit=19,file='output',status='unknown',action='write')
-
+!
+open(unit=19,file='output_porosity',status='unknown',action='write')
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Calculate the total unit cell volume using the triple product V = a . (b x c) . In A^3 !
@@ -256,15 +270,14 @@ if (eval_method == 1) then
       V_overlap = V_overlap + sub_overlap
 
       if (sub_overlap > 0.0) then
-       write(6,666) a,elements(a),b,elements(b),'  d =', distance_ab,' A    with V_overlap = ', sub_overlap,' A^3'
-       write(19,666) a,elements(a),b,elements(b),'  d =', distance_ab,' A    with V_overlap = ', sub_overlap,' A^3'
+        write(6,666) a,elements(a),b,elements(b),'  d =', distance_ab,' A    with V_overlap = ', sub_overlap,' A^3'
+        write(19,666) a,elements(a),b,elements(b),'  d =', distance_ab,' A    with V_overlap = ', sub_overlap,' A^3'
       end if
     end do
   end do
-
-!  
-! Write to screen
-!
+  !  
+  ! Write to screen
+  !
   write(6,*) name_struct
   write(6,fmt='(1X a,f10.3,1X a)') 'V_total     = ',V_total,'A^3'
   write(6,fmt='(1X a,f10.3,1X a)') 'V_vdW,atoms = ',V_occupied,'A^3'
@@ -278,10 +291,9 @@ if (eval_method == 1) then
   write(6,fmt='(1X a,f10.3,1X a)') 'Mass of the unit cell is                        : ',m_total*u,'10**-27 kg'
   call cpu_time(finish)
   write(6,fmt='(A,2X,F12.3,1X,A)') 'Total CPU time: ',finish-start,'s'
-
-!
-! Write to file
-!
+  !
+  ! Write to file
+  !
   write(19,*) name_struct
   write(19,fmt='(1X a,f10.3,1X a)') 'V_total     = ',V_total,'A^3'
   write(19,fmt='(1X a,f10.3,1X a)') 'V_vdW,atoms = ',V_occupied,'A^3'
@@ -305,53 +317,6 @@ if (eval_method == 1) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 else if (eval_method == 2) then                                                                ! choosing second evaluation method
-! Initialization
-  write(6,*) ' '
-  write(6,*) '########## PROBE RADIUS #####################################'
-  write(6,*) 'Probe radius to evaluate the accessible volume (in angstrom):'                    ! ask for the probe radius
-  write(6,*) '#############################################################'
-  read(5,*) probe_r                                                                             ! define the probe radius
-  write(6,*) ' '
-  write(6,*) '########## CELL VECTORS ARE: ################################################'    ! display the cell vectors. Allowing an initial assessment of the number of grid points.
-  write(6,*) 'a = ',cell_a,'with length ',sqrt(cell_a(1)**2 + cell_a(2)**2 + cell_a(3)**2)
-  write(6,*) 'b = ',cell_b,'with length ',sqrt(cell_b(1)**2 + cell_b(2)**2 + cell_b(3)**2)
-  write(6,*) 'c = ',cell_c,'with length ',sqrt(cell_c(1)**2 + cell_c(2)**2 + cell_c(3)**2)
-  write(6,*) '#############################################################################'
-  write(6,*) ' '
-  write(6,*) '########## METHOD TO DEFINE GRID POINTS ##########################'
-  write(6,*) '(1) Grid points per unit cell vector                  (3 integers)'
-  write(6,*) '(2) Grid points per angstrom (uniform grid)               (1 real)'
-  write(6,*) '##################################################################'
-  read(5,*) t                                                                                  ! t serves as a temporary variable
-  if (t == 1) then
-    write(6,*) ' '
-    write(6,*) '########## CHOOSE NUMBER OF GRID POINTS ################'
-    write(6,*) 'How many grid points per unit cell vector (3 integers) ?'                      ! ask for the number of grid points along each cell vector
-    write(6,*) '########################################################'
-    read(5,*) grid_a, grid_b, grid_c
-  else if (t == 2) then
-    write(6,*) ' '
-    write(6,*) '########## CHOOSE NUMBER OF GRID POINTS #####'
-    write(6,*) 'How many grid points per angstrom  (1 real) ?'                              ! ask for the number of grid points per angstroem for each unit cell vector
-    write(6,*) '#############################################'
-    read(5,*) g
-    grid_a = ceiling(g*sqrt(cell_a(1)**2 + cell_a(2)**2 + cell_a(3)**2))                       ! ceiling -> round to the next higher integer. Use g * len_unit_cell_vector as the number of grid points
-    grid_b = ceiling(g*sqrt(cell_b(1)**2 + cell_b(2)**2 + cell_b(3)**2))
-    grid_c = ceiling(g*sqrt(cell_c(1)**2 + cell_c(2)**2 + cell_c(3)**2))
-  end if
-  write(6,*) '########## PORE SIZE DISTRIBUTION #############'
-  write(6,*) 'Beta-Version: Calculate PSD?  (1) Yes    (2) No'
-  write(6,*) '###############################################'
-  read(5,*) t
-  if (t == 1) then
-    call cpu_time(start)
-    call porefinder(struct)
-    call cpu_time(finish)
-    write(6,*) 'PSD took ',finish-start, ' s'
-    write(6,*) ' '
-  end if
-
-
   call cpu_time(start)                                                                         ! initialize time measurement
 
 ! Evaluate the total mass (for later evaluation)
@@ -360,9 +325,6 @@ else if (eval_method == 2) then                                                 
   do t = 1,number_of_atoms                                                                     ! go through all atoms and evaluate the total mass
     call eval_vol_mass(elements(t),V_occupied,m_total)
   end do
-
-
-
 
 ! allocate all lists. Use maximum grid points for each list, as it is not clear how much is needed
   allocate(grid_points(grid_a*grid_b*grid_c,3))                                                ! allocate (grid_size) fields for the grid points. There are 3 coordinates per entry.
