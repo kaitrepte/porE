@@ -33,5 +33,7 @@ Usage: First, modify the input file (input_porosity OR input_PSD) according to t
 ```
 
 Limitations: Some elements regarding their vdW radii are not implemented yet. 
-
 More will be done in the future.
+
+
+Several results from porE are summarized in the *results* folder.
