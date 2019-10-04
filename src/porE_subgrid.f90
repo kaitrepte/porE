@@ -332,8 +332,8 @@ if (eval_method == 1) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 else if (eval_method == 2) then                                                                ! if GPA is chosen
-  write(6,fmt='(A,2X,I15,A)') 'The calculation should take roughly ',&
-                               number_of_atoms*grid_a*grid_b*grid_c/(10**6),' s'               ! only for GPA_subgrid. 
+!  write(6,fmt='(A,2X,I15,A)') 'The calculation should take roughly ',&
+!                               number_of_atoms*grid_a*grid_b*grid_c/(10**6),' s'               ! only for GPA_subgrid. 
 
   call cpu_time(start)                                                                         ! initialize time measurement
   !

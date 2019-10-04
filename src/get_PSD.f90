@@ -137,8 +137,8 @@ read(16,*) cycles
 !
 ! Approximate computational time
 !
-write(6,fmt='(A,2X,I15,A)') 'The calculation should take roughly ', &
-                             number_of_atoms*start_points*cycles/(10**6),' s'
+!write(6,fmt='(A,2X,I15,A)') 'The calculation should take roughly ', &
+!                             number_of_atoms*start_points*cycles/(10**6),' s'
 
 
 allocate(elements(number_of_atoms))                             ! allocate (number_of_atoms) fields for elements. There is one elements each. As many elements as number_of_atoms (makes sense :))
