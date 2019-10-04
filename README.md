@@ -11,6 +11,7 @@ Sidekick:
 
 Coding language: FORTRAN   
 
+## Installation
 To compile the code, do
 
 	cd src/
@@ -19,6 +20,7 @@ To compile the code, do
 
 	cd ..
 
+## Running the code
 To run the code, go to the *run* folder. The file run.sh includes three options
 
 * porE: This is the standard code. Includes OSA, and the standard GPA
@@ -32,8 +34,9 @@ Usage: First, modify the input file (input_porosity OR input_PSD) according to t
 ./run.sh
 ```
 
+## Additional information
 Limitations: Some elements regarding their vdW radii are not implemented yet. 
 More will be done in the future.
 
-
+## Reference results
 Several results from porE are summarized in the *results* folder.
