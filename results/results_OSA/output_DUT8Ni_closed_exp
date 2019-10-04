@@ -1,0 +1,57 @@
+   13 H    46 C   d =   1.08510 A    with V_overlap =    5.34120 A^3
+   14 H    47 C   d =   1.08565 A    with V_overlap =    5.33875 A^3
+   15 H    50 C   d =   1.07118 A    with V_overlap =    5.40341 A^3
+   16 H    51 C   d =   1.08602 A    with V_overlap =    5.33710 A^3
+   17 H    52 C   d =   1.08596 A    with V_overlap =    5.33736 A^3
+   18 H    54 C   d =   1.08430 A    with V_overlap =    5.34480 A^3
+   19 H    35 C   d =   1.08152 A    with V_overlap =    5.35724 A^3
+   20 H    36 C   d =   1.08239 A    with V_overlap =    5.35335 A^3
+   21 H    39 C   d =   1.07947 A    with V_overlap =    5.36638 A^3
+   22 H    40 C   d =   1.08216 A    with V_overlap =    5.35436 A^3
+   23 H    41 C   d =   1.08122 A    with V_overlap =    5.35855 A^3
+   24 H    43 C   d =   1.07958 A    with V_overlap =    5.36589 A^3
+   25 C    62 O   d =   1.28667 A    with V_overlap =    7.48699 A^3
+   25 C    63 O   d =   1.30306 A    with V_overlap =    7.37723 A^3
+   26 C    59 O   d =   1.28711 A    with V_overlap =    7.48400 A^3
+   26 C    64 O   d =   1.29498 A    with V_overlap =    7.43126 A^3
+   27 C    57 O   d =   1.29040 A    with V_overlap =    7.46193 A^3
+   27 C    58 O   d =   1.29850 A    with V_overlap =    7.40769 A^3
+   32 C    35 C   d =   1.40863 A    with V_overlap =    8.52205 A^3
+   32 C    39 C   d =   1.43231 A    with V_overlap =    8.34458 A^3
+   35 C    36 C   d =   1.41811 A    with V_overlap =    8.45084 A^3
+   36 C    37 C   d =   1.41692 A    with V_overlap =    8.45973 A^3
+   37 C    38 C   d =   1.40573 A    with V_overlap =    8.54386 A^3
+   37 C    43 C   d =   1.43174 A    with V_overlap =    8.34879 A^3
+   38 C    39 C   d =   1.43147 A    with V_overlap =    8.35083 A^3
+   38 C    40 C   d =   1.41676 A    with V_overlap =    8.46098 A^3
+   40 C    41 C   d =   1.41800 A    with V_overlap =    8.45166 A^3
+   41 C    42 C   d =   1.40821 A    with V_overlap =    8.52520 A^3
+   42 C    43 C   d =   1.43228 A    with V_overlap =    8.34482 A^3
+   44 C    60 O   d =   1.30167 A    with V_overlap =    7.38653 A^3
+   44 C    61 O   d =   1.29164 A    with V_overlap =    7.45363 A^3
+   45 C    46 C   d =   1.41155 A    with V_overlap =    8.50007 A^3
+   45 C    50 C   d =   1.43425 A    with V_overlap =    8.33005 A^3
+   46 C    47 C   d =   1.41828 A    with V_overlap =    8.44960 A^3
+   47 C    48 C   d =   1.42430 A    with V_overlap =    8.40443 A^3
+   48 C    49 C   d =   1.40489 A    with V_overlap =    8.55021 A^3
+   48 C    54 C   d =   1.42279 A    with V_overlap =    8.41579 A^3
+   49 C    50 C   d =   1.41832 A    with V_overlap =    8.44924 A^3
+   49 C    51 C   d =   1.42270 A    with V_overlap =    8.41644 A^3
+   51 C    52 C   d =   1.41299 A    with V_overlap =    8.48923 A^3
+   52 C    53 C   d =   1.40913 A    with V_overlap =    8.51829 A^3
+   53 C    54 C   d =   1.44023 A    with V_overlap =    8.28549 A^3
+   55 N    65 Ni  d =   1.90576 A    with V_overlap =    3.50935 A^3
+   60 O    66 Ni  d =   1.84575 A    with V_overlap =    3.61886 A^3
+   61 O    65 Ni  d =   1.78755 A    with V_overlap =    3.92046 A^3
+   64 O    66 Ni  d =   1.86311 A    with V_overlap =    3.53077 A^3
+ DUT-8(Ni) closed, exp                                                                               
+ V_total     =    647.678 A^3
+ V_vdW,atoms =    976.263 A^3
+ V_overlap   =    323.939 A^3
+ V_occupied  =    652.324 A^3
+ V_void      =     -4.646 A^3
+ Porosity    =     -0.717  %
+ Density of the structure is (m_total/V_total)   :   1686.776 kg/m^3
+ Pore volume density is (V_void/m_total)         :     -0.004 cm^3/g
+ Mass of the unit cell is                        :   1092.488 10**-27 kg
+Total CPU time:          0.009 s

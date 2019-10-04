@@ -1,0 +1,7 @@
+Results using the GPA in porE. 
+Without sub-grid employment.
+
+grid_dependence:
+	- Increasing the used grid while fixing a given probe radius
+probeRadius_dependence:
+	- Increasing the probe radius while fixing the used grid
