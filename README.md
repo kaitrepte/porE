@@ -11,9 +11,10 @@ Sidekick:
 
 Coding language: FORTRAN   
 
-To compile the code, go to the *src* directory and type
-
+To compile the code, do
+	cd src/
 	make
+	cd ..
 
 To run the code, go to the *run* folder. The file run.sh includes three options
 
