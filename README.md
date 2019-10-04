@@ -12,6 +12,7 @@ Sidekick:
 Coding language: FORTRAN   
 
 To compile the code, do
+
 	cd src/
 
 	make
