@@ -608,7 +608,7 @@ else if (eval_method == 2) then                                                 
   write(6,fmt='(1X a,I15)') 'Points OCCUPIED:             ',n_occ
   write(6,fmt='(1X a,I15)') 'Points NOT OCCUPIED (void):  ',grid_a*grid_b*grid_c - n_occ
   write(6,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
-  write(6,fmt='(1X a,7X f7.3,1X a)') 'probe radius:                ',probe_r,'A'
+  write(6,fmt='(1X a,7X f7.3,1X a)') 'Probe radius:                ',probe_r,'A'
   write(6,*) ' '
  
   write(6,777) 'Porosity (void):       ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100,'%'
@@ -645,7 +645,7 @@ else if (eval_method == 2) then                                                 
   write(19,fmt='(1X a,I15)') 'Points OCCUPIED:             ',n_occ
   write(19,fmt='(1X a,I15)') 'Points NOT OCCUPIED (void):  ',grid_a*grid_b*grid_c - n_occ
   write(19,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
-  write(19,fmt='(1X a,7X f7.3,1X a)') 'probe radius:                ',probe_r,'A'
+  write(19,fmt='(1X a,7X f7.3,1X a)') 'Probe radius:                ',probe_r,'A'
   write(19,*) ' '
 
   write(19,777) 'Porosity (void):       ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100,'%'
