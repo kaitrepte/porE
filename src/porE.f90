@@ -524,7 +524,7 @@ else if (eval_method == 2) then                                                 
   write(6,*) '#######################################################################################################'
   write(6,*) 'Structure : ',name_struct
   write(6,fmt='(1X a,7X I4,1X a,1X I4,1X a,1x I4)') 'Grid which was used:         ',grid_a,'x',grid_b,'x',grid_c                              ! 1X -> 1 space, 7X -> 7 spaces
-  write(6,fmt='(1X,a,2X,I15)') 'Total number of grid points: ',grid_a*grid_b*grid_c
+  write(6,fmt='(1X,a,I15)') 'Total number of grid points: ',grid_a*grid_b*grid_c
   write(6,fmt='(1X,a,f15.3,a,3(f10.3,2X,a),a)') 'Grid point density:         ',grid_a*grid_b*grid_c/V_total, &
               ' grid points per A^3, with ',grid_per_A_x,' x ',grid_per_A_y,' x ',grid_per_A_z,' grid points per A'                           ! (grid_a*grid_b*grid_c/V_total)**(1./3.)
   write(6,fmt='(1X a,I15)') 'Points OCCUPIED:             ',n_occ
@@ -562,7 +562,7 @@ else if (eval_method == 2) then                                                 
   write(19,*) '#######################################################################################################'
   write(19,*) 'Structure : ',name_struct
   write(19,fmt='(1X a,7X I4,1X a,1X I4,1X a,1x I4)') 'Grid which was used:         ',grid_a,'x',grid_b,'x',grid_c                              ! 1X -> 1 space, 7X -> 7 spaces
-  write(19,fmt='(1X,a,2X,I15)') 'Total number of grid points: ',grid_a*grid_b*grid_c
+  write(19,fmt='(1X,a,I15)') 'Total number of grid points: ',grid_a*grid_b*grid_c
   write(19,fmt='(1X,a,f15.3,a,3(f10.3,2X,a),a)') 'Grid point density:         ',grid_a*grid_b*grid_c/V_total, &
               ' grid points per A^3, with ',grid_per_A_x,' x ',grid_per_A_y,' x ',grid_per_A_z,' grid points per A'                           ! (grid_a*grid_b*grid_c/V_total)**(1./3.)
   write(19,fmt='(1X a,I15)') 'Points OCCUPIED:             ',n_occ
