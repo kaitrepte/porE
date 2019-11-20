@@ -46,5 +46,11 @@ Then, type
 Limitations: Some elements regarding their vdW radii are not implemented yet. 
 More will be done in the future.
 
+The basic outline of the porE code and its applications are summarized in 
+
+K. Trepte and S. Schwalbe, 'Systematic Analysis of Porosities in Metal-Organic Frameworks', 2019, at ChemRXiv, see 
+https://chemrxiv.org/articles/Systematic\_Analysis\_of\_Porosities\_ in\_Metal-Organic\_Frameworks/10060331
+
+
 ## Reference results
 Several results from porE are summarized in the *results* folder.
