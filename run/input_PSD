@@ -1,11 +1,11 @@
 STRUCTURE
-u6				Structure string. Several available options are given at the end of this file
-n/a				If Structure = 'ud': the full path to the xyz file you want to use, e.g. "../structures_xyz/test.xyz"
-n/a				If Structure = 'ud': the name of the structure (for output purposes only)
+u6                     									Structure string. Several available options are given at the end of this file
+'/some/path/to/a/file.xyz'						                If Structure = 'ud': the full path to the xyz file you want to use, e.g. "../structures_xyz/test.xyz"
+'aNiceName'  		                     						If Structure = 'ud': the name of the structure (for output purposes only)
 
 CALCULATION PARAMETERS
-100				Number of starting points. 	Recommended > 100
-10000				Number of Monte-Carlo steps. 	Recommended > 10000
+200				Number of starting points. 	Recommended > 100
+50000				Number of Monte-Carlo steps. 	Recommended > 10000
 
 
 

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Author:  K. Trepte
-# Date: 02.10.2019 
+# Date: 08.01.2020
 porE_dir="$(dirname "$(pwd)")"
 
 ## Execute porE 
@@ -10,7 +10,12 @@ porE_dir="$(dirname "$(pwd)")"
 
 ## Execute porE_subgrid
 ## Functionalities: OSA, GPA with sub-grid division (much faster)
-$porE_dir/src/porE_subgrid
+#$porE_dir/src/porE_subgrid
+
+## Execute porE_window
+## Functionalities: OSA, GPA with sub-grid division (much faster), pore window evaluation (needs an output_PSD file as input)
+## Usage: First, generate an output_PSD file using the get_PSD exectuable. Then, you can use this executable to evaluate the pore windows
+$porE_dir/src/porE_window
 
 ## Execute get_PSD
 ## Functionalities: Calculate the PSD with any desired accuracy

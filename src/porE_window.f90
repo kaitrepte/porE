@@ -5,13 +5,20 @@ implicit none
 ! POROsity Whole Analysis Tool (porowat)
 ! Author Kai Trepte
 ! Version January 23, 2019
-! Version August 23, 2019
+! Version April 29th, 2019    -- implement sub-grid division
+! Version August 23rd, 2019   -- add many more elements, vdW and covalent radii
+! Version September 4th, 2019 -- read initial information from input file
+! Version October 15th, 2019  -- start thinking about pore windows and how to get them -- 
+!         November 21th, 2019 -- pore windows: read pore centers and sizes from PSD analysis. 
+!                                Then, evaluate vectors between the centers. Minimum distance to 
+!                                the vdW surface of these vectors is the pore window!
+!         January 08th, 2020  -- Start final implementation of pore windows, include in evaluation
 
 character(2)                        :: struct
 character(len=100)                  :: name_struct
 integer                             :: eval_method
 
-integer                             :: number_of_atoms
+integer(8)                          :: number_of_atoms
 real(8)                             :: cell_a(3)           ! array for the cell vector in the a direction. Vector.
 real(8)                             :: cell_b(3)           ! array for the cell vector in the b direction. Vector.
 real(8)                             :: cell_c(3)           ! array for the cell vector in the c direction. Vector.
@@ -28,11 +35,11 @@ real(8), parameter                  ::  u = 1.660539               ! define atom
 real(8)     :: sub_overlap                                               ! overlap volume as evaluated by the subroutine
 real(8)     :: V_occupied, V_overlap, m_total, distance_ab, new_distance ! volume occupied by vdw spheres, total overlap volume, total mass of unit cell, distance between two atoms, distance evaluated due to PBC
 real(8)     :: r_vdw1, r_vdw2                                            ! vdW radii of two species. Needed for evaluation (makes it easier)
-integer     :: a,b,c,d,e,f,n,t                                           ! loop parameter
+integer     :: a,b,c,d,e,f,n,t,v,w,x                                     ! loop parameter
 
 ! Evaluation method 2
 real(8)     :: probe_r, grid_point_x, grid_point_y, grid_point_z, factor ! probe radius, grid point coordinates for any specific grid point (x,y,z), grid density (grid points per A^3)
-integer     :: grid_a, grid_b, grid_c, aa, bb, cc, running_n             ! number of grid points along cell vectors (a,b,c), loop variables to write grid points, running variable for the loop (assign grid_points correctly)
+integer(8)  :: grid_a, grid_b, grid_c, aa, bb, cc, running_n             ! number of grid points along cell vectors (a,b,c), loop variables to write grid points, running variable for the loop (assign grid_points correctly)
 real(8)     :: g                                                         ! if grid size is suppossed to be determined automatically -> use real, not integer
 integer     :: check_grid, n_coords                                      ! loop counter for the actual evaluation (grid) and for the coordinates (coords)
 integer     :: counter_access, counter_check_acc, counter_noOccu         ! counter to evaluate whether a point is accessible, check accessible, or NOT occupied
@@ -40,13 +47,33 @@ integer     :: n_access, n_occ, n_check, n_check_acc, n_noOccu           ! count
 integer     :: pbc_a, pbc_b, pbc_c                                       ! loop variables for the check of PBCs (grid point - atom)
 real(8)     :: dist_point_atom, new_point_atom, dist_point_point         ! distance from a grid point to an atom, distance evaluated due to PBC, distance between grid points
 real(8)     :: V_void, V_accessible                                      ! void and accessible volume
-real(8)     :: grid_per_A_x, grid_per_A_y, grid_per_A_z                  ! grid per angstrom
+real(8)     :: grid_per_A_x, grid_per_A_y, grid_per_A_z                  ! grid per angstrom, in the cell vector directions (x == a, y == b, z == c)
 real(8), allocatable, dimension(3)  :: grid_points(:,:)                  ! array for the grid_points. Matrix.
-!real(8), allocatable, dimension(3)  :: list_occupi(:,:)                  ! empty list to save all the occupied points, thus the ones which are inside atoms
 real(8), allocatable, dimension(3)  :: list_noOccu(:,:)                  ! empty list for all NOT occupied points
 real(8), allocatable, dimension(3)  :: list_access(:,:)                  ! empty list for all accessible points. Initial evaluation
 real(8), allocatable, dimension(3)  :: list_check_acc(:,:)               ! empty list for the check of accessibility. Will be smaller than list_access and thus easier/faster to evaluate
+!! For pore windows
+real(8), allocatable                :: pore_center(:,:)                  ! empty list for the coordinates of the pore centers
+real(8), allocatable                :: pore_size(:)                      ! empty list for the pore sizes
+real(8), allocatable                :: pore_windows(:)                   ! empty list for the pore windows
+integer     :: counter_1, counter_2, n_pore, ios, n_points               ! counter for evaluation of pore window/ pore size, counter for amount of pore sizes, iostat for reading, number of points
+real(8)                             :: junk2                             ! junk for reading
+real(8)                             :: dist1, dist2                      ! distances for evaluation
+real(8)                             :: tmp_vec(3)                        ! temporary vector          
 !real(8), allocatable, dimension(3)  :: list_all_access(:,:)              ! empty list for all accessible points. Final evaluation (take points inside the probe radius sphere into account)
+
+!
+! IDEA: Subdivide grid into sub-grids per atom. Then, only evaluate the necessary grid points.
+! Thus, exclude grid points which are very far away. 
+! - Introduce new array, dimensions are number_of_atoms AND a specific number according to the specific atom (needs to be counted, need two loops over the grid points. Should still be cheap)
+! - When looping, choose grid point for an atom if it is close to this grid point -> store grid point for the sub-grid for the atom 
+!
+! For sub-grid generation, one needs a variable array which is allocatable
+type global_array
+  integer              :: sub_grid_points                       ! dimensions: n_atoms
+  real(8), allocatable :: sub_grids(:,:)                        ! dimensions: n_atoms, sub_grid_points(atom), 3
+end type global_array
+type(global_array), dimension(:), allocatable :: sub_division
 
 ! Some arrays for easier handling of vdW radii
 character(2)              :: all_pse(25)                        ! all currently available elements
@@ -73,9 +100,13 @@ all_vdW_radii = (/ 1.20D0, 1.40D0, 1.82D0, 1.53D0, 1.92D0, 1.70D0, 1.55D0, 1.52D
 ! 2. evaluation: place grid inside the unit cell, count each point which is in an occupied region, compare to total points -> P = N_occ/N_tot   !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!!!!!!!!!!!!!!!!!!
-! Initialization !
-!!!!!!!!!!!!!!!!!!
+!!!! IDEA !!!
+! For pore windows:
+! get radii for all grid points, i.e. largest distance to vdW surface of the atoms
+! with that, determine pore sizes. Use vectors between the pores -> analyze minimum distance to surface -> pore window
+! Once evaluated, compare to probe radius -> if window < r_probe ==> pore becomes inaccessible!
+!!!!
+
 !!!!!!!!!!!!!!!!!!
 ! Initialization !
 !!!!!!!!!!!!!!!!!!
@@ -188,16 +219,17 @@ close(16)                                       ! close input file
 ! Store elements and coordinates
 !
 allocate(elements(number_of_atoms))                                                         ! allocate (number_of_atoms) fields for elements. There is one elements each.
-allocate(coordinates(number_of_atoms,3))                                                    ! allocate (number_of_atoms) fields for coordinates. There are 3 coordinates per entry.
+allocate(coordinates(number_of_atoms,3))                                                    ! allocate (number_of_atoms) fields for coordinates. There are 3 coordinates per entry. 
 allocate(tmp_pse(number_of_atoms))                                                          ! allocate tmp_pse, dummy
+tmp_pse(:) = 'X'
 no_elements = 0                                                                             ! number of different atoms
 
-do n = 1,number_of_atoms                                                                      ! go through all atoms
+do n = 1,number_of_atoms                                                                      ! go through all atoms 
   read(unit=15,fmt=*) elements(n), coordinates(n,1:3)                                         ! storing element and coordinates
   !
   ! Determine what kind of different atoms there are -> use later for the evaluation of the vdW radii
   !
-  c = 0                                                                                       ! counter for each entry
+  c = 0                                                                                       ! counter for each entry 
   do a = 1, number_of_atoms
     if (elements(n) == tmp_pse(a)) then                                                       ! if the elements is already in the tmp_pse list -> ignore
       c = 1
@@ -225,7 +257,7 @@ end do
 deallocate(tmp_pse)
 !
 ! Output file
-!
+! 
 open(unit=19,file='output_porosity',status='unknown',action='write')
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -242,14 +274,17 @@ V_total = (cell_a(1)*cell_b(2)*cell_c(3) + cell_a(2)*cell_b(3)*cell_c(1) + cell_
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 if (eval_method == 1) then
   call cpu_time(start)                                                                         ! starting time for the evaluation
-! Initialization
+  !
+  ! Initialization
+  !
   V_occupied  = 0.0                                                                            ! initial value for the occupied volume
   m_total     = 0.0                                                                            ! and for the total mass
   do t = 1, number_of_atoms                                                                    ! go through all atoms and evaluate the total occupied volume and the total mass
     call eval_vol_mass(elements(t),V_occupied,m_total)
   end do
-
-! Calculate overlap volume. Include PBCs
+  !
+  ! Calculate overlap volume. Include PBCs
+  !
   V_overlap = 0.0                                                                               ! initial value for the overlap volume
   do a = 1,number_of_atoms-1                                                                    ! go through all pairs of atoms (first loop til number_of_atoms - 1)
     do b = a+1,number_of_atoms                                                                  ! second loop from next atom til the end. Evaluate overlap. Consider periodic boundary conditions (PBCs)! No double counting
@@ -309,6 +344,7 @@ if (eval_method == 1) then
   close(19)
 
 666 format(I5.0,1X,A,I5.0,1X,A,A,F10.5,A,F10.5,A)
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! Evaluation method 2 : Uniform grid. Evaluate each point as to whether it is occupied, void !!
@@ -316,32 +352,37 @@ if (eval_method == 1) then
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-else if (eval_method == 2) then                                                                ! choosing second evaluation method
-  call cpu_time(start)                                                                         ! initialize time measurement
+else if (eval_method == 2) then                                                                ! if GPA is chosen
+!  write(6,fmt='(A,2X,I15,A)') 'The calculation should take roughly ',&
+!                               number_of_atoms*grid_a*grid_b*grid_c/(10**6),' s'               ! only for GPA_subgrid. 
 
-! Evaluate the total mass (for later evaluation)
+  call cpu_time(start)                                                                         ! initialize time measurement
+  !
+  ! Evaluate the total mass (for later evaluation)
+  !
   V_occupied  = 0.0                                                                            ! Dummy value. Necessary to use subroutine
   m_total     = 0.0                                                                            ! initial value for the total mass
   do t = 1,number_of_atoms                                                                     ! go through all atoms and evaluate the total mass
     call eval_vol_mass(elements(t),V_occupied,m_total)
   end do
-
-! allocate all lists. Use maximum grid points for each list, as it is not clear how much is needed
+  !
+  ! allocate all lists. Use maximum grid points for each list, as it is not clear how much is needed
+  !
   allocate(grid_points(grid_a*grid_b*grid_c,3))                                                ! allocate (grid_size) fields for the grid points. There are 3 coordinates per entry.
   allocate(list_access(grid_a*grid_b*grid_c,3))                                                ! allocate (grid_size) fields for the accessible list. There are 3 coordinates per entry.
   allocate(list_check_acc(grid_a*grid_b*grid_c,3))                                             ! allocate (grid_size) fields for the 'check accessibility' list. There are 3 coordinates per entry.
   allocate(list_noOccu(grid_a*grid_b*grid_c,3))                                                ! allocate (grid_size) fields for the NOT occupied list. There are 3 coordinates per entry.
-! use these to assign at which point of the respective lists something shall be stored
+  !
+  ! use these to assign at which point of the respective lists something shall be stored
+  !
   n_access = 0
   n_occ = 0
   n_noOccu = 0
   n_check_acc = 0
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!! 1st looping through the grid points !!!!!!!!!!!!!
-! Get initial list of occupied points and accessible points !
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Write the array of the grid points
+  !
+  !
+  ! Write the array of the grid points
+  !
   running_n = 0                                                                                ! initialize running variable (for the assignment of the grid_points array)
   do aa = 1,grid_a                                                                             ! go through the grid points and write grid points according to the cell vectors
     do bb = 1,grid_b
@@ -351,9 +392,9 @@ else if (eval_method == 2) then                                                 
         grid_point_y = cell_a(2)/grid_a*(aa-1) + cell_b(2)/grid_b*(bb-1) + cell_c(2)/grid_c*(cc-1) ! y coordinate
         grid_point_z = cell_a(3)/grid_a*(aa-1) + cell_b(3)/grid_b*(bb-1) + cell_c(3)/grid_c*(cc-1) ! z coordinate
         grid_points(running_n,:) = (/ grid_point_x,grid_point_y,grid_point_z /)                    ! assign the respective values to the array
-
-
-! Include evaluation of Occupied or Accessible here, in the grid generation -> no need to go through the entire grid again!
+        !
+        ! Include evaluation of Occupied or Accessible here, in the grid generation -> no need to go through the entire grid again!
+        !
         counter_access = 0                                                                         ! initialize variable for each grid point
         counter_noOccu = 0                                                                         ! initialize variable for each grid point
         loop14: do n_coords = 1,number_of_atoms                                                    ! go through all atoms and evaluate grid points
@@ -369,9 +410,9 @@ else if (eval_method == 2) then                                                 
               end do
             end do
           end do
-  !
-  ! Evaluate whether point is occupied or accessible
-  !
+          !
+          ! Evaluate whether point is occupied or accessible
+          !
           loop66: do n = 1, no_elements
             if (elements(n_coords) == pse(n)) then
               if (dist_point_atom <= vdW_radii(n)) then                            ! if the grid point is inside any atom (distance is smaller than the vdW radius of the respective atom)
@@ -388,12 +429,14 @@ else if (eval_method == 2) then                                                 
             end if
           end do loop66
         end do loop14
-
+        !
+        !
+        !
         if (counter_access == number_of_atoms) then                                                ! if the counter for the accessible points increased for all atoms -> add to list
           n_access = n_access + 1                                                                  ! increase assignment counter for the accessible list
           list_access(n_access,:) = grid_points(running_n,:)
         end if
-        if (counter_noOccu == number_of_atoms .and. counter_access .ne. number_of_atoms) then      ! if the counter for the 'NOT occupied' points increased for all atoms -> add to list if it is not immediately accessible
+        if ((counter_noOccu == number_of_atoms) .and. (counter_access .ne. number_of_atoms)) then  ! if the counter for the 'NOT occupied' points increased for all atoms -> add to list
           n_noOccu = n_noOccu + 1                                                                  ! increase assignment counter for the list
           list_noOccu(n_noOccu,:) = grid_points(running_n,:)
         end if
@@ -401,29 +444,302 @@ else if (eval_method == 2) then                                                 
     end do
   end do
 
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !!!!!!! PORE WINDOW EVALUATION !!!!!!
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ! 
+  ! Read pore sizes from output_PSD
+  ! Go through the file. See how many pores there are.  
+  ! Allocate pore_center and pore_size accordingly
+  !
+  n_pore = 0
+  open(unit=20,file='output_PSD',status='old',action='read')  
+  do a = 1, 100  ! no more than 100 lines in the file.
+    read(20,*,iostat=ios) junk2
+    !
+    ! reading a floating point number was successful
+    !
+    if (ios==0) then
+      !
+      ! increase counter for pores
+      !
+      n_pore = n_pore + 1
+    end if
+  end do
+  !
+  ! Go back to the top of the file
+  !
+  rewind(20)
+  !
+  ! allocate arrays
+  !
+  allocate(pore_size(n_pore))
+  allocate(pore_center(n_pore,3))
+  if (n_pore == 1) then
+    allocate(pore_windows(1)) ! for later
+  else
+    allocate(pore_windows(n_pore*(n_pore-1))) ! for later
+  end if
+  !
+  ! Go through the file again
+  !
+  n_pore = 0
+  do a = 1, 100
+    read(20,*,iostat=ios) junk2                          
+    !
+    ! reading a floating point number was successful
+    !
+    if (ios==0) then
+      !
+      ! go up one line
+      !
+      backspace(20)
+      !
+      ! increase counter for pores
+      !
+      n_pore = n_pore + 1
+      !
+      ! read pore size and pore center
+      !
+      read(20,*) pore_size(n_pore), junk2, pore_center(n_pore,:)
+      !
+      ! store the radius, not the diameter
+      !
+      pore_size(n_pore) = pore_size(n_pore)/2.0D0
+    end if
+  end do
+  close(20)
+
+  write(6,*) 'Pore  Pore radius  Pore diameter       coordinates of pore center'
+  write(19,*) 'Pore  Pore radius  Pore diameter       coordinates of pore center'
+  do a = 1, n_pore
+    write(6,fmt='(I5,F13.4,F15.4,7X,3F11.6)') a, pore_size(a), pore_size(a)*2.0D0, pore_center(a,:)
+    write(19,fmt='(I5,F13.4,F15.4,7X,3F11.6)') a, pore_size(a), pore_size(a)*2.0D0, pore_center(a,:)
+  end do
+
+  !
+  ! initialize all with 5000.0
+  ! 
+  pore_windows(:) = 5000.0D0
+  counter_1 = 0
+  !
+  ! If only one pore exists: analyze pore window with periodic image of that pore center 
+  !
+  if (n_pore == 1) then
+    dist1 = 1000.0D0
+    do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
+      do d = 1,3                                                                             ! here for cell_b
+        do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
+          tmp_vec(:) = pore_center(1,:) - (pore_center(1,:) + (c-2)*cell_a(:) + (d-2)*cell_b(:) + (e-2)*cell_c(:))
+          if ((sqrt(sum(tmp_vec(:)**2)) < dist1).and.(sqrt(sum(tmp_vec(:)**2)).ne.0.0D0)) then
+            !
+            ! store new minimum distance and the corresponding values for the cell vectors (periodicity)
+            !
+            dist1 = sqrt(sum(tmp_vec(:)**2))
+            v = c
+            w = d
+            x = e
+          end if
+        end do
+      end do
+    end do    
+    !
+    ! Evaluate pore window
+    ! If it is zero -> disregard (pores are not actually adjacent to each other), thus the vector goes through some atoms
+    !   can we exclude pores like that before? Would be good
+    !
+    ! Move along the connecting vector between pore a and pore b. Analyze the distance to the vdW surface. Minimum distance is the
+    ! pore window!
+    !
+    ! Use length of vector between pores to determine number of points to evaluate. e.g. 10 points/A
+    ! 
+    n_points = int(dist1*10.0D0)  ! 10 points/A to analyze. Should be enough
+    dist1 = 100000.0D0            ! initial value for each pore 
+    do f = 1, n_points            ! steps along the vector
+      !
+      ! point to evaluate. Start at pore a. Move step by step further towards pore b.
+      !
+      tmp_vec(:) = pore_center(1,:) + real(f/real(n_points,8),8)*&
+      &(pore_center(1,:) - (pore_center(1,:) + (v-2)*cell_a(:) + (w-2)*cell_b(:) + (x-2)*cell_c(:)))
+      !
+      ! go through all atoms
+      !
+      do n_coords = 1, number_of_atoms
+        !
+        ! For vdW radii
+        !
+        loop322: do n = 1, no_elements
+          if (elements(n_coords) == pse(n)) then
+            !
+            ! evaluate minimum distance to vdW surface
+            !
+            dist_point_atom = sqrt(sum((tmp_vec(:) - coordinates(n_coords,:))**2)) - vdW_radii(n)    ! initial distance between grid point and atom
+            do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
+              do d = 1,3                                                                             ! here for cell_b
+                do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
+                  new_point_atom = sqrt(sum((tmp_vec(:) - coordinates(n_coords,:) + &
+                                      (c-2)*cell_a(:) + (d-2)*cell_b(:) + (e-2)*cell_c(:))**2)) - vdW_radii(n)      ! evaluate new distance due to PBC
+                  if (new_point_atom < dist_point_atom) then                                         ! if distance is smaller -> use this one !
+                    dist_point_atom = new_point_atom
+                  end if
+                end do
+              end do
+            end do
+            exit loop322
+          end if
+        end do loop322       
+        !
+        ! if distance is smaller than previous distance
+        !
+        if (dist_point_atom < dist1) then
+          dist1 = dist_point_atom
+        end if
+      end do
+    end do
+    !
+    ! If dist1 > 0 -> no evaluation here
+    !
+    if (dist1 > 0.0D0) then
+      write(6,fmt='(A,F10.5,A)') 'Pore window between pore   1 and pore   1 is ',dist1,' A'
+      write(19,fmt='(A,F10.5,A)') 'Pore window between pore   1 and pore   1 is ',dist1,' A'
+      counter_1 = counter_1 + 1
+      pore_windows(counter_1) = dist1
+    end if
+
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!
+  ! Pore window evaluation
+  !
+  ! Use the pore centers as a starting point. Construct vectors between the pore sizes (periodically)
+  ! along these vectors, analyze the minimum distance the the vdW surface. 
+  ! the smallest value is the pore window!
+  ! Use only the vector corresponding to the shortestdistance between two pore centers (take pbcs into account) -> that should do!
+  !
+  else
+    do a = 1, n_pore-1
+      do b = a+1, n_pore
+        dist1 = 1000.0D0 
+        do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
+          do d = 1,3                                                                             ! here for cell_b
+            do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
+              tmp_vec(:) = pore_center(b,:) - (pore_center(a,:) + (c-2)*cell_a(:) + (d-2)*cell_b(:) + (e-2)*cell_c(:))
+              if (sqrt(sum(tmp_vec(:)**2)) < dist1) then
+                !
+                ! store new minimum distance and the corresponding values for the cell vectors (periodicity)
+                !
+                dist1 = sqrt(sum(tmp_vec(:)**2))
+                v = c
+                w = d
+                x = e
+              end if
+            end do
+          end do
+        end do
+        !
+        ! Evaluate pore window
+        ! If it is zero -> disregard (pores are not actually adjacent to each other), thus the vector goes through some atoms
+        !   can we exclude pores like that before? Would be good
+        !
+        !
+        ! Move along the connecting vector between pore a and pore b. Analyze the distance to the vdW surface. Minimum distance is the
+        ! pore window!
+        !
+        ! Use length of vector between pores to determine number of points to evaluate. e.g. 10 points/A
+        ! 
+        n_points = int(dist1*10.0D0)  ! 10 points/A to analyze. Should be enough
+        dist1 = 100000.0D0            ! initial value for each pore 
+        do f = 1, n_points            ! steps along the vector
+          !
+          ! point to evaluate. Start at pore a. Move step by step further towards pore b.
+          !
+          tmp_vec(:) = pore_center(a,:) + real(f/real(n_points,8),8)*&
+          &(pore_center(b,:) - (pore_center(a,:) + (v-2)*cell_a(:) + (w-2)*cell_b(:) + (x-2)*cell_c(:)))
+          !
+          ! go through all atoms
+          !
+          do n_coords = 1, number_of_atoms
+            !
+            ! For vdW radii
+            !
+            loop321: do n = 1, no_elements
+              if (elements(n_coords) == pse(n)) then
+                !
+                ! evaluate minimum distance to vdW surface
+                !
+                dist_point_atom = sqrt(sum((tmp_vec(:) - coordinates(n_coords,:))**2)) - vdW_radii(n)    ! initial distance between grid point and atom
+                do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
+                  do d = 1,3                                                                             ! here for cell_b
+                    do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
+                      new_point_atom = sqrt(sum((tmp_vec(:) - coordinates(n_coords,:) + &
+                                          (c-2)*cell_a(:) + (d-2)*cell_b(:) + (e-2)*cell_c(:))**2)) - vdW_radii(n)      ! evaluate new distance due to PBC
+                      if (new_point_atom < dist_point_atom) then                                         ! if distance is smaller -> use this one !
+                        dist_point_atom = new_point_atom
+                      end if
+                    end do
+                  end do
+                end do
+                exit loop321
+              end if
+            end do loop321         
+            !
+            ! if distance is smaller than previous distance
+            !
+            if (dist_point_atom < dist1) then
+              dist1 = dist_point_atom
+            end if
+          end do
+        end do
+        !
+        ! If dist1 > 0 -> no evaluation here
+        !
+        if (dist1 > 0.0D0) then
+          write(6,fmt='(A,I3,A,I3,A,F10.5,A)') 'Pore window between pore ',a,' and pore ',b,' is ',dist1,' A'
+          write(19,fmt='(A,I3,A,I3,A,F10.5,A)') 'Pore window between pore ',a,' and pore ',b,' is ',dist1,' A'
+          counter_1 = counter_1 + 1
+          pore_windows(counter_1) = dist1
+        end if
+      end do
+    end do
+  end if
+  !
+  ! END pore windows
+  !
 
 
 
 
 
+  !
+  ! for subdivision of the grid
+  !
+  allocate(sub_division(number_of_atoms))
+  !
+  ! Intitialize all point as zero
+  !
+  sub_division(:)%sub_grid_points = 0
+  !
+  ! first loop -> count points. Then allocate sub_grids and write points into them
+  !
 
-
-
-
-
-
-
-! This can probably be simplified
-! Get all points to be double check for accessibility -> don't go through all accessible points again!
-! Get a factor to determine which points shall be taken -> the denser the grid, the smaller the additional distance (epsilon)
+  !
+  ! Get all points to be double check for accessibility -> don't go through all N_check_acc points!
+  ! Get a factor to determine which points shall be taken -> the denser the grid, the smaller the additional distance (epsilon)
+  !
   grid_per_A_x = real(grid_a)/sqrt(cell_a(1)**2 + cell_a(2)**2 + cell_a(3)**2)
   grid_per_A_y = real(grid_b)/sqrt(cell_b(1)**2 + cell_b(2)**2 + cell_b(3)**2)
   grid_per_A_z = real(grid_c)/sqrt(cell_c(1)**2 + cell_c(2)**2 + cell_c(3)**2)
-  factor = 1.0D0 + 1.0D0/((grid_per_A_x+grid_per_A_y+grid_per_A_z)/3.0D0)                      ! divide by average grid points per A
+  factor = 1.0 + 1.0/((grid_per_A_x+grid_per_A_y+grid_per_A_z)/3.0)                            ! divide by average grid points per A
 
+  !
+  ! Get number of sub-grid points per atom
+  !
+  !
+  ! HERE: Idea -> include the firstloop here into the very first loop over the grid points -> avoid looping over all accessible points twice
+  !! I.e. do the counting part in the very first loop. Then, in the second loop write grid points
+  !
   do n = 1, n_access                                                                           ! go through all accessible points
-    loop3: do n_coords = 1,number_of_atoms                                                     ! go through all atoms and evaluate grid points
-      dist_point_atom = sqrt(sum((list_access(n,:) - coordinates(n_coords,:))**2))             ! initial distance between grid point and atom
+    loop13: do n_coords = 1,number_of_atoms                                                    ! go through all atoms and evaluate grid points
+      dist_point_atom = sqrt(sum((list_access(n,:) - coordinates(n_coords,:))**2))             ! initial distance
       do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
         do d = 1,3                                                                             ! here for cell_b
           do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
@@ -439,53 +755,94 @@ else if (eval_method == 2) then                                                 
       loop67: do a = 1, no_elements
         if (elements(n_coords) == pse(a)) then
           if (dist_point_atom < vdW_radii(a) + probe_r*factor) then                             ! if grid point is outside an atom + the probe radius, but close by -> get this point
-            n_check_acc = n_check_acc + 1
-            list_check_acc(n_check_acc,:) = list_access(n,:)                                       ! add this point to the check_acc list. Stop looping
-            exit loop3
+            sub_division(n_coords)%sub_grid_points = sub_division(n_coords)%sub_grid_points + 1 ! to check accessibility later on
+            exit loop67
           end if                                                                                ! take only points in between vdW+probe_r AND vdw+probe_r*factor
-          exit loop67
         end if
       end do loop67
-    end do loop3
+    end do loop13
   end do
 
+  !
+  ! Allocate the respective number of grid points for each sub grid
+  !
+  do a = 1, number_of_atoms
+    allocate(sub_division(a)%sub_grids(sub_division(a)%sub_grid_points,3))
+  end do
+  !
+  ! Reset number to count once more in the next loop
+  !
+  sub_division(:)%sub_grid_points = 0
+  !
+  ! Write sub-grid points per atom
+  !
+  do n = 1, n_access                                                                           ! go through all accessible points
+   loop15: do n_coords = 1,number_of_atoms                                                     ! go through all atoms and evaluate grid points
+      dist_point_atom = sqrt(sum((list_access(n,:) - coordinates(n_coords,:))**2))             ! initial distance
+      do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
+        do d = 1,3                                                                             ! here for cell_b
+          do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
+            new_point_atom = sqrt(sum((list_access(n,:) - coordinates(n_coords,:) + &
+                                (c-2)*cell_a(:) + (d-2)*cell_b(:) + (e-2)*cell_c(:))**2))      ! evaluate new distance due to PBC
+            if (new_point_atom < dist_point_atom) then                                         ! if distance is smaller -> use this one !
+              dist_point_atom = new_point_atom
+            end if
+          end do
+        end do
+      end do
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      loop68: do a = 1, no_elements
+        if (elements(n_coords) == pse(a)) then
+          if (dist_point_atom < vdW_radii(a) + probe_r*factor) then                             ! if grid point is outside an atom + the probe radius, but close by -> get this point
+            sub_division(n_coords)%sub_grid_points = sub_division(n_coords)%sub_grid_points + 1
+            sub_division(n_coords)%sub_grids(sub_division(n_coords)%sub_grid_points,:) = list_access(n,:)
+            exit loop68
+          end if                                                                                ! take only points in between vdW+probe_r AND vdw+probe_r*factor
+        end if
+      end do loop68
+    end do loop15
+  end do
+  !
+  ! Write to screen
+  !
   write(6,*) ' '
-  write(6,*) 'N_acc after 1st loop      ', n_access
-  write(6,*) 'N_check_acc after 1st loop', n_check_acc
+  write(6,*) 'N_acc after 1st loop                ',n_access
+  write(6,*) '  Total number of unoccupied points ',n_noOccu
+  write(6,*) '  Sum of sub-grid points            ',sum(sub_division(:)%sub_grid_points)
+  !
+  ! Write to file
+  !
   write(19,*) ' '
-  write(19,*) 'N_acc after 1st loop      ', n_access
-  write(19,*) 'N_check_acc after 1st loop', n_check_acc
+  write(19,*) 'N_acc after 1st loop                ',n_access
+  write(19,*) '  Total number of unoccupied points ',n_noOccu
+  write(19,*) '  Sum of sub-grid points            ',sum(sub_division(:)%sub_grid_points)
+
+! HERE -> restructure like
+! 1. loop: atoms
+! 2. loop: corresponding grid points per atoms
+! 3. loop: atoms => make sure that everything is sampled correctly!! evaluate grid points with repsect to all atoms !
+
+! IDEA:
+! - loop over noOccu points
+! - check distance of the noOccu point to any atoms (thus, only loop over atoms here!)
+! - if distance is within a certain distance (some cutoff radius is needed here)
+! -> Only evaluate the grid points corresponding to these atoms, and NOT all n_check_acc points !!!!!
+! This should be much more efficient, and much faster (if done correctly)
+
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!! 2nd looping through the grid points !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Identify last accessible points (the ones which are inside the probe radius sphere) !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  do check_grid = 1, n_noOccu                                                                ! go through all grid points which are NOT occupied
+
+  do a = 1, n_noOccu
+
     loop1: do n_coords = 1,number_of_atoms                                                   ! go through all atoms and evaluate grid points
-      dist_point_atom = sqrt(sum((list_noOccu(check_grid,:) - coordinates(n_coords,:))**2))  ! initial distance between grid point and atom
+      dist_point_atom = sqrt(sum((list_noOccu(a,:) - coordinates(n_coords,:))**2))           ! initial distance between grid point and atom
       do c = 1,3                                                                             ! PBCs in all direction. Here for cell_a (-1,0,+1)
         do d = 1,3                                                                           ! here for cell_b
           do e = 1,3                                                                         ! here for cell_c. Taking all surrounding unit cells into account
-            new_point_atom = sqrt(sum((list_noOccu(check_grid,:) - coordinates(n_coords,:) + &
+            new_point_atom = sqrt(sum((list_noOccu(a,:) - coordinates(n_coords,:) + &
                                 (c-2)*cell_a(:) + (d-2)*cell_b(:) + (e-2)*cell_c(:))**2))    ! evaluate new distance due to PBC
             if (new_point_atom < dist_point_atom) then                                       ! if distance is smaller -> use this one !
               dist_point_atom = new_point_atom
@@ -493,31 +850,31 @@ else if (eval_method == 2) then                                                 
           end do
         end do
       end do
-    
 
-      loop68: do n = 1, no_elements
+      ! Get the points which are initially unoccupied, but are accessible
+      loop69: do n = 1, no_elements
         if (elements(n_coords) == pse(n)) then
           if (dist_point_atom < vdW_radii(n) + probe_r) then                                ! If grid point is outside an atom (see last if statement), but within a length of the probe radius
-            do f = 1, n_check_acc                                                           ! Go through the 'check accessibility' points (which have been determined before)
-              dist_point_point = sqrt(sum((list_noOccu(check_grid,:) - list_check_acc(f,:))**2))  ! determine the distance to any accessible point
+            do f = 1, sub_division(n_coords)%sub_grid_points                                ! Go through the 'check accessibility' points (which have been determined before)
+              dist_point_point = sqrt(sum((sub_division(n_coords)%sub_grids(f,:) - &
+                                           list_noOccu(a,:))**2))                           ! determine the distance to any accessible point
               if (dist_point_point < probe_r) then                                          ! if the distance to any accessible point is smaller than the probe radius -> NEW ACCESSIBLE POINT
                 n_access = n_access + 1                                                     ! increase accessible counter
                 exit loop1                                                                  ! Stop looping once this is confirmed (i.e. stop looping over the atoms)
               end if
             end do
-            exit loop68
+            exit loop69
           end if
         end if
-      end do loop68
-    end do loop1 
+      end do loop69
+    end do loop1                                                                             ! end do atoms
   end do                                                                                     ! end do full grid
 
-  write(6,*) 'N_acc after 2nd loop      ', n_access
-  write(19,*) 'N_acc after 2nd loop      ', n_access
-
- !
- ! Write to screen
- !
+  write(6,*) 'N_acc after 2nd loop                ', n_access
+  write(19,*) 'N_acc after 2nd loop                ', n_access
+  !
+  ! Write to screen
+  !
   write(6,*) ' '
   write(6,*) '#######################################################################################################'
   write(6,*) '###############################################  OUTPUT ###############################################'
@@ -529,18 +886,40 @@ else if (eval_method == 2) then                                                 
               ' grid points per A^3, with ',grid_per_A_x,' x ',grid_per_A_y,' x ',grid_per_A_z,' grid points per A'                           ! (grid_a*grid_b*grid_c/V_total)**(1./3.)
   write(6,fmt='(1X a,I15)') 'Points OCCUPIED:             ',n_occ
   write(6,fmt='(1X a,I15)') 'Points NOT OCCUPIED (void):  ',grid_a*grid_b*grid_c - n_occ
-  write(6,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
+  !
+  ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
+  !
+  if (probe_r > minval(pore_windows)) then
+    write(6,fmt='(1X a,I15)') 'Points IN-ACCESSIBLE:        ',n_access
+  else
+    write(6,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
+  end if
   write(6,fmt='(1X a,7X f7.3,1X a)') 'Probe radius:                ',probe_r,'A'
+  write(6,fmt='(1X a,7X f7.3,1X a)') 'Smallest pore window:        ',minval(pore_windows),'A'
   write(6,*) ' '
  
-  write(6,777) 'Porosity (void):       ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100,'%'
-  write(6,777) 'Porosity (accessible): ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+  write(6,777) 'Porosity (void):          ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100,'%'
+  !
+  ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
+  !
+  if (probe_r > minval(pore_windows)) then
+    write(6,777) 'Porosity (in-accessible): ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+  else
+    write(6,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+  end if
  
   V_void       = (real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*V_total
   V_accessible = real(n_access)/(real(grid_a*grid_b*grid_c))*V_total 
  
-  write(6,777) 'Volume (void):         ',V_void,'A^3'
-  write(6,777) 'Volume (accessible):   ',V_accessible,'A^3'
+  write(6,777) 'Volume (void):            ',V_void,'A^3'
+  !
+  ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
+  !
+  if (probe_r > minval(pore_windows)) then
+    write(6,777) 'Volume (in-accessible):   ',V_accessible,'A^3'
+  else
+    write(6,777) 'Volume (accessible):      ',V_accessible,'A^3'
+  end if
   write(6,*) ' '
  
   write(6,fmt='(1X a,f10.3,a)') 'Unit cell volume (V_total):                   ',V_total,' A^3'
@@ -552,10 +931,9 @@ else if (eval_method == 2) then                                                 
   call cpu_time(finish)
   write(6,*) ' '
   write(6,fmt='(A,2X,F12.3,1X,A)') 'Total CPU time: ',finish-start,'s'
-
-!
-! Write to file
-! 
+  ! 
+  ! Write to file
+  ! 
   write(19,*) ' '
   write(19,*) '#######################################################################################################'
   write(19,*) '###############################################  OUTPUT ###############################################'
@@ -567,38 +945,62 @@ else if (eval_method == 2) then                                                 
               ' grid points per A^3, with ',grid_per_A_x,' x ',grid_per_A_y,' x ',grid_per_A_z,' grid points per A'                           ! (grid_a*grid_b*grid_c/V_total)**(1./3.)
   write(19,fmt='(1X a,I15)') 'Points OCCUPIED:             ',n_occ
   write(19,fmt='(1X a,I15)') 'Points NOT OCCUPIED (void):  ',grid_a*grid_b*grid_c - n_occ
-  write(19,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
+  !
+  ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
+  !
+  if (probe_r > minval(pore_windows)) then
+    write(19,fmt='(1X a,I15)') 'Points IN-ACCESSIBLE:        ',n_access
+  else
+    write(19,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
+  end if
   write(19,fmt='(1X a,7X f7.3,1X a)') 'Probe radius:                ',probe_r,'A'
+  write(19,fmt='(1X a,7X f7.3,1X a)') 'Smallest pore window:        ',minval(pore_windows),'A'
   write(19,*) ' '
- 
-  write(19,777) 'Porosity (void):       ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100,'%'
-  write(19,777) 'Porosity (accessible): ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
- 
+
+  write(19,777) 'Porosity (void):          ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100,'%'
+  !
+  ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
+  !
+  if (probe_r > minval(pore_windows)) then
+    write(19,777) 'Porosity (in-accessible): ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+  else
+    write(19,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+  end if
+
   V_void       = (real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*V_total
-  V_accessible = real(n_access)/(real(grid_a*grid_b*grid_c))*V_total 
- 
-  write(19,777) 'Volume (void):         ',V_void,'A^3'
-  write(19,777) 'Volume (accessible):   ',V_accessible,'A^3'
+  V_accessible = real(n_access)/(real(grid_a*grid_b*grid_c))*V_total
+
+  write(19,777) 'Volume (void):            ',V_void,'A^3'
+  !
+  ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
+  !
+  if (probe_r > minval(pore_windows)) then
+    write(19,777) 'Volume (in-accessible):   ',V_accessible,'A^3'
+  else
+    write(19,777) 'Volume (accessible):      ',V_accessible,'A^3'
+  end if
   write(19,*) ' '
- 
+
   write(19,fmt='(1X a,f10.3,a)') 'Unit cell volume (V_total):                   ',V_total,' A^3'
   write(19,fmt='(1X a,f10.3,a)') 'Mass of unit cell (m_total):                  ',m_total*u,' 10**-27 kg'
   write(19,fmt='(1X a,f10.3,a)') 'Density of the structure (m_total/V_total):   ',m_total*u/V_total*10**3,' kg/m^3'
   write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_void/m_total):         ',V_void/(m_total*u)*10**(0),' cm^3/g'
   write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_acc/m_total):          ',V_accessible/(m_total*u)*10**(0),' cm^3/g'
- 
+
   write(19,*) ' '
   write(19,fmt='(A,2X,F12.3,1X,A)') 'Total CPU time: ',finish-start,'s'
   close(19)
 
-
   deallocate(grid_points)
+!  deallocate(list_occupi)
   deallocate(list_access)
   deallocate(list_check_acc)
   deallocate(list_noOccu)
+  deallocate(sub_division)
 end if           ! global end if (second method ends here)
 
 777 format(1X,A,F20.5,1X,A)
+
 
 deallocate(elements)
 deallocate(coordinates)
@@ -663,13 +1065,13 @@ subroutine eval_overlap(element_a, element_b, dist_ab, sub_over)   ! evaluate th
   real(8), intent(in)      :: dist_ab                              ! distance between the elements
   real(8)                  :: r_vdw1, r_vdw2                       ! vdW radii of the atoms
   real(8), intent(out)     :: sub_over                             ! overlap volume (evaluated within the subroutine 'overlap')
-
+ 
   ! Some arrays for easier handling of vdW and covalent radii
   character(2)           :: pse(25)                               ! Elements
   real(8)                :: vdW_radii(25)                         ! vdW radii
   real(8)                :: cov_radii(25)                         ! cov radii
   integer                :: a, b                                  ! loop variables
-
+  
   pse = (/ 'H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne',&
            'Na', 'Mg', 'Al', 'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca',&
            'Co', 'Ni', 'Cu', 'Zn', 'Zr' /)
@@ -695,316 +1097,3 @@ subroutine eval_overlap(element_a, element_b, dist_ab, sub_over)   ! evaluate th
   end do
   return
 end subroutine eval_overlap
-
-
-subroutine porefinder(structure)      ! subroutine porefinder(structure,all_pore_center,all_pore_radius)
-  character(2)                        :: structure
-  integer                             :: number_of_atoms
-  real(8)                             :: cell_a(3)           ! array for the cell vector in the a direction. Vector.
-  real(8)                             :: cell_b(3)           ! array for the cell vector in the b direction. Vector.
-  real(8)                             :: cell_c(3)           ! array for the cell vector in the c direction. Vector.
-  real(8), allocatable, dimension(3)  :: coordinates(:,:)    ! array for the coordinates. Matrix.
-  character(2), allocatable           :: elements(:)         ! array for the elements. Vector.
-
-  integer                             :: a,b,c,d,e,f,n,t         ! loop parameter
-  real(8)                             :: rand1, rand2, rand3     ! random numbers to get new coordinates
-
-  real(8)                             :: coords1(3), coords2(3)  ! coordinates of point before and after MC step
-  real(8), allocatable                :: all_coords(:,:)         ! keep all coordinates for later usage
-  real(8)                             :: distance1, distance2    ! corresponding minimum distance to any atom
-  real(8)                             :: tmp_dist, vdw           ! temporary distance, vdW radius of the atom
-
-  integer                             :: start_points, cycles    ! number of starting points, number of MC cycles
-  real(8)                             :: stepsize                ! step size for MC steps
-  real(8), allocatable                :: all_distances(:)        ! store all distances (maybe need another list to separate different distances which occur more often.. PSD and stuff)
-  real(8), allocatable                :: all_distances2(:)       ! store all distances, to double check
-
-  real(8)                             :: all_pore_center(10,3)   ! coordinates of the pore centers          ! intent(inout)
-  real(8)                             :: all_pore_radius(10)     ! corresponding radii                      ! intent(inout)
-
-  ! for random seed
-  integer                             :: values(1:8), k
-  integer, dimension(:), allocatable  :: seed
-  real(8)                             :: vv
-  call date_and_time(values=values)
-  call random_seed(size=k)
-  allocate(seed(1:k))
-  seed(:) = values(8)
-  call random_seed(put=seed)
-  ! end for random seed
-
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  ! Read in the xyz coordinates and the cell vectors !
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if (structure == 'do') then                                                                      ! if the initial DUT-8(Ni) open structure is choosen
-    open(unit=15,file='../structures_xyz/dut_8_open.xyz',status='old',action='read')               ! read in the xyz file
-  else if (structure == 'vo') then                                                                 ! if the relaxed DUT-8(Ni) open structure is choosen 
-    open(unit=15,file='../structures_xyz/dut_8_open_vcrelax.xyz',status='old',action='read')       ! read in the xyz file
-  else if (structure == 'dc') then                                                                 ! if the initial DUT-8(Ni) closed structure is choosen
-    open(unit=15,file='../structures_xyz/dut_8_closed.xyz',status='old',action='read')             ! read in the xyz file
-  else if (structure == 'vc') then                                                                 ! if the relaxed DUT-8(Ni) closed structure is choosen
-    open(unit=15,file='../structures_xyz/dut_8_closed_vcrelax.xyz',status='old',action='read')     ! read in the xyz file
-  else if (structure == 'u6') then                                                                 ! if UiO-66 (primitive cell) is choosen
-    open(unit=15,file='../structures_xyz/uio66.xyz',status='old',action='read')                    ! read in the xyz file
-  else if (structure == 'u7') then                                                                 ! if UiO-67 (primitive cell) is choosen
-    open(unit=15,file='../structures_xyz/uio67.xyz',status='old',action='read')                    ! read in the xyz file
-  else if (structure == 'm5') then                                                                 ! if MOF-5 (unit cell) is choosen
-    open(unit=15,file='../structures_xyz/mof5.xyz',status='old',action='read')                     ! read in the xyz file
-  else if (structure == 'ir') then                                                                 ! if IRMOF-10 (unit cell) is choosen
-    open(unit=15,file='../structures_xyz/irmof10.xyz',status='old',action='read')                  ! read in the xyz file
-  else if (structure == 'm2') then                                                                 ! if MOF210 (primitive cell) is choosen
-    open(unit=15,file='../structures_xyz/mof210.xyz',status='old',action='read')                   ! read in the xyz file
-  else if (structure == 'h1') then                                                                 ! if HKUST-1 (primitive cell) is choosen
-    open(unit=15,file='../structures_xyz/hkust1.xyz',status='old',action='read')                   ! read in the xyz file
-  else if (structure == 'be') then                                                                 ! if benzene (arbitrary cell) is choosen
-    open(unit=15,file='../structures_xyz/benzene.xyz',status='old',action='read')                  ! read in the xyz file
-  else if (structure == 'b2') then                                                                 ! if benzene, experimental structure (arbitrary cell) is choosen
-    open(unit=15,file='../structures_xyz/benzene_exp.xyz',status='old',action='read')              ! read in the xyz file
-  else if (structure == 'bc') then                                                                 ! if benzene, only C atoms (arbitrary cell) is choosen
-    open(unit=15,file='../structures_xyz/benzene_Conly.xyz',status='old',action='read')            ! read in the xyz file
-  else if (structure == 'ha') then                                                                 ! if H atom (cubic cell) is choosen
-    open(unit=15,file='../structures_xyz/h_atom.xyz',status='old',action='read')                   ! read in the xyz file
-  end if
-  ! Read in the corresponding values
-  read(unit=15,fmt='(I13.0)') number_of_atoms                     ! first entry is the number of atoms
-  read(unit=15,fmt=*) cell_a(1:3), cell_b(1:3), cell_c(1:3)       ! second entry contains the cell vectors. Read them in individually (makes it easier later on)
-
-  allocate(elements(number_of_atoms))                             ! allocate (number_of_atoms) fields for elements. There is one elements each. As many elements as number_of_atoms (makes sense :))
-  allocate(coordinates(number_of_atoms,3))                        ! allocate (number_of_atoms) fields for coordinates. There are 3 coordinates per entry. 
-  do n = 1,number_of_atoms                                        ! go through all atoms 
-    read(unit=15,fmt=*) elements(n), coordinates(n,1:3)           ! storing element and coordinates
-  end do
-  close(unit=15)
-
-  !! initialize stuff
-  do a = 1, 10
-    all_pore_center(a,:) = (/ real(0.0,8), real(0.0,8), real(0.0,8) /)
-    all_pore_radius(a)   = real(0.0,8)
-  end do
-
-
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !! Monte-Carlo to get pore sizes !!
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  ! Initialize stuff
-  start_points = 100   ! 100
-  cycles       = 10000  ! 10000
-  stepsize     = 0.01
-  allocate(all_distances(start_points))
-  allocate(all_distances2(start_points))
-  allocate(all_coords(start_points,3))
-
-  ! LOOP OVER START POINTS
-  do a = 1, start_points
-    call random_number(rand1)
-    call random_number(rand2)
-    call random_number(rand3)
-    ! make random number between 0.1 and 0.9. Points are inside the unit cell and not at a boundary
-    rand1 = 0.1 + 0.8*rand1
-    rand2 = 0.1 + 0.8*rand2
-    rand3 = 0.1 + 0.8*rand3
-    coords1(:) = cell_a(:)*rand1 + cell_b(:)*rand2 + cell_c(:)*rand3
-
-  ! LOOP MC
-    do b = 1, cycles
-      call random_number(rand1)
-      call random_number(rand2)
-      call random_number(rand3)
-      coords2(1) = coords1(1) + (2*rand1 - 1)*stepsize
-      coords2(2) = coords1(2) + (2*rand2 - 1)*stepsize
-      coords2(3) = coords1(3) + (2*rand3 - 1)*stepsize
-  ! Check distances
-      distance1 = 100.0 ! initial values
-      distance2 = 100.0
-      do n = 1,number_of_atoms                                                                   ! go through all atoms
-        if (elements(n) == 'H')  vdw = 1.20
-        if (elements(n) == 'He') vdw = 1.40
-        if (elements(n) == 'Li') vdw = 1.82
-        if (elements(n) == 'Be') vdw = 1.53
-        if (elements(n) == 'B')  vdw = 1.92
-        if (elements(n) == 'C')  vdw = 1.70
-        if (elements(n) == 'N')  vdw = 1.55
-        if (elements(n) == 'O')  vdw = 1.52
-        if (elements(n) == 'F')  vdw = 1.47
-        if (elements(n) == 'Ne') vdw = 1.54
-        if (elements(n) == 'Na') vdw = 2.27
-        if (elements(n) == 'Mg') vdw = 1.73
-        if (elements(n) == 'Al') vdw = 1.84
-        if (elements(n) == 'Si') vdw = 2.10
-        if (elements(n) == 'P')  vdw = 1.80
-        if (elements(n) == 'S')  vdw = 1.80
-        if (elements(n) == 'Cl') vdw = 1.75
-        if (elements(n) == 'Ar') vdw = 1.88
-        if (elements(n) == 'K')  vdw = 2.75
-        if (elements(n) == 'Ca') vdw = 2.31
-        if (elements(n) == 'Co') vdw = 1.92 ! Los Alamos value
-        if (elements(n) == 'Ni') vdw = 1.63
-        if (elements(n) == 'Cu') vdw = 1.40
-        if (elements(n) == 'Zn') vdw = 1.39
-        if (elements(n) == 'Zr') vdw = 2.36
-        do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
-          do d = 1,3                                                                             ! here for cell_b
-            do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
-              tmp_dist = sqrt(sum((coords1(:)-coordinates(n,:)+(c-2)*cell_a(:)+(d-2)*cell_b(:)+(e-2)*cell_c(:))**2))-vdw      ! evaluate new distance due to PBC
-              if (tmp_dist < distance1) then                                                     ! if distance is smaller -> use this one !
-                distance1 = tmp_dist
-              end if
-              tmp_dist = sqrt(sum((coords2(:)-coordinates(n,:)+(c-2)*cell_a(:)+(d-2)*cell_b(:)+(e-2)*cell_c(:))**2))-vdw      ! evaluate new distance due to PBC
-              if (tmp_dist < distance2) then                                                     ! if distance is smaller -> use this one !
-                distance2 = tmp_dist
-              end if
-            end do
-          end do
-        end do
-      end do
-
-  ! Evaluate which distance is larger
-      if (distance1 > distance2) then   ! if initial distance is larger
-        coords2(:) = coords1(:)         ! reset second set of coordinates to be the first one
-      else
-        coords1(:) = coords2(:)         ! otherwise, keep new distances
-      end if
-    end do    ! end MC
-
-    ! store all coordinates of the pore centers
-    all_coords(a,:) = coords1(:)
-
-  ! Get probe diameter radius
-    if (distance1 > distance2) then
-      all_distances(a) = distance1
-    else
-      all_distances(a) = distance2
-    end if
-  end do      ! end starting points
-
-!!!!!
-  ! tranfer all coordinates back into the unit cell!!!!
-  do a = 1, start_points
-    call frac_cart(cell_a,cell_b,cell_c,all_coords(a,:))
-  end do
-!!!!!
-
-  all_distances2(:) = all_distances(:)
-
-  ! Get distribution
-  write(6,*) ' '
-  write(6,*) 'Pore size distribution (diameter in angstrom, PSD in % - excluding too small contributions)'
-
-  do a = 1, start_points
-    c = 0
-    do b = 1, start_points
-      if (abs(all_distances(a) - all_distances2(b)) < 0.10) then    ! collect data which is within this range of the value
-        c = c + 1
-        all_distances2(b) = 1000.0                  ! do not evaluate this point again
-      end if
-    end do
-    if (c <= 0.05*start_points) then                ! only pores with more than 5 % contribution will be handled
-    else
-      write(6,*) all_distances(a)*2.0, c   ! print diameter instead of the radius
-
- ! NEW
-      do b = 1, 10
-        f = 0
-        rand1 = sum(sqrt(all_coords(a,:) - all_pore_center(b,:)))                                ! distance between new coordinate and any other that has been stored
-
-        do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
-          do d = 1,3                                                                             ! here for cell_b
-            do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
-              rand2 = sqrt(sum((all_coords(a,:)-all_pore_center(b,:)+(c-2)*cell_a(:)+(d-2)*cell_b(:)+(e-2)*cell_c(:))**2))
-              if (rand2 < rand1) then                                                     ! if distance is smaller -> use this one !
-                rand1 = rand2
-              end if
-            end do
-          end do
-        end do
-
-        ! if the new coordinate is within an already existing pore -> see which one is bigger and keep that
-        if ((rand1) < (all_pore_radius(b) + all_distances(a))) then
-          f = f + 1
-          if (all_distances(a) > all_pore_radius(b)) then                                          ! if the new radius is bigger -> overwrite old one
-            all_pore_center(b,:) = all_coords(a,:)
-            all_pore_radius(b) = all_distances(a)
-          end if
-        end if
-
-        if (f == 0) then                                                                           ! if no other points is close to this one -> store
-          if (all_pore_center(b,1) == 0.0) then                                                    ! for an entry that has not been written yet
-            all_pore_center(b,:) = all_coords(a,:)
-            all_pore_radius(b) = all_distances(a)
-            exit
-          end if
-        end if
-      end do
-  ! END NEW
-    end if
-  end do
-
-  deallocate(coordinates)
-  deallocate(elements)
-  deallocate(all_distances)
-  deallocate(all_distances2)
-
-  close(20)
-
-  return
-end subroutine porefinder
-
-
-
-subroutine frac_cart(vecA,vecB,vecC,pos_cart)
-real(8), intent(in)    :: vecA(3), vecB(3), vecC(3)
-real(8), intent(inout) :: pos_cart(3)
-real(8)                :: pos_frac(3)
-real(8)                :: trans_matrix(3,3)
-real(8)                :: determinant
-real(8)                :: lenA, lenB, lenC, angleBC, angleAC, angleAB, vol
-integer                :: t,f
-real(8), parameter     :: pi = 3.14159265358979323846
-
-lenA    = sqrt(vecA(1)**2+vecA(2)**2+vecA(3)**2)
-lenB    = sqrt(vecB(1)**2+vecB(2)**2+vecB(3)**2)
-lenC    = sqrt(vecC(1)**2+vecC(2)**2+vecC(3)**2)
-angleBC = ACOS((vecB(1)*vecC(1) + vecB(2)*vecC(2) + vecB(3)*vecC(3))/(lenB*lenC))*180.0/pi
-angleAC = ACOS((vecA(1)*vecC(1) + vecA(2)*vecC(2) + vecA(3)*vecC(3))/(lenA*lenC))*180.0/pi
-angleAB = ACOS((vecA(1)*vecB(1) + vecA(2)*vecB(2) + vecA(3)*vecB(3))/(lenA*lenB))*180.0/pi
-! deteminant of the matrix comntaining the cell vectors
-determinant = vecA(1)*vecB(2)*vecC(3)+vecB(1)*vecC(2)*vecA(3)+vecC(1)*vecA(2)*vecB(3) - &
-              vecA(3)*vecB(2)*vecC(1)-vecB(3)*vecC(2)*vecA(1)-vecC(3)*vecA(2)*vecB(1)
-! transformation matrix to get fractional coordinates. It is the inverse of the matrix containing the cell vectors
-trans_matrix(1,1) = (vecB(2)*vecC(3)-vecB(3)*vecC(2))/determinant
-trans_matrix(1,2) = (vecA(3)*vecC(2)-vecA(2)*vecC(3))/determinant
-trans_matrix(1,3) = (vecA(2)*vecB(3)-vecA(3)*vecB(2))/determinant
-trans_matrix(2,1) = (vecB(3)*vecC(1)-vecB(1)*vecC(3))/determinant
-trans_matrix(2,2) = (vecA(1)*vecC(3)-vecA(3)*vecC(1))/determinant
-trans_matrix(2,3) = (vecA(3)*vecB(1)-vecA(1)*vecB(3))/determinant
-trans_matrix(3,1) = (vecB(1)*vecC(2)-vecB(2)*vecC(1))/determinant
-trans_matrix(3,2) = (vecA(2)*vecC(1)-vecA(1)*vecC(2))/determinant
-trans_matrix(3,3) = (vecA(1)*vecB(2)-vecA(2)*vecB(1))/determinant
-! frac = cart*trans_matrix
-pos_frac(1) = pos_cart(1)*trans_matrix(1,1) + pos_cart(2)*trans_matrix(2,1) + pos_cart(3)*trans_matrix(3,1)
-pos_frac(2) = pos_cart(1)*trans_matrix(1,2) + pos_cart(2)*trans_matrix(2,2) + pos_cart(3)*trans_matrix(3,2)
-pos_frac(3) = pos_cart(1)*trans_matrix(1,3) + pos_cart(2)*trans_matrix(2,3) + pos_cart(3)*trans_matrix(3,3)
-! make sure that all fractional coordinates are within 0 and 1
-do f = 1, 3
-  t = 0
-  do while (t < 1)
-    if (pos_frac(f) > 1) then
-      pos_frac(f) = pos_frac(f) - 1
-    end if
-    if (pos_frac(f) < 0) then
-      pos_frac(f) = pos_frac(f) + 1
-    end if
-    if ((0 <= pos_frac(f)) .and. (pos_frac(f) <= 1)) then
-      t = 1
-    end if
-  end do
-end do
-! Transfrom back to cartesian. This ensures that all FODs are inside the unit cell
-pos_cart(1) = pos_frac(1)*vecA(1) + pos_frac(2)*vecB(1) + pos_frac(3)*vecC(1)
-pos_cart(2) = pos_frac(1)*vecA(2) + pos_frac(2)*vecB(2) + pos_frac(3)*vecC(2)
-pos_cart(3) = pos_frac(1)*vecA(3) + pos_frac(2)*vecB(3) + pos_frac(3)*vecC(3)
-
-return
-end subroutine frac_cart

@@ -75,9 +75,9 @@ all_elements = 25
 all_pse = (/ 'H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne',&
              'Na', 'Mg', 'Al', 'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca',&
              'Co', 'Ni', 'Cu', 'Zn', 'Zr' /)
-all_vdW_radii = (/ 1.20, 1.40, 1.82, 1.53, 1.92, 1.70, 1.55, 1.52, 1.47, 1.54,&
-                   2.27, 1.73, 1.84, 2.10, 1.80, 1.80, 1.75, 1.88, 2.75, 2.31,& 
-                   1.92, 1.63, 1.40, 1.39, 2.36 /)
+all_vdW_radii = (/ 1.20D0, 1.40D0, 1.82D0, 1.53D0, 1.92D0, 1.70D0, 1.55D0, 1.52D0, 1.47D0, 1.54D0,&
+                   2.27D0, 1.73D0, 1.84D0, 2.10D0, 1.80D0, 1.80D0, 1.75D0, 1.88D0, 2.75D0, 2.31D0,& 
+                   1.92D0, 1.63D0, 1.40D0, 1.39D0, 2.36D0 /)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Script to evaluate the porosity of a crystal structure. Taking information from xyz file and cell parameters.                                 !
@@ -201,6 +201,7 @@ close(16)                                       ! close input file
 allocate(elements(number_of_atoms))                                                         ! allocate (number_of_atoms) fields for elements. There is one elements each.
 allocate(coordinates(number_of_atoms,3))                                                    ! allocate (number_of_atoms) fields for coordinates. There are 3 coordinates per entry. 
 allocate(tmp_pse(number_of_atoms))                                                          ! allocate tmp_pse, dummy
+tmp_pse(:) = 'X'
 no_elements = 0                                                                             ! number of different atoms
 
 do n = 1,number_of_atoms                                                                      ! go through all atoms 
@@ -449,7 +450,7 @@ else if (eval_method == 2) then                                                 
   grid_per_A_x = real(grid_a)/sqrt(cell_a(1)**2 + cell_a(2)**2 + cell_a(3)**2)
   grid_per_A_y = real(grid_b)/sqrt(cell_b(1)**2 + cell_b(2)**2 + cell_b(3)**2)
   grid_per_A_z = real(grid_c)/sqrt(cell_c(1)**2 + cell_c(2)**2 + cell_c(3)**2)
-  factor = 1.0 + 1.0/((grid_per_A_x+grid_per_A_y+grid_per_A_z)/3.0)                            ! divide by average grid points per A
+  factor = 1.0D0 + 1.0D0/((grid_per_A_x+grid_per_A_y+grid_per_A_z)/3.0D0)                      ! divide by average grid points per A
 
   !
   ! Get number of sub-grid points per atom
@@ -707,12 +708,12 @@ subroutine eval_vol_mass(element,vocc,m)           ! element as input, V_occ and
   pse = (/ 'H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne',&
            'Na', 'Mg', 'Al', 'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca',&
            'Co', 'Ni', 'Cu', 'Zn', 'Zr' /)
-  vdW_radii = (/ 1.20, 1.40, 1.82, 1.53, 1.92, 1.70, 1.55, 1.52, 1.47, 1.54,&
-                 2.27, 1.73, 1.84, 2.10, 1.80, 1.80, 1.75, 1.88, 2.75, 2.31,&
-                 1.92, 1.63, 1.40, 1.39, 2.36 /)
-  mass = (/ 1.0079,  4.003,  6.941,  9.012, 10.811, 12.011, 14.007, 15.999, 18.998, 20.180,&
-            22.990, 24.305, 26.982, 28.086, 30.974, 32.066, 35.453, 39.948, 39.099, 40.078,&
-            58.933, 58.693, 63.546, 65.390, 91.224 /)
+  vdW_radii = (/ 1.20D0, 1.40D0, 1.82D0, 1.53D0, 1.92D0, 1.70D0, 1.55D0, 1.52D0, 1.47D0, 1.54D0,&
+                 2.27D0, 1.73D0, 1.84D0, 2.10D0, 1.80D0, 1.80D0, 1.75D0, 1.88D0, 2.75D0, 2.31D0,&
+                 1.92D0, 1.63D0, 1.40D0, 1.39D0, 2.36D0 /)
+  mass = (/ 1.0079D0,  4.003D0,  6.941D0,  9.012D0, 10.811D0, 12.011D0, 14.007D0, 15.999D0, 18.998D0, 20.180D0,&
+            22.990D0, 24.305D0, 26.982D0, 28.086D0, 30.974D0, 32.066D0, 35.453D0, 39.948D0, 39.099D0, 40.078D0,&
+            58.933D0, 58.693D0, 63.546D0, 65.390D0, 91.224D0 /)
 
   loop99: do a = 1, 25
     if (element == pse(a)) then
@@ -752,12 +753,12 @@ subroutine eval_overlap(element_a, element_b, dist_ab, sub_over)   ! evaluate th
   pse = (/ 'H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne',&
            'Na', 'Mg', 'Al', 'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca',&
            'Co', 'Ni', 'Cu', 'Zn', 'Zr' /)
-  vdW_radii = (/ 1.20, 1.40, 1.82, 1.53, 1.92, 1.70, 1.55, 1.52, 1.47, 1.54,&
-                 2.27, 1.73, 1.84, 2.10, 1.80, 1.80, 1.75, 1.88, 2.75, 2.31,&
-                 1.92, 1.63, 1.40, 1.39, 2.36 /)
-  cov_radii = (/ 0.33, 0.28, 1.28, 0.96, 0.84, 0.76, 0.71, 0.66, 0.57, 0.58,&
-                 1.67, 1.42, 1.21, 1.11, 1.07, 1.05, 1.02, 1.06, 2.03, 1.76,&
-                 1.26, 1.24, 1.30, 1.33, 1.48 /)
+  vdW_radii = (/ 1.20D0, 1.40D0, 1.82D0, 1.53D0, 1.92D0, 1.70D0, 1.55D0, 1.52D0, 1.47D0, 1.54D0,&
+                 2.27D0, 1.73D0, 1.84D0, 2.10D0, 1.80D0, 1.80D0, 1.75D0, 1.88D0, 2.75D0, 2.31D0,&
+                 1.92D0, 1.63D0, 1.40D0, 1.39D0, 2.36D0 /)
+  cov_radii = (/ 0.33D0, 0.28D0, 1.28D0, 0.96D0, 0.84D0, 0.76D0, 0.71D0, 0.66D0, 0.57D0, 0.58D0,&
+                 1.67D0, 1.42D0, 1.21D0, 1.11D0, 1.07D0, 1.05D0, 1.02D0, 1.06D0, 2.03D0, 1.76D0,&
+                 1.26D0, 1.24D0, 1.30D0, 1.33D0, 1.48D0 /)
 
   do a = 1, 25
     if (element_a == pse(a)) then

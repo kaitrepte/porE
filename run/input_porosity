@@ -1,21 +1,21 @@
 STRUCTURE
-u6			Structure string. Several available options are given at the end of this file
-n/a			If Structure = 'ud': the full path to the xyz file you want to use, e.g. "../structures_xyz/test.xyz"
-n/a			If Structure = 'ud': the name of the structure (for output purposes only)
+u6                     									Structure string. Several available options are given at the end of this file
+'/some/path/to/a/file.xyz'						                If Structure = 'ud': the full path to the xyz file you want to use, e.g. "../structures_xyz/test.xyz"
+'aNiceName'  		                     						If Structure = 'ud': the name of the structure (for output purposes only)
 
 EVALUATION METHOD
-2			Either 1 for Overlapping sphere approach (OSA) or 2 for grid point approach (GPA)
+2                      1 : Overlapping sphere approach (OSA), 2 : Grid point approach (GPA)
 
 FOR GPA ONLY
-1.20			Probe radius for the evaluation of the accessible porosity
-2			Grid point initialization. Either 1 for grid points per unit cell vector or 2 for grid points per A (uniform grid)
-5 	                If initialization = 1: 3 integers for the number of grid points along each cell vector
-			If initialization = 2: 1 real     for the number of grid points per angstrom 
+1.20                    Probe radius for the evaluation of the accessible porosity
+2                       Grid point initialization. 1 : grid points per unit cell vector, 2 : grid points per A (uniform grid)
+5                       If initialization = 1: 3 integers for the number of grid points along each cell vector
+			If initialization = 2: 1 real     for the grid points density along all cell vectors
 
 
 
 CURRENTLY AVAILABLE STRUCTURES
-# Structure		   - String
+# Structure                - String
 -----------------------------------
 # DUT-8(Ni) open           - do
 # DUT-8(Ni) open vcrelax   - vo
@@ -36,3 +36,4 @@ CURRENTLY AVAILABLE STRUCTURES
 # H atom                   - ha
 # User-defined xyz         - ud
 ###############################
+
