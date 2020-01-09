@@ -2,7 +2,7 @@ program porosity
 
 implicit none
 
-! POROsity Whole Analysis Tool (porowat)
+! porE
 ! Author Kai Trepte
 ! Version January 23, 2019
 ! Version April 29th, 2019 -- implement sub-grid division
