@@ -2,7 +2,10 @@ program porefinder
 
 implicit none
 
+! get PSD
 ! pore_finder
+! January 13th, 2020: use adaptive step size for MC.
+!                     use larger a_step in the beginning of each MC cycle, reduce over time
 
 character(2)                        :: struct
 character(len=100)                  :: name_struct
@@ -13,6 +16,8 @@ integer(8)                          :: number_of_atoms
 real(8)                             :: cell_a(3)           ! array for the cell vector in the a direction. Vector.
 real(8)                             :: cell_b(3)           ! array for the cell vector in the b direction. Vector.
 real(8)                             :: cell_c(3)           ! array for the cell vector in the c direction. Vector.
+real(8)                             :: len_vec(3)          ! length of cell vectors
+real(8)                             :: len_max             ! length of largest cell vectors
 real(8), allocatable, dimension(3)  :: coordinates(:,:)    ! array for the coordinates. Matrix.
 character(2), allocatable           :: elements(:)         ! array for the elements. Vector.
 
@@ -30,6 +35,8 @@ integer(8)                          :: start_points, cycles    ! number of start
 real(8)                             :: stepsize                ! step size for MC steps
 real(8), allocatable                :: all_distances(:)        ! store all distances (maybe need another list to separate different distances which occur more often.. PSD and stuff)
 real(8), allocatable                :: all_distances2(:)       ! store all distances, to double check
+integer                             :: count_pore              ! count how many pores there are
+real(8), allocatable                :: final_eval(:,:)         ! store final evaluated results. Use for sorting
 
 ! for random seed
 integer                             :: values(1:8), k
@@ -135,10 +142,15 @@ read(16,*)
 read(16,*) start_points
 read(16,*) cycles
 !
-! Approximate computational time
+! Get length of cell vectors. Use largest one as a starting point for step size in MC cycle
 !
-!write(6,fmt='(A,2X,I15,A)') 'The calculation should take roughly ', &
-!                             number_of_atoms*start_points*cycles/(10**6),' s'
+len_vec(1) = sqrt(sum(cell_a(:)**2))
+len_vec(2) = sqrt(sum(cell_b(:)**2))
+len_vec(3) = sqrt(sum(cell_c(:)**2))
+!
+! Use 1/10 of the largest cell vector as a starting point for a_step
+!
+len_max = maxval(len_vec)*0.1D0
 
 
 allocate(elements(number_of_atoms))                             ! allocate (number_of_atoms) fields for elements. There is one elements each. As many elements as number_of_atoms (makes sense :))
@@ -150,8 +162,8 @@ close(unit=15)                                                  ! close the file
 
 ! Output file
 open(unit=19,file='output_PSD',status='unknown',action='write')
-write(19,*) 'Starting points   (recommended: >= 100)   : ',start_points
-write(19,*) 'Monte-Carlo steps (recommended: >= 10000) : ',cycles
+write(19,*) 'Starting points   (recommended: >= 200)   : ',start_points
+write(19,*) 'Monte-Carlo steps (recommended: >= 1000)  : ',cycles
 write(19,*) ' '
 
 call cpu_time(start)
@@ -160,11 +172,18 @@ call cpu_time(start)
 !! Monte-Carlo to get pore sizes !!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-stepsize     = 0.01
 allocate(all_distances(start_points))
 allocate(all_distances2(start_points))
 allocate(coords_all_cart(start_points,3))
 allocate(coords_all_frac(start_points,3))
+!
+! write stuff about the used step sizes
+!
+write(19,fmt='(A,I8.0,A,F10.5)') 'Until step ',ceiling(0.25D0*cycles),', step size a_step = ',1.0D0*len_max
+write(19,fmt='(A,I8.0,A,F10.5)') 'Until step ',ceiling(0.50D0*cycles),', step size a_step = ',0.1D0*len_max
+write(19,fmt='(A,I8.0,A,F10.5)') 'Until step ',ceiling(0.75D0*cycles),', step size a_step = ',0.01D0*len_max
+write(19,fmt='(A,I8.0,A,F10.5)') 'Until step ',ceiling(1.00D0*cycles),', step size a_step = ',0.001D0*len_max
+write(19,*) ' '
 
 ! LOOP OVER START POINTS
 do a = 1, start_points
@@ -179,6 +198,34 @@ do a = 1, start_points
 
 ! LOOP MC
   do b = 1, cycles
+  !
+  ! Adaptive step size. Check where we are in the MC cycle.
+  ! Adjust a_step accordingly
+  !
+  ! KT: new January 2020. 
+  ! start at a_step = len_of_largest_cell_vector/10.0
+  ! Then, reduce by factor of 10 every1/4 of MC steps
+  !
+    !
+    ! The very beginning -> use large a_step
+    !
+    if (b <= ceiling(0.25D0*cycles)) stepsize = 1.0D0*len_max
+    !
+    ! First half -> reduce step size
+    !
+    if ((b > ceiling(0.25D0*cycles)).and.(b <= ceiling(0.5D0*cycles))) stepsize = 0.1D0*len_max
+    !
+    ! Beginning of second half -> reduce step size
+    !
+    if ((b > ceiling(0.5D0*cycles)).and.(b <= ceiling(0.75D0*cycles))) stepsize = 0.01D0*len_max
+    !
+    ! Last quarter -> reduce step size
+    !
+    if (b > ceiling(0.75D0*cycles)) stepsize = 0.001D0*len_max
+    
+    !
+    ! Now, do MC
+    !
     call random_number(rand1)
     call random_number(rand2)
     call random_number(rand3)
@@ -187,34 +234,34 @@ do a = 1, start_points
     coords2(3) = coords1(3) + (2*rand3 - 1)*stepsize  
  
 ! Check distances
-    distance1 = 100.0 ! initial values
-    distance2 = 100.0
+    distance1 = 100.0D0 ! initial values
+    distance2 = 100.0D0
     do n = 1,number_of_atoms                                                                   ! go through all atoms
-      if (elements(n) == 'H')  vdw = 1.20
-      if (elements(n) == 'He') vdw = 1.40
-      if (elements(n) == 'Li') vdw = 1.82
-      if (elements(n) == 'Be') vdw = 1.53
-      if (elements(n) == 'B')  vdw = 1.92
-      if (elements(n) == 'C')  vdw = 1.70
-      if (elements(n) == 'N')  vdw = 1.55
-      if (elements(n) == 'O')  vdw = 1.52
-      if (elements(n) == 'F')  vdw = 1.47
-      if (elements(n) == 'Ne') vdw = 1.54
-      if (elements(n) == 'Na') vdw = 2.27
-      if (elements(n) == 'Mg') vdw = 1.73
-      if (elements(n) == 'Al') vdw = 1.84
-      if (elements(n) == 'Si') vdw = 2.10
-      if (elements(n) == 'P')  vdw = 1.80
-      if (elements(n) == 'S')  vdw = 1.80
-      if (elements(n) == 'Cl') vdw = 1.75
-      if (elements(n) == 'Ar') vdw = 1.88
-      if (elements(n) == 'K')  vdw = 2.75
-      if (elements(n) == 'Ca') vdw = 2.31
-      if (elements(n) == 'Co') vdw = 1.92 ! Los Alamos value
-      if (elements(n) == 'Ni') vdw = 1.63
-      if (elements(n) == 'Cu') vdw = 1.40
-      if (elements(n) == 'Zn') vdw = 1.39
-      if (elements(n) == 'Zr') vdw = 2.36
+      if (elements(n) == 'H')  vdw = 1.20D0
+      if (elements(n) == 'He') vdw = 1.40D0
+      if (elements(n) == 'Li') vdw = 1.82D0
+      if (elements(n) == 'Be') vdw = 1.53D0
+      if (elements(n) == 'B')  vdw = 1.92D0
+      if (elements(n) == 'C')  vdw = 1.70D0
+      if (elements(n) == 'N')  vdw = 1.55D0
+      if (elements(n) == 'O')  vdw = 1.52D0
+      if (elements(n) == 'F')  vdw = 1.47D0
+      if (elements(n) == 'Ne') vdw = 1.54D0
+      if (elements(n) == 'Na') vdw = 2.27D0
+      if (elements(n) == 'Mg') vdw = 1.73D0
+      if (elements(n) == 'Al') vdw = 1.84D0
+      if (elements(n) == 'Si') vdw = 2.10D0
+      if (elements(n) == 'P')  vdw = 1.80D0
+      if (elements(n) == 'S')  vdw = 1.80D0
+      if (elements(n) == 'Cl') vdw = 1.75D0
+      if (elements(n) == 'Ar') vdw = 1.88D0
+      if (elements(n) == 'K')  vdw = 2.75D0
+      if (elements(n) == 'Ca') vdw = 2.31D0
+      if (elements(n) == 'Co') vdw = 1.92D0 ! Los Alamos value
+      if (elements(n) == 'Ni') vdw = 1.63D0
+      if (elements(n) == 'Cu') vdw = 1.40D0
+      if (elements(n) == 'Zn') vdw = 1.39D0
+      if (elements(n) == 'Zr') vdw = 2.36D0
       do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
         do d = 1,3                                                                             ! here for cell_b
           do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
@@ -274,21 +321,99 @@ write(19,*) 'Pore size distribution for ',name_struct
 write(19,*) ' '
 write(19,*) '  Pore size   Distribution [%]   coordinate (cartesian)                 coordinate (fractional)'
 
+!
+! Go thorugh all points once. Evaluate how many pores there are
+!
+count_pore = 0
 do a = 1, start_points
-  distribution = 0.0
+  distribution = 0.0D0
   do b = 1, start_points
-    if (abs(all_distances(a) - all_distances2(b)) < 0.10) then    ! collect data which is within this range of the value
-      distribution = distribution + 1.0
-      all_distances2(b) = 1000.0                  ! do not evaluate this point again
+    if (abs(all_distances(a) - all_distances2(b)) < 0.10D0) then    ! collect data which is within this range of the value
+      distribution = distribution + 1.0D0
+      all_distances2(b) = 1000.0D0                  ! do not evaluate this point again
     end if
   end do
   distribution = distribution/start_points*100.D0  ! distribution in %
-  if (distribution < 5.0) then      ! if less than 5 % -> do not evaluate
-  else
-    write(6,fmt='(F12.6,F8.2,11X,3F12.6,2X,3F12.6)') all_distances(a), distribution, coords_all_cart(a,:), coords_all_frac(a,:)
-    write(19,fmt='(F12.6,F8.2,11X,3F12.6,2X,3F12.6)') all_distances(a), distribution, coords_all_cart(a,:), coords_all_frac(a,:)
+  if (distribution > 5.0D0) then      ! if less than 5 % -> do not evaluate
+    count_pore = count_pore + 1
   end if
 end do
+!
+! Restore all distances in a second array -> use for final evaluation
+!
+all_distances2(:) = all_distances(:)
+!
+! Allocate final evaluation array
+!
+allocate(final_eval(count_pore+1,8)) ! diameter, distribution, 3x cartesian coords, 3x fractional coords. Count_pore + 1 for sorting (last entry can be used as temporary storage)
+!
+! Go through all point again. Write final results into array
+!
+count_pore = 0
+do a = 1, start_points
+  distribution = 0.0D0
+  do b = 1, start_points
+    if (abs(all_distances(a) - all_distances2(b)) < 0.10D0) then    ! collect data which is within this range of the value
+      distribution = distribution + 1.0D0
+      !
+      ! If all_distance2 larger than all_distances -> store the former
+      ! -> ensure that always the largest values is taken
+      !
+      if (all_distances2(b) > all_distances(a)) then
+        all_distances(a) = all_distances2(b)
+        coords_all_cart(a,:) = coords_all_cart(b,:)
+        coords_all_frac(a,:) = coords_all_frac(b,:)
+      end if
+      all_distances2(b) = 1000.0D0                  ! do not evaluate this point again
+    end if
+  end do
+  distribution = distribution/start_points*100.D0  ! distribution in %
+  if (distribution > 5.0D0) then      ! if less than 5 % -> do not evaluate
+    count_pore = count_pore + 1
+    final_eval(count_pore,1) = all_distances(a)
+    final_eval(count_pore,2) = distribution
+    final_eval(count_pore,3) = coords_all_cart(a,1)
+    final_eval(count_pore,4) = coords_all_cart(a,2)
+    final_eval(count_pore,5) = coords_all_cart(a,3)
+    final_eval(count_pore,6) = coords_all_frac(a,1)
+    final_eval(count_pore,7) = coords_all_frac(a,2)
+    final_eval(count_pore,8) = coords_all_frac(a,3)
+  end if
+end do
+
+!
+! Sort the output, from smallest to largest pore. TBD
+!
+do a = 1, count_pore
+  do b = 1, count_pore
+    !
+    ! If pore a is smaller than pore b
+    !
+    if (final_eval(a,1) <= final_eval(b,1)) then
+      !
+      ! If entry b comes before entry a
+      !
+      if (b < a) then
+        !
+        ! Change entries
+        !
+        final_eval(count_pore+1,:) = final_eval(b,:)
+        final_eval(b,:) = final_eval(a,:)
+        final_eval(a,:) = final_eval(count_pore+1,:) 
+      end if
+    end if
+  end do
+end do
+
+!
+! Write output
+!
+do a = 1, count_pore
+  write(6,fmt='(F12.6,F8.2,11X,3F12.6,2X,3F12.6)') final_eval(a,:)
+  write(19,fmt='(F12.6,F8.2,11X,3F12.6,2X,3F12.6)') final_eval(a,:)
+end do
+
+
 
 call cpu_time(finish)
 write(6,*) ' '
