@@ -1,0 +1,16 @@
+ Starting points   (recommended: >= 100)   :                   200
+ Monte-Carlo steps (recommended: >= 10000) :                  5000
+  
+Until step     1250, step size a_step =    4.67300
+Until step     2500, step size a_step =    0.46730
+Until step     3750, step size a_step =    0.04673
+Until step     5000, step size a_step =    0.00467
+  
+  
+ Pore size distribution for DUT-49(Co), conventional cell                                                                                            
+  
+   Pore size   Distribution [%]   coordinate (cartesian)                 coordinate (fractional)
+   17.798984   52.50              35.047441   35.047719   35.047948      0.749999    0.750005    0.750010
+   20.116715   47.50               0.000287   23.364833   23.364597      0.000006    0.499996    0.499991
+  
+Total CPU time:       3905.558 s
