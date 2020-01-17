@@ -14,9 +14,10 @@ implicit none
 !                                the vdW surface of these vectors is the pore window!
 !         January 08th, 2020  -- Start final implementation of pore windows, include in evaluation
 
+
 character(2)                        :: struct
 character(len=100)                  :: name_struct
-integer                             :: eval_method
+integer(8)                          :: eval_method
 
 integer(8)                          :: number_of_atoms
 real(8)                             :: cell_a(3)           ! array for the cell vector in the a direction. Vector.
@@ -34,17 +35,16 @@ real(8), parameter                  ::  u = 1.660539               ! define atom
 ! Evaluation method 1
 real(8)     :: sub_overlap                                               ! overlap volume as evaluated by the subroutine
 real(8)     :: V_occupied, V_overlap, m_total, distance_ab, new_distance ! volume occupied by vdw spheres, total overlap volume, total mass of unit cell, distance between two atoms, distance evaluated due to PBC
-real(8)     :: r_vdw1, r_vdw2                                            ! vdW radii of two species. Needed for evaluation (makes it easier)
-integer     :: a,b,c,d,e,f,n,t,v,w,x                                     ! loop parameter
+!real(8)     :: r_vdw1, r_vdw2                                            ! vdW radii of two species. Needed for evaluation (makes it easier)
+integer(8)  :: a,b,c,d,e,f,n,t,v,w,x                                     ! loop parameter
 
 ! Evaluation method 2
 real(8)     :: probe_r, grid_point_x, grid_point_y, grid_point_z, factor ! probe radius, grid point coordinates for any specific grid point (x,y,z), grid density (grid points per A^3)
 integer(8)  :: grid_a, grid_b, grid_c, aa, bb, cc, running_n             ! number of grid points along cell vectors (a,b,c), loop variables to write grid points, running variable for the loop (assign grid_points correctly)
 real(8)     :: g                                                         ! if grid size is suppossed to be determined automatically -> use real, not integer
-integer     :: check_grid, n_coords                                      ! loop counter for the actual evaluation (grid) and for the coordinates (coords)
-integer     :: counter_access, counter_check_acc, counter_noOccu         ! counter to evaluate whether a point is accessible, check accessible, or NOT occupied
-integer     :: n_access, n_occ, n_check, n_check_acc, n_noOccu           ! counter for list assignment -> accessible, occupied, used loop variable (store accessible points), counter for accessibility check list, not occupied
-integer     :: pbc_a, pbc_b, pbc_c                                       ! loop variables for the check of PBCs (grid point - atom)
+integer(8)  :: n_coords                                                  ! loop counter for the coordinates (coords)
+integer(8)  :: counter_access, counter_noOccu                            ! counter to evaluate whether a point is accessible, or NOT occupied
+integer(8)  :: n_access, n_occ, n_check_acc, n_noOccu                    ! counter for list assignment -> accessible, occupied, counter for accessibility check list, not occupied
 real(8)     :: dist_point_atom, new_point_atom, dist_point_point         ! distance from a grid point to an atom, distance evaluated due to PBC, distance between grid points
 real(8)     :: V_void, V_accessible                                      ! void and accessible volume
 real(8)     :: grid_per_A_x, grid_per_A_y, grid_per_A_z                  ! grid per angstrom, in the cell vector directions (x == a, y == b, z == c)
@@ -56,9 +56,9 @@ real(8), allocatable, dimension(3)  :: list_check_acc(:,:)               ! empty
 real(8), allocatable                :: pore_center(:,:)                  ! empty list for the coordinates of the pore centers
 real(8), allocatable                :: pore_size(:)                      ! empty list for the pore sizes
 real(8), allocatable                :: pore_windows(:)                   ! empty list for the pore windows
-integer     :: counter_1, counter_2, n_pore, ios, n_points               ! counter for evaluation of pore window/ pore size, counter for amount of pore sizes, iostat for reading, number of points
+integer(8)  :: counter_1, n_pore, ios, n_points                          ! counter for evaluation of pore window/ pore size, counter for amount of pore sizes, iostat for reading, number of points
 real(8)                             :: junk2                             ! junk for reading
-real(8)                             :: dist1, dist2                      ! distances for evaluation
+real(8)                             :: dist1                             ! distance for evaluation
 real(8)                             :: tmp_vec(3)                        ! temporary vector          
 !real(8), allocatable, dimension(3)  :: list_all_access(:,:)              ! empty list for all accessible points. Final evaluation (take points inside the probe radius sphere into account)
 
@@ -70,7 +70,7 @@ real(8)                             :: tmp_vec(3)                        ! tempo
 !
 ! For sub-grid generation, one needs a variable array which is allocatable
 type global_array
-  integer              :: sub_grid_points                       ! dimensions: n_atoms
+  integer(8)           :: sub_grid_points                       ! dimensions: n_atoms
   real(8), allocatable :: sub_grids(:,:)                        ! dimensions: n_atoms, sub_grid_points(atom), 3
 end type global_array
 type(global_array), dimension(:), allocatable :: sub_division
@@ -82,7 +82,7 @@ integer                   :: all_elements                       ! number of all 
 character(2), allocatable :: tmp_pse(:)                         ! temporary list to evaluate the used elements
 character(2), allocatable :: pse(:)                             ! used elements
 real(8), allocatable      :: vdW_radii(:)                       ! used vdW radii
-integer                   :: no_elements                        ! number of different elements
+integer(8)                :: no_elements                        ! number of different elements
 
 all_elements = 25
 all_pse = (/ 'H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne',&
@@ -522,90 +522,6 @@ else if (eval_method == 2) then                                                 
   ! 
   pore_windows(:) = 5000.0D0
   counter_1 = 0
-  !
-  ! If only one pore exists: analyze pore window with periodic image of that pore center 
-  !
-  if (n_pore == 1) then
-    dist1 = 1000.0D0
-    do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
-      do d = 1,3                                                                             ! here for cell_b
-        do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
-          tmp_vec(:) = pore_center(1,:) - (pore_center(1,:) + (c-2)*cell_a(:) + (d-2)*cell_b(:) + (e-2)*cell_c(:))
-          if ((sqrt(sum(tmp_vec(:)**2)) < dist1).and.(sqrt(sum(tmp_vec(:)**2)).ne.0.0D0)) then
-            !
-            ! store new minimum distance and the corresponding values for the cell vectors (periodicity)
-            !
-            dist1 = sqrt(sum(tmp_vec(:)**2))
-            v = c
-            w = d
-            x = e
-          end if
-        end do
-      end do
-    end do    
-    !
-    ! Evaluate pore window
-    ! If it is zero -> disregard (pores are not actually adjacent to each other), thus the vector goes through some atoms
-    !   can we exclude pores like that before? Would be good
-    !
-    ! Move along the connecting vector between pore a and pore b. Analyze the distance to the vdW surface. Minimum distance is the
-    ! pore window!
-    !
-    ! Use length of vector between pores to determine number of points to evaluate. e.g. 10 points/A
-    ! 
-    n_points = int(dist1*10.0D0)  ! 10 points/A to analyze. Should be enough
-    dist1 = 100000.0D0            ! initial value for each pore 
-    do f = 1, n_points            ! steps along the vector
-      !
-      ! point to evaluate. Start at pore a. Move step by step further towards pore b.
-      !
-      tmp_vec(:) = pore_center(1,:) + real(f/real(n_points,8),8)*&
-      &(pore_center(1,:) - (pore_center(1,:) + (v-2)*cell_a(:) + (w-2)*cell_b(:) + (x-2)*cell_c(:)))
-      !
-      ! go through all atoms
-      !
-      do n_coords = 1, number_of_atoms
-        !
-        ! For vdW radii
-        !
-        loop322: do n = 1, no_elements
-          if (elements(n_coords) == pse(n)) then
-            !
-            ! evaluate minimum distance to vdW surface
-            !
-            dist_point_atom = sqrt(sum((tmp_vec(:) - coordinates(n_coords,:))**2)) - vdW_radii(n)    ! initial distance between grid point and atom
-            do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
-              do d = 1,3                                                                             ! here for cell_b
-                do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
-                  new_point_atom = sqrt(sum((tmp_vec(:) - coordinates(n_coords,:) + &
-                                      (c-2)*cell_a(:) + (d-2)*cell_b(:) + (e-2)*cell_c(:))**2)) - vdW_radii(n)      ! evaluate new distance due to PBC
-                  if (new_point_atom < dist_point_atom) then                                         ! if distance is smaller -> use this one !
-                    dist_point_atom = new_point_atom
-                  end if
-                end do
-              end do
-            end do
-            exit loop322
-          end if
-        end do loop322       
-        !
-        ! if distance is smaller than previous distance
-        !
-        if (dist_point_atom < dist1) then
-          dist1 = dist_point_atom
-        end if
-      end do
-    end do
-    !
-    ! If dist1 > 0 -> no evaluation here
-    !
-    if (dist1 > 0.0D0) then
-      write(6,fmt='(A,F10.5,A)') 'Pore window between pore   1 and pore   1 is ',dist1,' A'
-      write(19,fmt='(A,F10.5,A)') 'Pore window between pore   1 and pore   1 is ',dist1,' A'
-      counter_1 = counter_1 + 1
-      pore_windows(counter_1) = dist1
-    end if
-
 
   !!!!!!!!!!!!!!!!!!!!!!!!!
   ! Pore window evaluation
@@ -615,92 +531,93 @@ else if (eval_method == 2) then                                                 
   ! the smallest value is the pore window!
   ! Use only the vector corresponding to the shortestdistance between two pore centers (take pbcs into account) -> that should do!
   !
-  else
-    do a = 1, n_pore-1
-      do b = a+1, n_pore
-        dist1 = 1000.0D0 
-        do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
-          do d = 1,3                                                                             ! here for cell_b
-            do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
-              tmp_vec(:) = pore_center(b,:) - (pore_center(a,:) + (c-2)*cell_a(:) + (d-2)*cell_b(:) + (e-2)*cell_c(:))
-              if (sqrt(sum(tmp_vec(:)**2)) < dist1) then
-                !
-                ! store new minimum distance and the corresponding values for the cell vectors (periodicity)
-                !
-                dist1 = sqrt(sum(tmp_vec(:)**2))
-                v = c
-                w = d
-                x = e
-              end if
-            end do
-          end do
-        end do
-        !
-        ! Evaluate pore window
-        ! If it is zero -> disregard (pores are not actually adjacent to each other), thus the vector goes through some atoms
-        !   can we exclude pores like that before? Would be good
-        !
-        !
-        ! Move along the connecting vector between pore a and pore b. Analyze the distance to the vdW surface. Minimum distance is the
-        ! pore window!
-        !
-        ! Use length of vector between pores to determine number of points to evaluate. e.g. 10 points/A
-        ! 
-        n_points = int(dist1*10.0D0)  ! 10 points/A to analyze. Should be enough
-        dist1 = 100000.0D0            ! initial value for each pore 
-        do f = 1, n_points            ! steps along the vector
-          !
-          ! point to evaluate. Start at pore a. Move step by step further towards pore b.
-          !
-          tmp_vec(:) = pore_center(a,:) + real(f/real(n_points,8),8)*&
-          &(pore_center(b,:) - (pore_center(a,:) + (v-2)*cell_a(:) + (w-2)*cell_b(:) + (x-2)*cell_c(:)))
-          !
-          ! go through all atoms
-          !
-          do n_coords = 1, number_of_atoms
-            !
-            ! For vdW radii
-            !
-            loop321: do n = 1, no_elements
-              if (elements(n_coords) == pse(n)) then
-                !
-                ! evaluate minimum distance to vdW surface
-                !
-                dist_point_atom = sqrt(sum((tmp_vec(:) - coordinates(n_coords,:))**2)) - vdW_radii(n)    ! initial distance between grid point and atom
-                do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
-                  do d = 1,3                                                                             ! here for cell_b
-                    do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
-                      new_point_atom = sqrt(sum((tmp_vec(:) - coordinates(n_coords,:) + &
-                                          (c-2)*cell_a(:) + (d-2)*cell_b(:) + (e-2)*cell_c(:))**2)) - vdW_radii(n)      ! evaluate new distance due to PBC
-                      if (new_point_atom < dist_point_atom) then                                         ! if distance is smaller -> use this one !
-                        dist_point_atom = new_point_atom
-                      end if
-                    end do
-                  end do
-                end do
-                exit loop321
-              end if
-            end do loop321         
-            !
-            ! if distance is smaller than previous distance
-            !
-            if (dist_point_atom < dist1) then
-              dist1 = dist_point_atom
+  !
+  ! Do for all pores, i.e. for b == a as well 
+  !                   ! ORG:
+  do a = 1, n_pore    ! 1, npore-1
+    do b = a, n_pore  ! a+1,n_pore
+      dist1 = 1000.0D0 
+      do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
+        do d = 1,3                                                                             ! here for cell_b
+          do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
+            tmp_vec(:) = pore_center(b,:) - (pore_center(a,:) + (c-2)*cell_a(:) + (d-2)*cell_b(:) + (e-2)*cell_c(:))
+            if ((sqrt(sum(tmp_vec(:)**2)) < dist1).and.(sqrt(sum(tmp_vec(:)**2)).ne.0.0D0)) then  ! when evaluating the same pore -> exclude zero distances
+              !
+              ! store new minimum distance and the corresponding values for the cell vectors (periodicity)
+              !
+              dist1 = sqrt(sum(tmp_vec(:)**2))
+              v = c
+              w = d
+              x = e
             end if
           end do
         end do
-        !
-        ! If dist1 > 0 -> no evaluation here
-        !
-        if (dist1 > 0.0D0) then
-          write(6,fmt='(A,I3,A,I3,A,F10.5,A)') 'Pore window between pore ',a,' and pore ',b,' is ',dist1,' A'
-          write(19,fmt='(A,I3,A,I3,A,F10.5,A)') 'Pore window between pore ',a,' and pore ',b,' is ',dist1,' A'
-          counter_1 = counter_1 + 1
-          pore_windows(counter_1) = dist1
-        end if
       end do
+      !
+      ! Evaluate pore window
+      ! If it is zero -> disregard (pores are not actually adjacent to each other), thus the vector goes through some atoms
+      !   can we exclude pores like that before? Would be good
+      !
+      !
+      ! Move along the connecting vector between pore a and pore b. Analyze the distance to the vdW surface. Minimum distance is the
+      ! pore window!
+      !
+      ! Use length of vector between pores to determine number of points to evaluate. e.g. 10 points/A
+      ! 
+      n_points = int(dist1*10.0D0)  ! 10 points/A to analyze. Should be enough
+      dist1 = 100000.0D0            ! initial value for each pore 
+      do f = 1, n_points            ! steps along the vector
+        !
+        ! point to evaluate. Start at pore a. Move step by step further towards pore b.
+        !
+        tmp_vec(:) = pore_center(a,:) + real(f/real(n_points,8),8)*&
+        &(pore_center(b,:) - (pore_center(a,:) + (v-2)*cell_a(:) + (w-2)*cell_b(:) + (x-2)*cell_c(:)))
+        !
+        ! go through all atoms
+        !
+        do n_coords = 1, number_of_atoms
+          !
+          ! For vdW radii
+          !
+          loop321: do n = 1, no_elements
+            if (elements(n_coords) == pse(n)) then
+              !
+              ! evaluate minimum distance to vdW surface
+              !
+              dist_point_atom = sqrt(sum((tmp_vec(:) - coordinates(n_coords,:))**2)) - vdW_radii(n)    ! initial distance between grid point and atom
+              do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
+                do d = 1,3                                                                             ! here for cell_b
+                  do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
+                    new_point_atom = sqrt(sum((tmp_vec(:) - coordinates(n_coords,:) + &
+                                        (c-2)*cell_a(:) + (d-2)*cell_b(:) + (e-2)*cell_c(:))**2)) - vdW_radii(n)      ! evaluate new distance due to PBC
+                    if (new_point_atom < dist_point_atom) then                                         ! if distance is smaller -> use this one !
+                      dist_point_atom = new_point_atom
+                    end if
+                  end do
+                end do
+              end do
+              exit loop321
+            end if
+          end do loop321         
+          !
+          ! if distance is smaller than previous distance
+          !
+          if (dist_point_atom < dist1) then
+            dist1 = dist_point_atom
+          end if
+        end do
+      end do
+      !
+      ! If dist1 > 0 -> no evaluation here
+      !
+      if (dist1 > 0.0D0) then
+        write(6,fmt='(A,I3,A,I3,A,F10.5,A)') 'Pore window between pore ',a,' and pore ',b,' is ',dist1,' A'
+        write(19,fmt='(A,I3,A,I3,A,F10.5,A)') 'Pore window between pore ',a,' and pore ',b,' is ',dist1,' A'
+        counter_1 = counter_1 + 1
+        pore_windows(counter_1) = dist1
+      end if
     end do
-  end if
+  end do
   !
   ! END pore windows
   !

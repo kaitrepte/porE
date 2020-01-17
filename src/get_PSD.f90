@@ -21,7 +21,7 @@ real(8)                             :: len_max             ! length of largest c
 real(8), allocatable, dimension(3)  :: coordinates(:,:)    ! array for the coordinates. Matrix.
 character(2), allocatable           :: elements(:)         ! array for the elements. Vector.
 
-integer                             :: a,b,c,d,e,f,n,t         ! loop parameter
+integer(8)                          :: a,b,c,d,e,n             ! loop parameter
 real(8)                             :: rand1, rand2, rand3     ! random numbers to get new coordinates
 
 real(8)                             :: coords1(3), coords2(3)  ! coordinates of point before and after MC step
@@ -35,13 +35,13 @@ integer(8)                          :: start_points, cycles    ! number of start
 real(8)                             :: stepsize                ! step size for MC steps
 real(8), allocatable                :: all_distances(:)        ! store all distances (maybe need another list to separate different distances which occur more often.. PSD and stuff)
 real(8), allocatable                :: all_distances2(:)       ! store all distances, to double check
-integer                             :: count_pore              ! count how many pores there are
+integer(8)                          :: count_pore              ! count how many pores there are
 real(8), allocatable                :: final_eval(:,:)         ! store final evaluated results. Use for sorting
 
 ! for random seed
 integer                             :: values(1:8), k
 integer, dimension(:), allocatable  :: seed
-real(8)                             :: vv
+!real(8)                             :: vv
 call date_and_time(values=values)
 call random_seed(size=k)
 allocate(seed(1:k))

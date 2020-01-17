@@ -7,6 +7,7 @@ implicit none
 ! Version January 23, 2019
 ! Version August 23, 2019
 
+
 character(2)                        :: struct
 character(len=100)                  :: name_struct
 integer                             :: eval_method
@@ -27,17 +28,16 @@ real(8), parameter                  ::  u = 1.660539               ! define atom
 ! Evaluation method 1
 real(8)     :: sub_overlap                                               ! overlap volume as evaluated by the subroutine
 real(8)     :: V_occupied, V_overlap, m_total, distance_ab, new_distance ! volume occupied by vdw spheres, total overlap volume, total mass of unit cell, distance between two atoms, distance evaluated due to PBC
-real(8)     :: r_vdw1, r_vdw2                                            ! vdW radii of two species. Needed for evaluation (makes it easier)
-integer     :: a,b,c,d,e,f,n,t                                           ! loop parameter
+!real(8)     :: r_vdw1, r_vdw2                                            ! vdW radii of two species. Needed for evaluation (makes it easier)
+integer     :: a,b,c,d,e,f,n,t                                            ! loop parameter
 
 ! Evaluation method 2
 real(8)     :: probe_r, grid_point_x, grid_point_y, grid_point_z, factor ! probe radius, grid point coordinates for any specific grid point (x,y,z), grid density (grid points per A^3)
 integer     :: grid_a, grid_b, grid_c, aa, bb, cc, running_n             ! number of grid points along cell vectors (a,b,c), loop variables to write grid points, running variable for the loop (assign grid_points correctly)
 real(8)     :: g                                                         ! if grid size is suppossed to be determined automatically -> use real, not integer
 integer     :: check_grid, n_coords                                      ! loop counter for the actual evaluation (grid) and for the coordinates (coords)
-integer     :: counter_access, counter_check_acc, counter_noOccu         ! counter to evaluate whether a point is accessible, check accessible, or NOT occupied
-integer     :: n_access, n_occ, n_check, n_check_acc, n_noOccu           ! counter for list assignment -> accessible, occupied, used loop variable (store accessible points), counter for accessibility check list, not occupied
-integer     :: pbc_a, pbc_b, pbc_c                                       ! loop variables for the check of PBCs (grid point - atom)
+integer     :: counter_access, counter_noOccu                            ! counter to evaluate whether a point is accessible, or NOT occupied
+integer     :: n_access, n_occ, n_check_acc, n_noOccu                    ! counter for list assignment -> accessible, occupied, counter for accessibility check list, not occupied
 real(8)     :: dist_point_atom, new_point_atom, dist_point_point         ! distance from a grid point to an atom, distance evaluated due to PBC, distance between grid points
 real(8)     :: V_void, V_accessible                                      ! void and accessible volume
 real(8)     :: grid_per_A_x, grid_per_A_y, grid_per_A_z                  ! grid per angstrom
@@ -725,7 +725,7 @@ subroutine porefinder(structure)      ! subroutine porefinder(structure,all_pore
   ! for random seed
   integer                             :: values(1:8), k
   integer, dimension(:), allocatable  :: seed
-  real(8)                             :: vv
+!  real(8)                             :: vv
   call date_and_time(values=values)
   call random_seed(size=k)
   allocate(seed(1:k))
@@ -959,7 +959,7 @@ real(8), intent(inout) :: pos_cart(3)
 real(8)                :: pos_frac(3)
 real(8)                :: trans_matrix(3,3)
 real(8)                :: determinant
-real(8)                :: lenA, lenB, lenC, angleBC, angleAC, angleAB, vol
+real(8)                :: lenA, lenB, lenC, angleBC, angleAC, angleAB
 integer                :: t,f
 real(8), parameter     :: pi = 3.14159265358979323846
 
