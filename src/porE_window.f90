@@ -478,7 +478,7 @@ else if (eval_method == 2) then                                                 
   if (n_pore == 1) then
     allocate(pore_windows(1)) ! for later
   else
-    allocate(pore_windows(n_pore*(n_pore-1))) ! for later
+    allocate(pore_windows(n_pore*n_pore)) ! for later
   end if
   !
   ! Go through the file again
