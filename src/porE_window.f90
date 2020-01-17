@@ -613,8 +613,13 @@ else if (eval_method == 2) then                                                 
       if (dist1 > 0.0D0) then
         write(6,fmt='(A,I3,A,I3,A,F10.5,A)') 'Pore window between pore ',a,' and pore ',b,' is ',dist1,' A'
         write(19,fmt='(A,I3,A,I3,A,F10.5,A)') 'Pore window between pore ',a,' and pore ',b,' is ',dist1,' A'
-        counter_1 = counter_1 + 1
-        pore_windows(counter_1) = dist1
+        !
+        ! Only store values which are physically meaningful (everything larger than H)
+        !
+        if (dist1 > 1.20) then
+          counter_1 = counter_1 + 1
+          pore_windows(counter_1) = dist1
+        end if
       end if
     end do
   end do
