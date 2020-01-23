@@ -47,7 +47,9 @@ Once all is set, type
 
 ## Installation to run with a Python GUI
 In the main folder of porE, there is a directory called *pyporE*. It contains a /src directory with all source files, 
-and an executable *pypore.py* which allows to use a graphical user interface to carry out any of the above mentioned functionalities.
+and an executable *pypore.py*. This executable allows using a graphical user interface (GUI) for porE. 
+
+All functionalities as mentioned above are included in this GUI.
 
 To compile this code, do
 
