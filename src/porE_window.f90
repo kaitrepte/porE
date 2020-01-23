@@ -59,7 +59,7 @@ real(8), allocatable                :: pore_windows(:)                   ! empty
 integer(8)  :: counter_1, n_pore, ios, n_points                          ! counter for evaluation of pore window/ pore size, counter for amount of pore sizes, iostat for reading, number of points
 real(8)                             :: junk2                             ! junk for reading
 real(8)                             :: dist1                             ! distance for evaluation
-real(8)                             :: tmp_vec(3)                        ! temporary vector          
+real(8)                             :: tmp_vec(3),tmp_vec2(3)                        ! temporary vector          
 !real(8), allocatable, dimension(3)  :: list_all_access(:,:)              ! empty list for all accessible points. Final evaluation (take points inside the probe radius sphere into account)
 
 !
@@ -598,27 +598,57 @@ else if (eval_method == 2) then                                                 
               end do
               exit loop321
             end if
-          end do loop321         
+          end do loop321
           !
           ! if distance is smaller than previous distance
+          ! -> store distance and position
           !
           if (dist_point_atom < dist1) then
+            tmp_vec2(:) = tmp_vec(:)
             dist1 = dist_point_atom
           end if
         end do
       end do
       !
-      ! If dist1 > 0 -> no evaluation here
+      ! If dist1 > 0 -> evaluation here
       !
       if (dist1 > 0.0D0) then
-        write(6,fmt='(A,I3,A,I3,A,F10.5,A)') 'Pore window between pore ',a,' and pore ',b,' is ',dist1,' A'
-        write(19,fmt='(A,I3,A,I3,A,F10.5,A)') 'Pore window between pore ',a,' and pore ',b,' is ',dist1,' A'
         !
-        ! Only store values which are physically meaningful (everything larger than H)
+        ! Check: ->
+        ! Is the distance to the pore centers is very different from the 
+        ! pore radii ->> this is not a pore window
+        ! Thus, do not take this into account
         !
-        if (dist1 > 1.20) then
-          counter_1 = counter_1 + 1
-          pore_windows(counter_1) = dist1
+        ! Distances to the two pore centers, a and b
+        !
+        dist_point_atom = sqrt(sum((tmp_vec2(:) - pore_center(a,:))**2))
+        new_point_atom  = sqrt(sum((tmp_vec2(:) - (pore_center(a,:)+&
+     &(pore_center(b,:)-(pore_center(a,:)+(v-2)*cell_a(:)+(w-2)*cell_b(:)+(x-2)*cell_c(:)))))**2))
+        !
+        ! Compare to pore sizes. If they are very different -> NOT A PORE WINDOW
+        ! Check whether distance is within 30% of the pore size
+        ! To be checked whether thsi is accurate
+        !
+        if ((abs((dist_point_atom-pore_size(a))/pore_size(a)) < 0.30D0).and.&
+        &    (abs((new_point_atom-pore_size(b))/pore_size(b)) < 0.30D0)) then
+          !
+          ! If this is all true -> pore window!
+          !
+          write(6,fmt='(A,I3,A,I3,A,F10.5,A)') 'PORE WINDOW between pore                     ',a,' and pore ',b,' is ',dist1,' A'
+          write(19,fmt='(A,I3,A,I3,A,F10.5,A)') 'PORE WINDOW between pore                     ',a,' and pore ',b,' is ',dist1,' A'
+          !
+          ! Only store values which are physically meaningful (everything larger than H)
+          !
+          if (dist1 > 1.20) then
+            counter_1 = counter_1 + 1
+            pore_windows(counter_1) = dist1
+          end if
+        !
+        ! In any other case -> not a pore window. Just print window size in between the pores 
+        !
+        else
+          write(6,fmt='(A,I3,A,I3,A,F10.5,A)') 'Minimum radius (NO pore window) between pore ',a,' and pore ',b,' is ',dist1,' A'
+          write(19,fmt='(A,I3,A,I3,A,F10.5,A)') 'Minimum radius (NO pore window) between pore ',a,' and pore ',b,' is ',dist1,' A'
         end if
       end if
     end do
