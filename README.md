@@ -11,7 +11,7 @@ Sidekick:
 
 Coding language: FORTRAN   
 
-## Installation
+## Installation to run in shell (no GUI)
 To compile the code, do
 
 	cd src/
@@ -20,14 +20,13 @@ To compile the code, do
 
 	cd ..
 
-## Running the code
+### Running the code
 There are three calculations types one can choose from:
 
 * OSA : Overlapping sphere approach. Calculates the porosity via two-body overlaps of spheres.
 * GPA : Grid point approach. Void and accessible porosity are calculated using a grid in the unit cell.
 * PSD : Pore size distribution. Using a Monte-Carlo scheme, the pore size distribution is calculated.
 
-### Running in the shell (no GUI)
 To run the code, go to the *run* folder. The file run.sh includes these options:
 
 * porE: This is the standard code. Includes OSA, and the standard GPA
@@ -46,15 +45,19 @@ Once all is set, type
 ./run.sh
 ```
 
-### Running with Python GUI
+## Installation to run with a Python GUI
 In the main folder of porE, there is a directory called *pyporE*. It contains a /src directory with all source files, 
 and an executable *pypore.py* which allows to use a graphical user interface to carry out any of the above mentioned functionalities.
 
-To use this GUI, go to the corresponding /src directory, type
+To compile this code, do
+
+	cd pyporE/src/
 
 	bash compile_python.sh
 
-and the code will be compiled. Then, simply execute
+
+### Running the code
+After compiling the code, you can simply execute
 
 	python3 pypore.py
 
