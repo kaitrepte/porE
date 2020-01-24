@@ -4,8 +4,8 @@ u6                     									Structure string. Several available options are 
 'aNiceName'  		                     						If Structure = 'ud': the name of the structure (for output purposes only)
 
 CALCULATION PARAMETERS
-200				Number of starting points. 	Recommended > 100
-50000				Number of Monte-Carlo steps. 	Recommended > 10000
+200				Number of starting points. 	Recommended > 200
+1000				Number of Monte-Carlo steps. 	Recommended > 1000
 
 
 
