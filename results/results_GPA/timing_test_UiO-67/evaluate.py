@@ -20,5 +20,5 @@ for u in range(len(grids)):
     time = float(lines[-1].split()[3])
 
 
-    print('Grid density = '+str(grids[u])+'\tGrid points = '+str(grid_points)+'\t Phi = '+str('%8.2f' % porosity)+'\t Time = '+str(time))
+    print('Grid density = '+str(grids[u])+'\tGrid points = '+str(grid_points)+'\t Phi_acc = '+str('%8.2f' % porosity)+' %\t Time = '+str('%10.3f' % time)+' s')
 
