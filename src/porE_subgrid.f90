@@ -5,9 +5,14 @@ implicit none
 ! porE
 ! Author Kai Trepte
 ! Version January 23, 2019
-! Version April 29th, 2019 -- implement sub-grid division
-! Version August 23rd, 2019 -- add many more elements, vdW and covalent radii
+! Version April 29th, 2019    -- implement sub-grid division
+! Version August 23rd, 2019   -- add many more elements, vdW and covalent radii
 ! Version September 4th, 2019 -- read initial information from input file
+! Version October 15th, 2019  -- start thinking about pore windows and how to get them -- 
+!         November 21th, 2019 -- pore windows: read pore centers and sizes from PSD analysis. 
+!                                Then, evaluate vectors between the centers. Minimum distance to 
+!                                the vdW surface of these vectors is the pore window!
+!         January 08th, 2020  -- Start final implementation of pore windows, include in evaluation
 
 
 character(2)                        :: struct
@@ -31,7 +36,7 @@ real(8), parameter                  ::  u = 1.660539               ! define atom
 real(8)     :: sub_overlap                                               ! overlap volume as evaluated by the subroutine
 real(8)     :: V_occupied, V_overlap, m_total, distance_ab, new_distance ! volume occupied by vdw spheres, total overlap volume, total mass of unit cell, distance between two atoms, distance evaluated due to PBC
 !real(8)     :: r_vdw1, r_vdw2                                            ! vdW radii of two species. Needed for evaluation (makes it easier)
-integer(8)  :: a,b,c,d,e,f,n,t                                           ! loop parameter
+integer(8)  :: a,b,c,d,e,f,n,t,v,w,x                                     ! loop parameter
 
 ! Evaluation method 2
 real(8)     :: probe_r, grid_point_x, grid_point_y, grid_point_z, factor ! probe radius, grid point coordinates for any specific grid point (x,y,z), grid density (grid points per A^3)
@@ -42,11 +47,20 @@ integer(8)  :: counter_access, counter_noOccu                            ! count
 integer(8)  :: n_access, n_occ, n_check_acc, n_noOccu                    ! counter for list assignment -> accessible, occupied, counter for accessibility check list, not occupied
 real(8)     :: dist_point_atom, new_point_atom, dist_point_point         ! distance from a grid point to an atom, distance evaluated due to PBC, distance between grid points
 real(8)     :: V_void, V_accessible                                      ! void and accessible volume
-real(8)     :: grid_per_A_x, grid_per_A_y, grid_per_A_z                  ! grid per angstrom
+real(8)     :: grid_per_A_x, grid_per_A_y, grid_per_A_z                  ! grid per angstrom, in the cell vector directions (x == a, y == b, z == c)
 real(8), allocatable, dimension(3)  :: grid_points(:,:)                  ! array for the grid_points. Matrix.
 real(8), allocatable, dimension(3)  :: list_noOccu(:,:)                  ! empty list for all NOT occupied points
 real(8), allocatable, dimension(3)  :: list_access(:,:)                  ! empty list for all accessible points. Initial evaluation
 real(8), allocatable, dimension(3)  :: list_check_acc(:,:)               ! empty list for the check of accessibility. Will be smaller than list_access and thus easier/faster to evaluate
+!! For pore windows
+logical                             :: file_exist                        ! Check whether output_PSD file exists
+real(8), allocatable                :: pore_center(:,:)                  ! empty list for the coordinates of the pore centers
+real(8), allocatable                :: pore_size(:)                      ! empty list for the pore sizes
+real(8), allocatable                :: pore_windows(:)                   ! empty list for the pore windows
+integer(8)  :: counter_1, n_pore, ios, n_points                          ! counter for evaluation of pore window/ pore size, counter for amount of pore sizes, iostat for reading, number of points
+real(8)                             :: junk2                             ! junk for reading
+real(8)                             :: dist1                             ! distance for evaluation
+real(8)                             :: tmp_vec(3),tmp_vec2(3)                        ! temporary vector          
 !real(8), allocatable, dimension(3)  :: list_all_access(:,:)              ! empty list for all accessible points. Final evaluation (take points inside the probe radius sphere into account)
 
 !
@@ -65,7 +79,7 @@ type(global_array), dimension(:), allocatable :: sub_division
 ! Some arrays for easier handling of vdW radii
 character(2)              :: all_pse(25)                        ! all currently available elements
 real(8)                   :: all_vdW_radii(25)                  ! the respective vdW radii
-integer(8)                :: all_elements                       ! number of all different elements
+integer                   :: all_elements                       ! number of all different elements
 character(2), allocatable :: tmp_pse(:)                         ! temporary list to evaluate the used elements
 character(2), allocatable :: pse(:)                             ! used elements
 real(8), allocatable      :: vdW_radii(:)                       ! used vdW radii
@@ -86,6 +100,13 @@ all_vdW_radii = (/ 1.20D0, 1.40D0, 1.82D0, 1.53D0, 1.92D0, 1.70D0, 1.55D0, 1.52D
 !                                                                                                                                               !
 ! 2. evaluation: place grid inside the unit cell, count each point which is in an occupied region, compare to total points -> P = N_occ/N_tot   !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!!!! IDEA !!!
+! For pore windows:
+! get radii for all grid points, i.e. largest distance to vdW surface of the atoms
+! with that, determine pore sizes. Use vectors between the pores -> analyze minimum distance to surface -> pore window
+! Once evaluated, compare to probe radius -> if window < r_probe ==> pore becomes inaccessible!
+!!!!
 
 !!!!!!!!!!!!!!!!!!
 ! Initialization !
@@ -360,6 +381,7 @@ else if (eval_method == 2) then                                                 
   n_noOccu = 0
   n_check_acc = 0
   !
+  !
   ! Write the array of the grid points
   !
   running_n = 0                                                                                ! initialize running variable (for the assignment of the grid_points array)
@@ -408,7 +430,9 @@ else if (eval_method == 2) then                                                 
             end if
           end do loop66
         end do loop14
-
+        !
+        !
+        !
         if (counter_access == number_of_atoms) then                                                ! if the counter for the accessible points increased for all atoms -> add to list
           n_access = n_access + 1                                                                  ! increase assignment counter for the accessible list
           list_access(n_access,:) = grid_points(running_n,:)
@@ -421,11 +445,227 @@ else if (eval_method == 2) then                                                 
     end do
   end do
 
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  !!!!!!! PORE WINDOW EVALUATION !!!!!!
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ! 
+  ! Check whether there is an output_PSD file. If so -> get pore windows
+  !
+  inquire(file='output_PSD',exist=file_exist)
+  if (file_exist) then
+    ! 
+    ! Read pore sizes from output_PSD
+    ! Go through the file. See how many pores there are.  
+    ! Allocate pore_center and pore_size accordingly
+    !
+    n_pore = 0
+    open(unit=20,file='output_PSD',status='old',action='read')  
+    do a = 1, 100  ! no more than 100 lines in the file.
+      read(20,*,iostat=ios) junk2
+      !
+      ! reading a floating point number was successful
+      !
+      if (ios==0) then
+        !
+        ! increase counter for pores
+        !
+        n_pore = n_pore + 1
+      end if
+    end do
+    !
+    ! Go back to the top of the file
+    !
+    rewind(20)
+    !
+    ! allocate arrays
+    !
+    allocate(pore_size(n_pore))
+    allocate(pore_center(n_pore,3))
+    if (n_pore == 1) then
+      allocate(pore_windows(1)) ! for later
+    else
+      allocate(pore_windows(n_pore*n_pore)) ! for later
+    end if
+    !
+    ! Go through the file again
+    !
+    n_pore = 0
+    do a = 1, 100
+      read(20,*,iostat=ios) junk2                          
+      !
+      ! reading a floating point number was successful
+      !
+      if (ios==0) then
+        !
+        ! go up one line
+        !
+        backspace(20)
+        !
+        ! increase counter for pores
+        !
+        n_pore = n_pore + 1
+        !
+        ! read pore size and pore center
+        !
+        read(20,*) pore_size(n_pore), junk2, pore_center(n_pore,:)
+        !
+        ! store the radius, not the diameter
+        !
+        pore_size(n_pore) = pore_size(n_pore)/2.0D0
+      end if
+    end do
+    close(20)
 
+    write(6,*) 'Pore  Pore radius  Pore diameter       coordinates of pore center'
+    write(19,*) 'Pore  Pore radius  Pore diameter       coordinates of pore center'
+    do a = 1, n_pore
+      write(6,fmt='(I5,F13.4,F15.4,7X,3F11.6)') a, pore_size(a), pore_size(a)*2.0D0, pore_center(a,:)
+      write(19,fmt='(I5,F13.4,F15.4,7X,3F11.6)') a, pore_size(a), pore_size(a)*2.0D0, pore_center(a,:)
+    end do
 
+    !
+    ! initialize all with 5000.0
+    ! 
+    pore_windows(:) = 5000.0D0
+    counter_1 = 0
 
-
-
+    !!!!!!!!!!!!!!!!!!!!!!!!!
+    ! Pore window evaluation
+    !
+    ! Use the pore centers as a starting point. Construct vectors between the pore sizes (periodically)
+    ! along these vectors, analyze the minimum distance the the vdW surface. 
+    ! the smallest value is the pore window!
+    ! Use only the vector corresponding to the shortestdistance between two pore centers (take pbcs into account) -> that should do!
+    !
+    !
+    ! Do for all pores, i.e. for b == a as well 
+    !                   ! ORG:
+    do a = 1, n_pore    ! 1, npore-1
+      do b = a, n_pore  ! a+1,n_pore
+        dist1 = 1000.0D0 
+        do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
+          do d = 1,3                                                                             ! here for cell_b
+            do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
+              tmp_vec(:) = pore_center(b,:) - (pore_center(a,:) + (c-2)*cell_a(:) + (d-2)*cell_b(:) + (e-2)*cell_c(:))
+              if ((sqrt(sum(tmp_vec(:)**2)) < dist1).and.(sqrt(sum(tmp_vec(:)**2)).ne.0.0D0)) then  ! when evaluating the same pore -> exclude zero distances
+                !
+                ! store new minimum distance and the corresponding values for the cell vectors (periodicity)
+                !
+                dist1 = sqrt(sum(tmp_vec(:)**2))
+                v = c
+                w = d
+                x = e
+              end if
+            end do
+          end do
+        end do
+        !
+        ! Evaluate pore window
+        ! If it is zero -> disregard (pores are not actually adjacent to each other), thus the vector goes through some atoms
+        !   can we exclude pores like that before? Would be good
+        !
+        !
+        ! Move along the connecting vector between pore a and pore b. Analyze the distance to the vdW surface. Minimum distance is the
+        ! pore window!
+        !
+        ! Use length of vector between pores to determine number of points to evaluate. e.g. 10 points/A
+        ! 
+        n_points = int(dist1*10.0D0)  ! 10 points/A to analyze. Should be enough
+        dist1 = 100000.0D0            ! initial value for each pore 
+        do f = 1, n_points            ! steps along the vector
+          !
+          ! point to evaluate. Start at pore a. Move step by step further towards pore b.
+          !
+          tmp_vec(:) = pore_center(a,:) + real(f/real(n_points,8),8)*&
+          &(pore_center(b,:) - (pore_center(a,:) + (v-2)*cell_a(:) + (w-2)*cell_b(:) + (x-2)*cell_c(:)))
+          !
+          ! go through all atoms
+          !
+          do n_coords = 1, number_of_atoms
+            !
+            ! For vdW radii
+            !
+            loop321: do n = 1, no_elements
+              if (elements(n_coords) == pse(n)) then
+                !
+                ! evaluate minimum distance to vdW surface
+                !
+                dist_point_atom = sqrt(sum((tmp_vec(:) - coordinates(n_coords,:))**2)) - vdW_radii(n)    ! initial distance between grid point and atom
+                do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
+                  do d = 1,3                                                                             ! here for cell_b
+                    do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
+                      new_point_atom = sqrt(sum((tmp_vec(:) - coordinates(n_coords,:) + &
+                                          (c-2)*cell_a(:) + (d-2)*cell_b(:) + (e-2)*cell_c(:))**2)) - vdW_radii(n)      ! evaluate new distance due to PBC
+                      if (new_point_atom < dist_point_atom) then                                         ! if distance is smaller -> use this one !
+                        dist_point_atom = new_point_atom
+                      end if
+                    end do
+                  end do
+                end do
+                exit loop321
+              end if
+            end do loop321
+            !
+            ! if distance is smaller than previous distance
+            ! -> store distance and position
+            !
+            if (dist_point_atom < dist1) then
+              tmp_vec2(:) = tmp_vec(:)
+              dist1 = dist_point_atom
+            end if
+          end do
+        end do
+        !
+        ! If dist1 > 0 -> evaluation here
+        !
+        if (dist1 > 0.0D0) then
+          !
+          ! Check: ->
+          ! Is the distance to the pore centers is very different from the 
+          ! pore radii ->> this is not a pore window
+          ! Thus, do not take this into account
+          !
+          ! Distances to the two pore centers, a and b
+          !
+          dist_point_atom = sqrt(sum((tmp_vec2(:) - pore_center(a,:))**2))
+          new_point_atom  = sqrt(sum((tmp_vec2(:) - (pore_center(a,:)+&
+       &(pore_center(b,:)-(pore_center(a,:)+(v-2)*cell_a(:)+(w-2)*cell_b(:)+(x-2)*cell_c(:)))))**2))
+          !
+          ! Compare to pore sizes. If they are very different -> NOT A PORE WINDOW
+          ! Check whether distance is within 30% of the pore size
+          ! To be checked whether thsi is accurate
+          !
+          if ((abs((dist_point_atom-pore_size(a))/pore_size(a)) < 0.30D0).and.&
+          &    (abs((new_point_atom-pore_size(b))/pore_size(b)) < 0.30D0)) then
+            !
+            ! If this is all true -> pore window!
+            !
+            write(6,fmt='(A,I3,A,I3,A,F10.5,A)') 'PORE WINDOW between pore                     ',a,' and pore ',b,' is ',dist1,' A'
+            write(19,fmt='(A,I3,A,I3,A,F10.5,A)') 'PORE WINDOW between pore                     ',a,' and pore ',b,' is ',dist1,' A'
+            !
+            ! Only store values which are physically meaningful (everything larger than H)
+            !
+            if (dist1 > 1.20) then
+              counter_1 = counter_1 + 1
+              pore_windows(counter_1) = dist1
+            end if
+          !
+          ! In any other case -> not a pore window. Just print window size in between the pores 
+          !
+          else
+            write(6,fmt='(A,I3,A,I3,A,F10.5,A)') 'Minimum radius (NO pore window) between pore ',a,' and pore ',b,' is ',dist1,' A'
+            write(19,fmt='(A,I3,A,I3,A,F10.5,A)') 'Minimum radius (NO pore window) between pore ',a,' and pore ',b,' is ',dist1,' A'
+          end if
+        end if
+      end do
+    end do
+    !
+    ! END pore windows
+    !
+  else
+    write(6,*) 'No output_PSD found => no evaluation of pore windows'
+    write(19,*) 'No output_PSD found => no evaluation of pore windows'
+  end if
 
 
 
@@ -450,7 +690,7 @@ else if (eval_method == 2) then                                                 
   grid_per_A_x = real(grid_a)/sqrt(cell_a(1)**2 + cell_a(2)**2 + cell_a(3)**2)
   grid_per_A_y = real(grid_b)/sqrt(cell_b(1)**2 + cell_b(2)**2 + cell_b(3)**2)
   grid_per_A_z = real(grid_c)/sqrt(cell_c(1)**2 + cell_c(2)**2 + cell_c(3)**2)
-  factor = 1.0D0 + 1.0D0/((grid_per_A_x+grid_per_A_y+grid_per_A_z)/3.0D0)                      ! divide by average grid points per A
+  factor = 1.0 + 1.0/((grid_per_A_x+grid_per_A_y+grid_per_A_z)/3.0)                            ! divide by average grid points per A
 
   !
   ! Get number of sub-grid points per atom
@@ -608,18 +848,55 @@ else if (eval_method == 2) then                                                 
               ' grid points per A^3, with ',grid_per_A_x,' x ',grid_per_A_y,' x ',grid_per_A_z,' grid points per A'                           ! (grid_a*grid_b*grid_c/V_total)**(1./3.)
   write(6,fmt='(1X a,I15)') 'Points OCCUPIED:             ',n_occ
   write(6,fmt='(1X a,I15)') 'Points NOT OCCUPIED (void):  ',grid_a*grid_b*grid_c - n_occ
-  write(6,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
+  !
+  ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
+  !
+  if (file_exist) then  ! make sure the pore windows were evaluated
+    if (probe_r > minval(pore_windows)) then
+      write(6,fmt='(1X a,I15)') 'Points IN-ACCESSIBLE:        ',n_access
+    else
+      write(6,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
+    end if
+  else
+    write(6,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
+  end if
+
   write(6,fmt='(1X a,7X f7.3,1X a)') 'Probe radius:                ',probe_r,'A'
+  if (file_exist) then  ! make sure the pore windows were evaluated
+    write(6,fmt='(1X a,7X f7.3,1X a)') 'Smallest pore window:        ',minval(pore_windows),'A'
+  end if
   write(6,*) ' '
  
-  write(6,777) 'Porosity (void):       ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100,'%'
-  write(6,777) 'Porosity (accessible): ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+  write(6,777) 'Porosity (void):          ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100,'%'
+  !
+  ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
+  !
+  if (file_exist) then  ! make sure the pore windows were evaluated
+    if (probe_r > minval(pore_windows)) then
+      write(6,777) 'Porosity (in-accessible): ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+    else
+      write(6,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+    end if
+  else
+    write(6,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+  end if
  
   V_void       = (real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*V_total
   V_accessible = real(n_access)/(real(grid_a*grid_b*grid_c))*V_total 
  
-  write(6,777) 'Volume (void):         ',V_void,'A^3'
-  write(6,777) 'Volume (accessible):   ',V_accessible,'A^3'
+  write(6,777) 'Volume (void):            ',V_void,'A^3'
+  !
+  ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
+  !
+  if (file_exist) then  ! make sure the pore windows were evaluated
+    if (probe_r > minval(pore_windows)) then
+      write(6,777) 'Volume (in-accessible):   ',V_accessible,'A^3'
+    else
+      write(6,777) 'Volume (accessible):      ',V_accessible,'A^3'
+    end if
+  else
+    write(6,777) 'Volume (accessible):      ',V_accessible,'A^3'
+  end if
   write(6,*) ' '
  
   write(6,fmt='(1X a,f10.3,a)') 'Unit cell volume (V_total):                   ',V_total,' A^3'
@@ -645,18 +922,55 @@ else if (eval_method == 2) then                                                 
               ' grid points per A^3, with ',grid_per_A_x,' x ',grid_per_A_y,' x ',grid_per_A_z,' grid points per A'                           ! (grid_a*grid_b*grid_c/V_total)**(1./3.)
   write(19,fmt='(1X a,I15)') 'Points OCCUPIED:             ',n_occ
   write(19,fmt='(1X a,I15)') 'Points NOT OCCUPIED (void):  ',grid_a*grid_b*grid_c - n_occ
-  write(19,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
+  !
+  ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
+  !
+  if (file_exist) then  ! make sure the pore windows were evaluated
+    if (probe_r > minval(pore_windows)) then
+      write(19,fmt='(1X a,I15)') 'Points IN-ACCESSIBLE:        ',n_access
+    else
+      write(19,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
+    end if
+  else
+    write(19,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
+  end if
+
   write(19,fmt='(1X a,7X f7.3,1X a)') 'Probe radius:                ',probe_r,'A'
+  if (file_exist) then  ! make sure the pore windows were evaluated
+    write(19,fmt='(1X a,7X f7.3,1X a)') 'Smallest pore window:        ',minval(pore_windows),'A'
+  end if
   write(19,*) ' '
 
-  write(19,777) 'Porosity (void):       ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100,'%'
-  write(19,777) 'Porosity (accessible): ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+  write(19,777) 'Porosity (void):          ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100,'%'
+  !
+  ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
+  !
+  if (file_exist) then  ! make sure the pore windows were evaluated
+    if (probe_r > minval(pore_windows)) then
+      write(19,777) 'Porosity (in-accessible): ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+    else
+      write(19,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+    end if
+  else
+    write(19,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+  end if
 
   V_void       = (real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*V_total
   V_accessible = real(n_access)/(real(grid_a*grid_b*grid_c))*V_total
 
-  write(19,777) 'Volume (void):         ',V_void,'A^3'
-  write(19,777) 'Volume (accessible):   ',V_accessible,'A^3'
+  write(19,777) 'Volume (void):            ',V_void,'A^3'
+  !
+  ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
+  !
+  if (file_exist) then  ! make sure the pore windows were evaluated
+    if (probe_r > minval(pore_windows)) then
+      write(19,777) 'Volume (in-accessible):   ',V_accessible,'A^3'
+    else
+      write(19,777) 'Volume (accessible):      ',V_accessible,'A^3'
+    end if
+  else
+    write(19,777) 'Volume (accessible):      ',V_accessible,'A^3'
+  end if
   write(19,*) ' '
 
   write(19,fmt='(1X a,f10.3,a)') 'Unit cell volume (V_total):                   ',V_total,' A^3'
