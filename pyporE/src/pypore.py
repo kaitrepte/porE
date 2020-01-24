@@ -15,7 +15,7 @@
 
 from porE import pore
 from porE_subgrid import pore as pore_subgrid
-from porE_window import pore as pore_window 
+#from porE_window import pore as pore_window 
 from get_PSD import * 
 
 import os 
@@ -95,8 +95,7 @@ class PyPore(Frame):
                 \t\t\t\t    enter value and click in the field to update the value\n 
                 \t executable: \n
                 \t\t\t original -- original implementation \n 
-                \t\t\t subgrid -- speedup for grid approach \n
-                \t\t\t window -- calculates pore windows as well \n 
+                \t\t\t subgrid -- speedup for grid approach, can calculate pore windows (using output_PSD file) \n
                 \t Authors: \n 
                 \t\t\t Kai Trepte (Fortran, core routines) \n 
                 \t\t\t Sebastian Schwalbe (Python, GUI)'''
@@ -128,7 +127,7 @@ class PyPore(Frame):
         exe_pore = StringVar()
         exe_pore.set('subgrid')
         self.exe_pore = exe_pore
-        w2= OptionMenu(self.controls, self.exe_pore, 'original','subgrid','window',command=self.refresh_pore)
+        w2= OptionMenu(self.controls, self.exe_pore, 'original','subgrid',command=self.refresh_pore)
         self.w2 = w2 
 
         self.w1.grid(row=1, column=2)
@@ -394,8 +393,8 @@ class PyPore(Frame):
                 pore(self.target[0],self.target[1],self.probe_r,self.grid_a,self.grid_b,self.grid_c)
             if self.exe_pore.get() == 'subgrid':
                 pore_subgrid(self.target[0],self.target[1],self.probe_r,self.grid_a,self.grid_b,self.grid_c)
-            if self.exe_pore.get() == 'window':
-                pore_window(self.target[0],self.target[1],self.probe_r,self.grid_a,self.grid_b,self.grid_c)
+###            if self.exe_pore.get() == 'window':
+###                pore_window(self.target[0],self.target[1],self.probe_r,self.grid_a,self.grid_b,self.grid_c)
             # restore the standard output file descriptor
             os.dup2(save, 1)
             # close the output file
