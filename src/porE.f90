@@ -545,7 +545,8 @@ else if (eval_method == 2) then                                                 
  
   write(6,fmt='(1X a,f10.3,a)') 'Unit cell volume (V_total):                   ',V_total,' A^3'
   write(6,fmt='(1X a,f10.3,a)') 'Mass of unit cell (m_total):                  ',m_total*u,' 10**-27 kg'
-  write(6,fmt='(1X a,f10.3,a)') 'Density of the structure (m_total/V_total):   ',m_total*u/V_total*10**3,' kg/m^3'
+  write(6,fmt='(1X a,f10.3,a,f10.3,a)') 'Density of the structure (m_total/V_total):   ',m_total*u/V_total*10**3,' kg/m^3 = ',&
+                                                                                         m_total*u/V_total,' g/cm^3'
   write(6,fmt='(1X a,f10.3,a)') 'Pore volume density (V_void/m_total):         ',V_void/(m_total*u)*10**(0),' cm^3/g'
   write(6,fmt='(1X a,f10.3,a)') 'Pore volume density (V_acc/m_total):          ',V_accessible/(m_total*u)*10**(0),' cm^3/g'
  
@@ -583,7 +584,8 @@ else if (eval_method == 2) then                                                 
  
   write(19,fmt='(1X a,f10.3,a)') 'Unit cell volume (V_total):                   ',V_total,' A^3'
   write(19,fmt='(1X a,f10.3,a)') 'Mass of unit cell (m_total):                  ',m_total*u,' 10**-27 kg'
-  write(19,fmt='(1X a,f10.3,a)') 'Density of the structure (m_total/V_total):   ',m_total*u/V_total*10**3,' kg/m^3'
+  write(19,fmt='(1X a,f10.3,a,f10.3,a)') 'Density of the structure (m_total/V_total):   ',m_total*u/V_total*10**3,' kg/m^3 = ',&
+                                                                                         m_total*u/V_total,' g/cm^3'
   write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_void/m_total):         ',V_void/(m_total*u)*10**(0),' cm^3/g'
   write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_acc/m_total):          ',V_accessible/(m_total*u)*10**(0),' cm^3/g'
  
