@@ -1,0 +1,33 @@
+STRUCTURE
+m2                     									Structure string. Several available options are given at the end of this file
+'/some/path/to/a/file.xyz'						                If Structure = 'ud': the full path to the xyz file you want to use, e.g. "../structures_xyz/test.xyz"
+'aNiceName'  		                     						If Structure = 'ud': the name of the structure (for output purposes only)
+
+CALCULATION PARAMETERS
+200				Number of starting points. 	Recommended > 200
+10000				Number of Monte-Carlo steps. 	Recommended > 1000
+
+
+
+CURRENTLY AVAILABLE STRUCTURES
+# Structure		   - String
+-----------------------------------
+# DUT-8(Ni) open           - do
+# DUT-8(Ni) open vcrelax   - vo
+# DUT-8(Ni) closed         - dc
+# DUT-8(Ni) closed vcrelax - vc
+# UiO-66                   - u6
+# UiO-67                   - u7
+# UiO-68                   - u8
+# MOF-5                    - m5
+# IRMOF-10                 - ir
+# MOF210                   - m2
+# HKUST-1, open Cu sites   - h1
+# HKUST-1, O-Cu-Cu-O       - ho
+# C60@MOF                  - c6
+# Benzene, opt             - b1
+# Benzene, exp             - b2
+# Benzene, C only          - bc
+# H atom                   - ha
+# User-defined xyz         - ud
+###############################

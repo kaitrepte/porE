@@ -30,7 +30,7 @@ There are three calculations types one can choose from:
 * GPA : Grid point approach. Void and accessible porosity are calculated using a grid in the unit cell.
 * PSD : Pore size distribution. Using a Monte-Carlo scheme, the pore size distribution is calculated.
 
-To run the code, go to the *run* folder. The file run.sh includes these options:
+To run the code, go to the *examples* folder. The file run.sh includes these options:
 
 * porE: This is the standard code. Includes OSA, and the standard GPA
 * porE_subgrid: A modified, much faster version of the GPA (GPA_sub-grid). Includes OSA as well. Further, there is an evaluation of the pore windows, which uses the output of get_PSD (see below)
