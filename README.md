@@ -9,7 +9,10 @@ Sidekick:
 
 * Sebastian Schwalbe 
 
-Coding language: FORTRAN   
+Coding language: 
+
+* FORTRAN (no GUI)
+* FORTRAN, Python (with GUI)
 
 ## Installation to run in shell (no GUI)
 To compile the code, do
