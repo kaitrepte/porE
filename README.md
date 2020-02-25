@@ -66,9 +66,9 @@ After compiling the code, you can simply execute
 	python3 pypore.py
 
 to start the GUI. Follow the tool-tips to run any desired calculation. This GUI also allows to load .cif files.
+In addition, pyporE can be used as a python library. An example is provided in the folder /pypore_as_library.
 
 Special thanks goes to Sebastian Schwalbe for writing this GUI and for many other useful discussions.
-
 
 ## Additional information
 Limitations: Some elements regarding their vdW radii are not implemented yet. 
