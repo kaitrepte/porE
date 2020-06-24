@@ -1,0 +1,33 @@
+## Conventional cells ##
+ UiO-67_VOL5                                                                                         
+ V_total     =  18696.347 A^3
+ V_vdW,atoms =  11624.587 A^3
+ V_overlap   =   4226.284 A^3
+ V_occupied  =   7398.303 A^3
+ V_void      =  11298.044 A^3
+ Porosity    =     60.429  %
+
+ UiO-67_VOL27                                                                                        
+ V_total     =  19193.509 A^3
+ V_vdW,atoms =  11624.587 A^3
+ V_overlap   =   4203.146 A^3
+ V_occupied  =   7421.441 A^3
+ V_void      =  11772.068 A^3
+ Porosity    =     61.334  %
+
+### Primitive cells ###
+ UiO-67_VOL5_prim                                                                                    
+ V_total     =   4674.093 A^3
+ V_vdW,atoms =   2906.147 A^3
+ V_overlap   =   1135.767 A^3
+ V_occupied  =   1770.380 A^3
+ V_void      =   2903.713 A^3
+ Porosity    =     62.124  %
+
+ UiO-67_VOL27_prim                                                                                   
+ V_total     =   4798.385 A^3
+ V_vdW,atoms =   2906.147 A^3
+ V_overlap   =   1129.280 A^3
+ V_occupied  =   1776.867 A^3
+ V_void      =   3021.519 A^3
+ Porosity    =     62.969  %

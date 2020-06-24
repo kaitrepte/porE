@@ -1,0 +1,16 @@
+ Starting points   (recommended: >= 100)   :                   200
+ Monte-Carlo steps (recommended: >= 10000) :                  1000
+  
+Until step      250, step size a_step =    2.58658
+Until step      500, step size a_step =    0.25866
+Until step      750, step size a_step =    0.02587
+Until step     1000, step size a_step =    0.00259
+  
+  
+ Pore size distribution for MOF-5                                                                                               
+  
+   Pore size   Distribution [%]   coordinate (cartesian)                 coordinate (fractional)
+   11.821217   28.50              12.933147   25.865479   12.932708      0.500009    0.999986    0.499992
+   15.099706   71.50              25.865797   25.865396   12.933047      0.999998    0.999983    0.500005
+  
+Total CPU time:         75.597 s

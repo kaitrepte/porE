@@ -1,0 +1,18 @@
+ Starting points   (recommended: >= 100)   :                   200
+ Monte-Carlo steps (recommended: >= 10000) :                 50000
+  
+Until step    12500, step size a_step =    7.10716
+Until step    25000, step size a_step =    0.71072
+Until step    37500, step size a_step =    0.07107
+Until step    50000, step size a_step =    0.00711
+  
+  
+ Pore size distribution for MOF-210                                                                                             
+  
+   Pore size   Distribution [%]   coordinate (cartesian)                 coordinate (fractional)
+   19.578793   19.00              55.568245   17.662825   14.488618      0.359895    0.228301    0.338020
+   19.969075    9.00             143.465535   52.438283   36.778757      0.827963    0.739907    0.858049
+   27.653817   29.50              88.491653   33.819802   21.431625      0.500004    0.499997    0.500000
+   27.976612   39.00              97.796943   37.376077   23.685337      0.552581    0.552573    0.552579
+  
+Total CPU time:      24143.845 s

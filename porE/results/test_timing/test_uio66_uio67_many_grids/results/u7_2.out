@@ -1,0 +1,30 @@
+  
+ N_acc after 1st loop                       24054
+   Total number of unoccupied points        18751
+   Sum of sub-grid points                   20038
+ N_acc after 2nd loop                       38107
+  
+ #######################################################################################################
+ ###############################################  OUTPUT ###############################################
+ #######################################################################################################
+ Structure : UiO-67                                                                                              
+ Grid which was used:                  39 x   39 x   39
+ Total number of grid points:           59319
+ Grid point density:                  11.930 grid points per A^3, with      2.036   x      2.036   x      2.036   grid points per A
+ Points OCCUPIED:                       16514
+ Points NOT OCCUPIED (void):            42805
+ Points ACCESSIBLE:                     38107
+ Probe radius:                         1.200 A
+  
+ Porosity (void):                   72.16069 %
+ Porosity (accessible):             64.24080 %
+ Volume (void):                   3588.14256 A^3
+ Volume (accessible):             3194.33129 A^3
+  
+ Unit cell volume (V_total):                     4972.434 A^3
+ Mass of unit cell (m_total):                    3521.417 10**-27 kg
+ Density of the structure (m_total/V_total):      708.188 kg/m^3
+ Pore volume density (V_void/m_total):              1.019 cm^3/g
+ Pore volume density (V_acc/m_total):               0.907 cm^3/g
+  
+Total CPU time:          2.393 s

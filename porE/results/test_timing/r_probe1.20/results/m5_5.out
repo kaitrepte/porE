@@ -1,0 +1,30 @@
+  
+ N_acc after 1st loop                     1161896
+   Total number of unoccupied points       600400
+   Sum of sub-grid points                  180128
+ N_acc after 2nd loop                     1714088
+  
+ #######################################################################################################
+ ###############################################  OUTPUT ###############################################
+ #######################################################################################################
+ Structure : MOF-5                                                                                               
+ Grid which was used:                 130 x  130 x  130
+ Total number of grid points:         2197000
+ Grid point density:                 126.955 grid points per A^3, with      5.026   x      5.026   x      5.026   grid points per A
+ Points OCCUPIED:                      434704
+ Points NOT OCCUPIED (void):          1762296
+ Points ACCESSIBLE:                   1714088
+ Probe radius:                         1.200 A
+  
+ Porosity (void):                   80.21375 %
+ Porosity (accessible):             78.01949 %
+ Volume (void):                  13881.24901 A^3
+ Volume (accessible):            13501.52492 A^3
+  
+ Unit cell volume (V_total):                    17305.325 A^3
+ Mass of unit cell (m_total):                   10227.669 10**-27 kg
+ Density of the structure (m_total/V_total):      591.013 kg/m^3
+ Pore volume density (V_void/m_total):              1.357 cm^3/g
+ Pore volume density (V_acc/m_total):               1.320 cm^3/g
+  
+Total CPU time:        246.593 s

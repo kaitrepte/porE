@@ -1,0 +1,30 @@
+  
+ N_acc after 1st loop                      247897
+   Total number of unoccupied points       307392
+   Sum of sub-grid points                   76500
+ N_acc after 2nd loop                      523698
+  
+ #######################################################################################################
+ ###############################################  OUTPUT ###############################################
+ #######################################################################################################
+ Structure : HKUST-1                                                                                             
+ Grid which was used:                  93 x   93 x   93
+ Total number of grid points:          804357
+ Grid point density:                 176.797 grid points per A^3, with      5.000   x      5.000   x      5.000   grid points per A
+ Points OCCUPIED:                      249068
+ Points NOT OCCUPIED (void):           555289
+ Points ACCESSIBLE:                    523698
+ Probe radius:                         1.200 A
+  
+ Porosity (void):                   69.03514 %
+ Porosity (accessible):             65.10766 %
+ Volume (void):                   3140.83432 A^3
+ Volume (accessible):             2962.14871 A^3
+  
+ Unit cell volume (V_total):                     4549.617 A^3
+ Mass of unit cell (m_total):                    4336.454 10**-27 kg
+ Density of the structure (m_total/V_total):      953.147 kg/m^3
+ Pore volume density (V_void/m_total):              0.724 cm^3/g
+ Pore volume density (V_acc/m_total):               0.683 cm^3/g
+  
+Total CPU time:         29.096 s

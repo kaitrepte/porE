@@ -1,0 +1,17 @@
+ Starting points   (recommended: >= 100)   :                   200
+ Monte-Carlo steps (recommended: >= 10000) :                  1250
+  
+Until step      313, step size a_step =    1.85950
+Until step      625, step size a_step =    0.18595
+Until step      938, step size a_step =    0.01859
+Until step     1250, step size a_step =    0.00186
+  
+  
+ Pore size distribution for HKUST-1                                                                                             
+  
+   Pore size   Distribution [%]   coordinate (cartesian)                 coordinate (fractional)
+    5.536897   13.00               9.297591    5.367548    3.795553      0.250024    0.249980    0.249992
+   11.151011   49.00              18.594750   10.736090    7.591080      0.499994    0.500022    0.499982
+   13.369744   38.00              18.594824   21.471523   15.182424      0.000010    0.999996    0.999982
+  
+Total CPU time:         34.759 s

@@ -1,0 +1,30 @@
+  
+ N_acc after 1st loop                     9753861
+   Total number of unoccupied points      8290922
+   Sum of sub-grid points                  398167
+ N_acc after 2nd loop                    17078159
+  
+ #######################################################################################################
+ ###############################################  OUTPUT ###############################################
+ #######################################################################################################
+ Structure : DUT-8(Ni) open, exp                                                                                 
+ Grid which was used:                 369 x  369 x  188
+ Total number of grid points:        25598268
+ Grid point density:                8024.185 grid points per A^3, with     20.021   x     20.021   x     20.019   grid points per A
+ Points OCCUPIED:                     7553485
+ Points NOT OCCUPIED (void):         18044783
+ Points ACCESSIBLE:                  17078159
+ Probe radius:                         1.200 A
+  
+ Porosity (void):                   70.49221 %
+ Porosity (accessible):             66.71607 %
+ Volume (void):                   2248.79959 A^3
+ Volume (accessible):             2128.33568 A^3
+  
+ Unit cell volume (V_total):                     3190.139 A^3
+ Mass of unit cell (m_total):                    2184.976 10**-27 kg
+ Density of the structure (m_total/V_total):      684.915 kg/m^3
+ Pore volume density (V_void/m_total):              1.029 cm^3/g
+ Pore volume density (V_acc/m_total):               0.974 cm^3/g
+  
+Total CPU time:        881.975 s

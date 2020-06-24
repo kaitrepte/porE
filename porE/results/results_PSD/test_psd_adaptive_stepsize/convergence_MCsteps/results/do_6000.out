@@ -1,0 +1,15 @@
+ Starting points   (recommended: >= 100)   :                   200
+ Monte-Carlo steps (recommended: >= 10000) :                  6000
+  
+Until step     1500, step size a_step =    1.84310
+Until step     3000, step size a_step =    0.18431
+Until step     4500, step size a_step =    0.01843
+Until step     6000, step size a_step =    0.00184
+  
+  
+ Pore size distribution for DUT-8(Ni) open, exp                                                                                 
+  
+   Pore size   Distribution [%]   coordinate (cartesian)                 coordinate (fractional)
+   10.176310   98.50               4.952455   13.982441    0.661801      0.268702    0.758637    0.070472
+  
+Total CPU time:        143.999 s

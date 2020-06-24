@@ -1,0 +1,16 @@
+ Starting points   (recommended: >= 100)   :                   200
+ Monte-Carlo steps (recommended: >= 10000) :                   750
+  
+Until step      188, step size a_step =    2.52550
+Until step      375, step size a_step =    0.25255
+Until step      563, step size a_step =    0.02525
+Until step      750, step size a_step =    0.00253
+  
+  
+ Pore size distribution for IRMOF10                                                                                             
+  
+   Pore size   Distribution [%]   coordinate (cartesian)                 coordinate (fractional)
+   17.838651   10.00               2.747456    8.335761   24.645121      0.160230    0.357420    0.975851
+   17.960946   89.50               6.091448   19.996718   12.446197      0.355249    0.857419    0.492821
+  
+Total CPU time:         22.813 s

@@ -1,0 +1,17 @@
+ Starting points   (recommended: >= 100)   :                   200
+ Monte-Carlo steps (recommended: >= 10000) :                 20000
+  
+Until step     5000, step size a_step =    1.48340
+Until step    10000, step size a_step =    0.14834
+Until step    15000, step size a_step =    0.01483
+Until step    20000, step size a_step =    0.00148
+  
+  
+ Pore size distribution for UiO-66                                                                                              
+  
+   Pore size   Distribution [%]   coordinate (cartesian)                 coordinate (fractional)
+    7.192412   22.00             -15.733858   15.733828   15.733858      0.750004    0.750001    0.750001
+    7.707307   25.50              -5.244543    5.244588    5.244554      0.249996    0.250000    0.249999
+    8.445104   52.50             -10.489140   10.489265   10.489213      0.499995    0.500007    0.500000
+  
+Total CPU time:        565.577 s

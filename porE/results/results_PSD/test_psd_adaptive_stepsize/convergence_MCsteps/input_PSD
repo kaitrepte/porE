@@ -1,0 +1,8 @@
+STRUCTURE
+ho
+bla
+bla
+
+CALCULATION PARAMETERS
+200                             Number of starting points.      Recommended > 100
+20000                      Number of Monte-Carlo steps.    Recommended > 10000    

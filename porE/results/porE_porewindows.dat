@@ -1,0 +1,92 @@
+#
+# Zeo++
+#
+UiO66           2.064785
+UiO67           3.022315
+HKUST1          3.32256
+IRMOF10         6.08776
+MOF5            3.96322
+DUT8closed_exp  0.681115
+DUT8closed_calc 0.52835
+DUT8open_exp    4.600125
+DUT8open_calc   4.43268
+
+# PSD with 200 starting points and 50000 MC steps
+# Evaluation using 5 points/A
+
+UiO-66
+ Pore  Pore radius  Pore diameter       coordinates of pore center
+    1       3.5961         7.1921        -15.733608  15.733912  15.733894
+    2       3.8534         7.7069         -5.244866   5.244431   5.244507
+    3       4.2225         8.4451        -10.489235  10.489103  10.489207
+Minimum radius (NO pore window) between pore   1 and pore   1 is    0.35869 A
+PORE WINDOW between pore                       1 and pore   3 is    1.83930 A
+Minimum radius (NO pore window) between pore   2 and pore   2 is    0.35863 A
+PORE WINDOW between pore                       2 and pore   3 is    2.05808 A
+
+UiO-67
+ Pore  Pore radius  Pore diameter       coordinates of pore center
+    1       4.8144         9.6287        -20.320822  20.320866  20.320545
+    2       5.2109        10.4217         -6.773627   6.773526   6.773709
+    3       6.3759        12.7518        -13.547320  13.546961  13.546847
+Minimum radius (NO pore window) between pore   1 and pore   1 is    0.61793 A
+PORE WINDOW between pore                       1 and pore   3 is    2.58595 A
+Minimum radius (NO pore window) between pore   2 and pore   2 is    0.79690 A
+PORE WINDOW between pore                       2 and pore   3 is    2.91246 A
+
+UiO-68
+ Pore  Pore radius  Pore diameter       coordinates of pore center
+    1       6.4569        12.9137         24.998285  24.998455  24.998106
+    2       7.0355        14.0711          8.332587   8.332782   8.332492
+    3       8.5084        17.0168         16.665012  16.665450  16.665578
+Minimum radius (NO pore window) between pore   1 and pore   1 is    1.89536 A
+PORE WINDOW between pore                       1 and pore   3 is    4.21649 A
+Minimum radius (NO pore window) between pore   2 and pore   2 is    2.05785 A
+PORE WINDOW between pore                       2 and pore   3 is    4.69243 A
+
+IRMOF-10
+ Pore  Pore radius  Pore diameter       coordinates of pore center
+    1       9.0107        18.0215          2.376807   8.336217  25.254076
+PORE WINDOW between pore                       1 and pore   1 is    5.88249 A
+
+MOF5
+ Pore  Pore radius  Pore diameter       coordinates of pore center
+    1       5.9109        11.8217         12.932968  25.865741  12.932770
+    2       7.5501        15.1001         12.932927  12.932675  12.932903
+Minimum radius (NO pore window) between pore   1 and pore   1 is    3.90687 A
+PORE WINDOW between pore                       1 and pore   2 is    3.90693 A
+Minimum radius (NO pore window) between pore   2 and pore   2 is    3.90702 A
+
+HKUST-1 (open Cu sites)
+ Pore  Pore radius  Pore diameter       coordinates of pore center
+    1       2.7686         5.5371          9.297691   5.367881   3.795710
+    2       5.5756        11.1512         18.594847  10.735970   7.591570
+    3       6.6848        13.3697         27.892374   5.368286  15.182668
+PORE WINDOW between pore                       1 and pore   3 is    1.83784 A
+PORE WINDOW between pore                       2 and pore   3 is    3.21265 A
+
+HKUST-1 (O-Cu-Cu-O)
+ Pore  Pore radius  Pore diameter       coordinates of pore center
+    1       2.2310         4.4620         27.898923  11.416949  13.048064
+    2       2.6527         5.3055         27.898925  16.107448  11.389477
+    3       4.3127         8.6254         18.599278   0.000060   0.000007
+    4       5.6984        11.3969         18.599289  10.738331   7.593193
+PORE WINDOW between pore                       1 and pore   2 is    1.72344 A
+PORE WINDOW between pore                       1 and pore   3 is    1.84785 A
+Minimum radius (NO pore window) between pore   2 and pore   3 is    1.72329 A
+Minimum radius (NO pore window) between pore   3 and pore   4 is    2.60433 A
+
+DUT-8(Ni) open, exp
+ Pore  Pore radius  Pore diameter       coordinates of pore center
+    1       5.0881        10.1763          4.952461  13.982391   0.661767
+PORE WINDOW between pore                       1 and pore   1 is    4.05403 A
+
+DUT-8(Ni) closed, exp
+ Pore  Pore radius  Pore diameter       coordinates of pore center
+    1       0.7353         1.4707          2.747277   1.461347   5.062052
+    2       1.0577         2.1153          0.259265   3.542395  11.219989
+    3       1.2208         2.4416          2.890305   4.910225   2.836286
+Minimum radius (NO pore window) between pore   1 and pore   2 is    0.17320 A
+Minimum radius (NO pore window) between pore   1 and pore   3 is    0.18247 A
+Minimum radius (NO pore window) between pore   2 and pore   3 is    0.43386 A
+Minimum radius (NO pore window) between pore   3 and pore   3 is    0.02888 A

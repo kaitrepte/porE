@@ -1,0 +1,30 @@
+  
+ N_acc after 1st loop                      150335
+   Total number of unoccupied points        92398
+   Sum of sub-grid points                   96733
+ N_acc after 2nd loop                      231993
+  
+ #######################################################################################################
+ ###############################################  OUTPUT ###############################################
+ #######################################################################################################
+ Structure : IRMOF10                                                                                             
+ Grid which was used:                  52 x   70 x   76
+ Total number of grid points:          276640
+ Grid point density:                  27.391 grid points per A^3, with      3.033   x      3.001   x      3.009   grid points per A
+ Points OCCUPIED:                       33907
+ Points NOT OCCUPIED (void):           242733
+ Points ACCESSIBLE:                    231993
+ Probe radius:                         2.160 A
+  
+ Porosity (void):                   87.74328 %
+ Porosity (accessible):             83.86098 %
+ Volume (void):                   8861.66154 A^3
+ Volume (accessible):             8469.56727 A^3
+  
+ Unit cell volume (V_total):                    10099.533 A^3
+ Mass of unit cell (m_total):                    3315.095 10**-27 kg
+ Density of the structure (m_total/V_total):      328.242 kg/m^3
+ Pore volume density (V_void/m_total):              2.673 cm^3/g
+ Pore volume density (V_acc/m_total):               2.555 cm^3/g
+  
+Total CPU time:         13.154 s
