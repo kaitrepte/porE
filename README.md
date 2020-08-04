@@ -6,14 +6,11 @@
 [![language](https://img.shields.io/badge/language-Python3-blue)](https://www.python.org/)
 [![language](https://img.shields.io/badge/language-FORTRAN-blue)](https://www.fortran.com/)
 [![version](https://img.shields.io/badge/version-1.0.1-lightgrey)]()  
+
 Main developer: 
 
-* Kai Trepte (FORTRAN, Python) 
-* Sebastian Schwalbe (Python) 
-
-Coding languages: 
-
-* FORTRAN and Python
+* Kai Trepte 
+* Sebastian Schwalbe 
 
 ## Installation (global pip installation)
 ```bash 
@@ -34,10 +31,11 @@ There are three calculations types one can choose from:
 * GPA : Grid point approach. Void and accessible porosity are calculated using a grid in the unit cell.
 * PSD : Pore size distribution. Using a Monte-Carlo scheme, the pore size distribution is calculated.
 
-To run the code, go to the *examples* folder. The file run_porE.py contains examples for the execution on the non-GUI level.
-The file run_GUI.py will execute the graphical user interface, including all functionalities.
+To run the code, go to the *examples* folder.     
+The file run_porE.py contains examples for the execution on the non-GUI level.    
+The file run_GUI.py will execute the graphical user interface, including all functionalities.   
 
-Special thanks goes to Sebastian Schwalbe for writing the GUI and for many other useful discussions.
+Special thanks goes to Sebastian Schwalbe for writing the GUI and for many other useful discussions.    
 
 ## Additional information
 Limitations: Some elements regarding their vdW radii are not implemented yet. 
