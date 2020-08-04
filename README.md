@@ -43,7 +43,7 @@ More will be done in the future.
 
 The basic outline of the porE code and its applications are summarized in 
 
-  [K. Trepte and S. Schwalbe, Systematic Analysis of Porosities in Metal-Organic Frameworks](https://chemrxiv.org/articles/Systematic_Analysis_of_Porosities_in_Metal-Organic_Frameworks/10060331)     
+-  [K. Trepte and S. Schwalbe, Systematic Analysis of Porosities in Metal-Organic Frameworks](https://chemrxiv.org/articles/Systematic_Analysis_of_Porosities_in_Metal-Organic_Frameworks/10060331)     
   ChemRxiv, DOI: 10.26434/chemrxiv.10060331.v1, 2019 
 
 
