@@ -38,7 +38,7 @@ The file run_GUI.py will execute the graphical user interface, including all fun
 Special thanks goes to Sebastian Schwalbe for writing the GUI and for many other useful discussions.    
 
 ## Additional information
-Limitations: Some elements regarding their vdW radii are not implemented yet. 
+Limitations: Some elements regarding their vdW radii are not implemented yet.    
 More will be done in the future.
 
 The basic outline of the porE code and its applications are summarized in 
