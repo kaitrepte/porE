@@ -4,6 +4,7 @@ PORosity Evaluation tool
 
 [![license](https://img.shields.io/badge/license-APACHE2-green)](https://www.apache.org/licenses/LICENSE-2.0)
 [![language](https://img.shields.io/badge/language-Python3-blue)](https://www.python.org/)
+[![language](https://img.shields.io/badge/language-FORTRAN-blue)](https://www.fortran.com/)
 [![version](https://img.shields.io/badge/version-1.0.1-lightgrey)]()  
 Main developer: 
 
