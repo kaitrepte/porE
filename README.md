@@ -3,16 +3,12 @@ PORosity Evaluation tool
 
 Main developer: 
 
-* Kai Trepte 
+* Kai Trepte (FORTRAN, Python) 
+* Sebastian Schwalbe (Python) 
 
-Sidekick:  
+Coding languages: 
 
-* Sebastian Schwalbe 
-
-Coding language: 
-
-* FORTRAN (no GUI)
-* FORTRAN, Python (with GUI)
+* FORTRAN and Python
 
 ## Installation (global pip installation)
 ```bash 
@@ -44,8 +40,9 @@ More will be done in the future.
 
 The basic outline of the porE code and its applications are summarized in 
 
-K. Trepte and S. Schwalbe, 'Systematic Analysis of Porosities in Metal-Organic Frameworks', 2019, at ChemRxiv, see 
-https://chemrxiv.org/articles/Systematic_Analysis_of_Porosities_in_Metal-Organic_Frameworks/10060331
+  [K. Trepte and S. Schwalbe, Systematic Analysis of Porosities in Metal-Organic Frameworks](https://chemrxiv.org/articles/Systematic_Analysis_of_Porosities_in_Metal-Organic_Frameworks/10060331)     
+  ChemRxiv, DOI: 10.26434/chemrxiv.10060331.v1, 2019 
+
 
 
 ## Reference results
