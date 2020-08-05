@@ -8,5 +8,6 @@
 *.so
 tmp*
 log
-build 
+build
+dist 
 __pycache__ 
