@@ -1,4 +1,4 @@
-# porE, v. 1.0.2
+# porE
 ## PORosity Evaluation tool
 
 [![license](https://img.shields.io/badge/license-APACHE2-green)](https://www.apache.org/licenses/LICENSE-2.0)
