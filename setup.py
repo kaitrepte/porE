@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setup(
    name="porE",
-   version="1.0.0",
+   version="1.0.1",
    author="Kai Trepte",
    author_email="kai.trepte1987@gmail.com",
    description="Porosity Evaluation tool",
@@ -17,6 +17,7 @@ setup(
    long_description_content_type="text/markdown",
    include_package_data=True,
    packages = ['porE/lib','porE/gui','porE/io'],
+   install_requires=['ase'],
    zip_safe=False,
    ext_modules=[Extension(name='pore', sources=['porE/lib/porE.f90'], f2py_options=['--quiet'])]
 )
