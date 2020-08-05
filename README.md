@@ -14,7 +14,7 @@ Main developer:
 
 ## Installation (global pip installation)
 ```bash 
-pip3 install porE
+$ pip3 install porE
 ```
 
 ## Installation (local pip installation)
