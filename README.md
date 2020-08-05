@@ -1,4 +1,3 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3972196.svg)](https://doi.org/10.5281/zenodo.3972196)
 # porE 
 **PORosity Evaluation tool**
 
@@ -6,6 +5,7 @@
 [![language](https://img.shields.io/badge/language-Python3-blue)](https://www.python.org/)
 [![language](https://img.shields.io/badge/language-FORTRAN-blue)](https://www.fortran.com/)
 [![version](https://img.shields.io/badge/version-1.0.1-lightgrey)]()  
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3972196.svg)](https://doi.org/10.5281/zenodo.3972196)
 
 Main developer: 
 
