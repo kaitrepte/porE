@@ -35,7 +35,7 @@ osa(structure)
 print('-----------')
 print('\nRun PSD\n')
 print('-----------')
-get_PSD(structure,100,1000)
+get_PSD(structure,200,1000)
 #
 # Execute porosity evaluation, using the grid point apporach (GPA)
 # a probe radius for the accessible porosity needs to be provided
