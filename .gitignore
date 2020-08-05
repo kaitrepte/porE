@@ -1,0 +1,11 @@
+*.pyc
+*.log
+*.tmp
+*.dat
+*.out 
+*.swp
+*.egg-info
+*.so
+tmp*
+log
+build  
