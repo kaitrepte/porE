@@ -1,6 +1,5 @@
 import pore
 from porE.io.ase2pore import *
-
 # two modules: porosity and psd
 
 # define some abbreviations
@@ -8,17 +7,14 @@ osa          = pore.porosity.osa
 gpa_FullGrid = pore.porosity.gpa_fullgrid
 gpa_GridPerA = pore.porosity.gpa_gridpera
 get_PSD      = pore.psd.get_psd
-
 #
-# Structure of the xyz file:
+# Structure of porE xyz file:
 #   number of atoms
 #   cell vectors as   a_x a_y a_z  b_x b_y b_z  c_x c_y c_z
 #   Element specifiers and coordinates
 ##
 # see folder 'structures_xyz' as well
 #
-#structure = 'structures_xyz/uio66.xyz'
-
 # start from a cif file 
 cif = 'structures_xyz/uio66_vesta.cif'
 # convertes cif to porE xyz (i.e., pypore.xyz) 
@@ -35,13 +31,18 @@ osa(structure)
 # Execute an analyis of the pore size distribution (PSD)
 # First number   -> Number of starting points
 # Second number  -> Number of MC steps
+#
+print('-----------')
+print('\nRun PSD\n')
+print('-----------')
 get_PSD(structure,100,1000)
-#####
+#
 # Execute porosity evaluation, using the grid point apporach (GPA)
 # a probe radius for the accessible porosity needs to be provided
+#
 probe_R = 1.20
 #
-# Here, explicitely provide the full grid (grid points along each cell vector)
+# Here, explicitly provide the full grid (grid points along each cell vector)
 # FullGrid
 grid_a  = 30
 grid_b  = 30
