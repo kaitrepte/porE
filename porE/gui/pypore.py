@@ -71,7 +71,7 @@ class PyPore(Frame):
         self.master = master 
         self.master.title("PyPorE")
         # Predefined porE xyz files 
-        self.dirname = 'structures_xyz/'       
+        self.dirname = '../../examples/structures/xyz/'       
 
         # Action buttons 
         #b1 = Button(self.master, text='Open', command=self.open_file).grid(column=2,row=3, sticky=W, pady=4)

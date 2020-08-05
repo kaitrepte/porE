@@ -1550,9 +1550,9 @@ end module PSD
 program porE_all
   USE porosity
   USE PSD
-  call OSA('../structures_xyz/uio66.xyz')
-  call get_PSD('../structures_xyz/uio66.xyz',100,1000)
-  call GPA_FullGrid('../structures_xyz/uio66.xyz',1.20D0,40,40,40)
-  call GPA_GridPerA('../structures_xyz/uio66.xyz',1.20D0,2.0D0)
+  call OSA('../../examples/structures/xyz/uio66.xyz')
+  call get_PSD('../../examples/structures/xyz/uio66.xyz',100,1000)
+  call GPA_FullGrid('../../examples/structures/xyz/uio66.xyz',1.20D0,40,40,40)
+  call GPA_GridPerA('../../examples/structures/xyz/uio66.xyz',1.20D0,2.0D0)
 end program porE_all
 

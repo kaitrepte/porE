@@ -16,7 +16,7 @@ get_PSD      = pore.psd.get_psd
 # see folder 'structures_xyz' as well
 #
 # start from a cif file 
-cif = 'structures_xyz/uio66_vesta.cif'
+cif = 'structures/cif/uio66_vesta.cif'
 # convertes cif to porE xyz (i.e., pypore.xyz) 
 ase2pore(cif)
 structure = 'pypore.xyz'
