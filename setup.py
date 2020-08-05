@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setup(
    name="porE",
-   version="1.0.1",
+   version="1.0.2",
    author="Kai Trepte",
    author_email="kai.trepte1987@gmail.com",
    description="Porosity Evaluation tool",
@@ -21,5 +21,3 @@ setup(
    zip_safe=False,
    ext_modules=[Extension(name='pore', sources=['porE/lib/porE.f90'], f2py_options=['--quiet'])]
 )
-
-
