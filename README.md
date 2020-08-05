@@ -3,7 +3,7 @@
 
 [![license](https://img.shields.io/badge/license-APACHE2-green)](https://www.apache.org/licenses/LICENSE-2.0)
 [![language](https://img.shields.io/badge/language-Python3-blue)](https://www.python.org/)
-[![language](https://img.shields.io/badge/language-FORTRAN-blue)](https://www.fortran.com/)
+[![language](https://img.shields.io/badge/language-FORTRAN-red)](https://www.fortran.com/)
 [![version](https://img.shields.io/badge/version-1.0.2-lightgrey)](https://github.com/kaitrepte/porE/blob/master/README.md)  
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3973264.svg)](https://doi.org/10.5281/zenodo.3973264)
 
