@@ -5,6 +5,7 @@
 [![language](https://img.shields.io/badge/language-Python3-blue)](https://www.python.org/)
 [![language](https://img.shields.io/badge/language-FORTRAN-red)](https://www.fortran.com/)
 [![version](https://img.shields.io/badge/version-1.0.2-lightgrey)](https://github.com/kaitrepte/porE/blob/master/README.md)  
+[![researchgate](https://img.shields.io/static/v1?label=researchgate&message=MOFs&style=social&logo=researchgate)](https://www.researchgate.net/project/Systematic-and-efficient-theoretical-investigations-of-metal-organic-frameworks-MOFs)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3973264.svg)](https://doi.org/10.5281/zenodo.3973264)
 
 
