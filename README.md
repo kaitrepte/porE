@@ -11,8 +11,8 @@
 
 Main developer: 
 
-* Kai Trepte 
-* Sebastian Schwalbe 
+* Kai Trepte (KT, kai.trepte1987@gmail.com)  
+* Sebastian Schwalbe (SS, theonov13@gmail.com)  
 
 ## Installation (global pip installation)
 ```bash 
