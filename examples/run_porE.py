@@ -26,7 +26,7 @@ structure = 'pypore.xyz'
 print('-----------')
 print('\nRun OSA\n')
 print('-----------')
-osa(structure)
+Phi, density, poreV, V_total, V_vdwSum, V_overlap = osa(structure)
 #
 # Execute an analyis of the pore size distribution (PSD)
 # First number   -> Number of starting points
@@ -35,7 +35,9 @@ osa(structure)
 print('-----------')
 print('\nRun PSD\n')
 print('-----------')
-get_PSD(structure,200,1000)
+no_pores,tmp1,tmp2 = get_PSD(structure,200,1000)
+pores = tmp1[0:no_pores]
+distr = tmp2[0:no_pores]
 #
 # Execute porosity evaluation, using the grid point apporach (GPA)
 # a probe radius for the accessible porosity needs to be provided
@@ -50,7 +52,7 @@ grid_c  = 30
 print('-----------------------------------')
 print('\nRun GPA: grid_a, grid_b, grid_c\n')
 print('-----------------------------------')
-gpa_FullGrid(structure,probe_R,grid_a,grid_b,grid_c)
+Phi_void, Phi_acc, density, poreV_void, poreV_acc = gpa_FullGrid(structure,probe_R,grid_a,grid_b,grid_c)
 #
 # Here, a grid point density per A is provided instead
 # GridPerA
@@ -58,5 +60,5 @@ grid_density = 2.0
 print('-------------------------')
 print('\nRun GPA: grid_density\n')
 print('-------------------------')
-gpa_GridPerA(structure,probe_R,grid_density)
+Phi_void, Phi_acc, density, poreV_void, poreV_acc = gpa_GridPerA(structure,probe_R,grid_density)
 

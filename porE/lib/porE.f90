@@ -12,27 +12,13 @@ module porosity
 !                                the vdW surface of these vectors is the pore window!
 !         January 08th, 2020  -- Start final implementation of pore windows, include in evaluation
 ! May 28th, 2020              -- restructuring to make it a python module!
-
-
-! KT: Maybe reconstruct this, make three subroutines. 
-!   One for OSA 
-!   One for GPA providing the full grid 
-!   One for GPA providing the grid points per A
-
-! subroutine OSA(struct)
-! subroutine GPA_FullGrid(struct,probe_r,grid_a, grid_b, grid_c)
-! subroutine GPA_GridPerA(struct,probe_r,g)
-
-! Add get_PSD in here!
-
-!  usesubroutine, like do_GPA(grid,probe_r, etc)  with the last two GPA subroutines. Onlydifferntiate between the initialization of
-!  the grid...
-
-! struct - just provide the full path to the .xyz file
+! Sep 14th, 2020              -- added more elements (up to Rd). 
+!                             -- Introduce return variable for easier handling with python
 
 
 contains
-subroutine OSA(struct)
+subroutine OSA(struct,&
+                porosity,density,poreV,V_total,V_occupied,V_overlap) ! Return values
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! Script to evaluate the porosity of a crystal structure. Taking information from xyz file and cell parameters.    
   ! 1. evaluation: calculate total volume, occupied volume (excluding overlap) and void volume -> P = V_void/V_total 
@@ -41,22 +27,25 @@ subroutine OSA(struct)
   character(len=200)                          :: name_struct               ! derive name of the structure from the input file
   ! Evaluation method: Overlapping sphere approach (OSA)
   real(8)     :: sub_overlap                                               ! overlap volume as evaluated by the subroutine
-  real(8)     :: V_overlap, distance_ab, new_distance                      ! total overlap volume, 
-                                                                           ! total mass of unit cell, distance between two atoms, distance evaluated due to PBC
+  real(8)     :: distance_ab, new_distance                                 ! distance between two atoms, distance evaluated due to PBC
   integer(8)                          :: number_of_atoms
   real(8)                             :: cell_a(3)           ! array for the cell vector in the a direction. Vector.
   real(8)                             :: cell_b(3)           ! array for the cell vector in the b direction. Vector.
   real(8)                             :: cell_c(3)           ! array for the cell vector in the c direction. Vector.
   real(8), allocatable                :: coordinates(:,:)    ! array for the coordinates. Matrix.
   character(2), allocatable           :: elements(:)         ! array for the elements. Vector.
-  real(8)                             :: V_total, m_total    ! total volume of the cell, total mass of unit cell
-  real(8)                             :: V_occupied          ! total occupied volume of the atoms in the cell
+  real(8)                             :: m_total             ! total mass of unit cell
+ ! real(8)                             :: V_occupied          ! total occupied volume of the atoms in the cell
   real(8)                             :: start, finish       ! evaluate the time
   
   real(8), parameter                  :: pi = 4.0D0*atan(1.0D0)      ! define pi
   real(8), parameter                  ::  u = 1.660539D0             ! define atomic mass unit (in 10**-27 kg)
   ! Evaluation
   integer(8)  :: a,b,c,d,e,f,n,t,v,w,x                                     ! loop parameter
+
+  ! Return values
+  real(8),intent(out) :: porosity, density, poreV
+  real(8),intent(out) :: V_total, V_occupied, V_overlap 
 
   ! Initial value
   name_struct = 'User-defined system'
@@ -166,30 +155,48 @@ subroutine OSA(struct)
   deallocate(elements)
   deallocate(coordinates)
 
+  ! 
+  ! Define return values
+  !
+  porosity = (V_total - (V_occupied - V_overlap))/V_total*100
+  density  = m_total*u/V_total*10**3
+  poreV    = (V_total - (V_occupied - V_overlap))/(m_total*u)*10**(0)
+  return
+
 666 format(I5.0,1X,A,I5.0,1X,A,A,F10.5,A,F10.5,A)
 end subroutine OSA  
 
 
 
-subroutine GPA_FullGrid(struct,probe_r,grid_a,grid_b,grid_c)
+subroutine GPA_FullGrid(struct,probe_r,grid_a,grid_b,grid_c,&
+                poro_void,poro_acc,density,poreV_void,poreV_acc) ! return variables
   ! Use the GPA, providing the total grid points per cell vector
   character(len=*), intent(in)                :: struct                    ! full path to input structure (xyz type)
 
   real(8), intent(in)   :: probe_r        ! probe radius
   integer, intent(in)   :: grid_a, grid_b, grid_c
 
+  ! dummy arguments for return values
+  real(8), intent(out) :: poro_void,poro_acc,density,poreV_void,poreV_acc
+
   ! Call actual GPA, with the given grid
-  call do_GPA(struct,probe_r,grid_a,grid_b,grid_c)
+  call do_GPA(struct,probe_r,grid_a,grid_b,grid_c,&
+          poro_void,poro_acc,density,poreV_void,poreV_acc)
+  return
 end subroutine GPA_FullGrid
 
 
-subroutine GPA_GridPerA(struct,probe_r,g)
+subroutine GPA_GridPerA(struct,probe_r,g,&
+                poro_void,poro_acc,density,poreV_void,poreV_acc) ! return values
   ! Use the GPA, providing the approximate number of points per angstrom
   character(len=*), intent(in)                :: struct                    ! full path to input structure (xyz type)
 
   real(8), intent(in)   :: probe_r, g        ! probe radius
   integer               :: grid_a, grid_b, grid_c
   real(8)               :: cell_a(3), cell_b(3), cell_c(3)
+
+  ! dummy arguments for return values
+  real(8), intent(out) :: poro_void,poro_acc,density,poreV_void,poreV_acc
 
   open(unit=15,file=struct,status='old',action='read')                     ! read in the xyz file
   read(unit=15,fmt=*) 
@@ -202,12 +209,15 @@ subroutine GPA_GridPerA(struct,probe_r,g)
   grid_c = ceiling(g*sqrt(cell_c(1)**2 + cell_c(2)**2 + cell_c(3)**2))
 
   ! Call actual GPA, with the given grid
-  call do_GPA(struct,probe_r,grid_a,grid_b,grid_c)
+  call do_GPA(struct,probe_r,grid_a,grid_b,grid_c,&
+          poro_void,poro_acc,density,poreV_void,poreV_acc)
+  return
 end subroutine GPA_GridPerA
 
 
 
-subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c)
+subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c,&
+                poro_void,poro_acc,density,poreV_void,poreV_acc) ! return values
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Script to evaluate the porosity of a crystal structure. Taking information from xyz file and cell parameters.                                 !
 ! 2. evaluation: place grid inside the unit cell, count each point which is in an occupied region, compare to total points -> P = N_occ/N_tot   !
@@ -259,8 +269,8 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c)
   integer(8)  :: a,b,c,d,e,f,n,t,v,w,x                                     ! loop parameter
   
   ! Some arrays for easier handling of vdW radii
-  character(2)              :: all_pse(25)                        ! all currently available elements
-  real(8)                   :: all_vdW_radii(25)                  ! the respective vdW radii
+  character(2)              :: all_pse(86)                        ! all currently available elements
+  real(8)                   :: all_vdW_radii(86)                  ! the respective vdW radii
   integer                   :: all_elements                       ! number of all different elements
   character(2), allocatable :: tmp_pse(:)                         ! temporary list to evaluate the used elements
   character(2), allocatable :: pse(:)                             ! used elements
@@ -279,14 +289,33 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c)
   end type global_array
   type(global_array), dimension(:), allocatable :: sub_division
 
+  ! Return values
+  real(8), intent(out)  :: poro_void,poro_acc,density,poreV_void,poreV_acc
+
   ! Define some elements with their vdW_radii
-  all_elements = 25
+  all_elements = 86
   all_pse = (/ 'H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne',&
                'Na', 'Mg', 'Al', 'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca',&
-               'Co', 'Ni', 'Cu', 'Zn', 'Zr' /)
+               'Co', 'Ni', 'Cu', 'Zn', 'Zr', &
+               'Sc', 'Ti', 'V ', 'Cr', 'Mn', 'Fe', &
+               'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', &
+               'Rb', 'Sr', 'Y ',       'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', &
+               'In', 'Sn', 'Sb', 'Te', 'I ', 'Xe', &
+               'Cs', 'Ba', 'La', 'Hf', 'Ta', 'W ', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', & 
+               'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', &
+               'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn' /)
   all_vdW_radii = (/ 1.20D0, 1.40D0, 1.82D0, 1.53D0, 1.92D0, 1.70D0, 1.55D0, 1.52D0, 1.47D0, 1.54D0,&
                      2.27D0, 1.73D0, 1.84D0, 2.10D0, 1.80D0, 1.80D0, 1.75D0, 1.88D0, 2.75D0, 2.31D0,&
-                     1.92D0, 1.63D0, 1.40D0, 1.39D0, 2.36D0 /)
+                     1.92D0, 1.63D0, 1.40D0, 1.39D0, 2.36D0, &
+                     2.30D0, 2.15D0, 2.05D0, 2.05D0, 2.05D0, 2.05D0, &
+                     2.10D0, 2.10D0, 2.05D0, 1.90D0, 1.90D0, 2.02D0, &
+                     2.90D0, 2.55D0, 2.40D0,         2.15D0, 2.10D0, 2.05D0, 2.05D0, 2.00D0, 2.05D0, 2.10D0, 2.20D0, &
+                     2.20D0, 2.25D0, 2.20D0, 2.10D0, 2.10D0, 2.16D0, &
+                     3.00D0, 2.70D0, 2.50D0, 2.25D0, 2.20D0, 2.10D0, 2.05D0, 2.00D0, 2.00D0, 2.05D0, 2.10D0, 2.05D0, &
+                     2.48D0,2.47D0,2.45D0,2.43D0,2.42D0,2.40D0,2.38D0,2.37D0,2.35D0,2.33D0,2.32D0,2.30D0,2.28D0,2.27D0, &
+                     2.20D0, 2.30D0, 2.30D0, 2.00D0, 2.00D0, 2.00D0 /)
+ ! for > Ca (besides Co, Ni, Cu, Zn, Zr)  : https://www.re3data.org/repository/r3d100000013
+
 
   ! Initial value
   name_struct = 'User-defined system'
@@ -871,18 +900,18 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c)
   end if
   write(6,*) ' '
  
-  write(6,777) 'Porosity (void):          ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100,'%'
+  write(6,777) 'Porosity (void):          ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100D0,'%'
   !
   ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
   !
   if (file_exist) then  ! make sure the pore windows were evaluated
     if (probe_r > minval(pore_windows)) then
-      write(6,777) 'Porosity (in-accessible): ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+      write(6,777) 'Porosity (in-accessible): ',real(n_access)/(real(grid_a*grid_b*grid_c))*100D0,'%'
     else
-      write(6,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+      write(6,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100D0,'%'
     end if
   else
-    write(6,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+    write(6,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100D0,'%'
   end if
  
   V_void       = (real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*V_total
@@ -907,8 +936,8 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c)
   write(6,fmt='(1X a,f10.3,a)') 'Mass of unit cell (m_total):                  ',m_total*u,' 10**-27 kg'
   write(6,fmt='(1X a,f10.3,a,f10.3,a)') 'Density of the structure (m_total/V_total):   ',m_total*u/V_total*10**3,' kg/m^3 = ',&
                                                                                          m_total*u/V_total,' g/cm^3'
-  write(6,fmt='(1X a,f10.3,a)') 'Pore volume density (V_void/m_total):         ',V_void/(m_total*u)*10**(0),' cm^3/g'
-  write(6,fmt='(1X a,f10.3,a)') 'Pore volume density (V_acc/m_total):          ',V_accessible/(m_total*u)*10**(0),' cm^3/g'
+  write(6,fmt='(1X a,f10.3,a)') 'Pore volume density (V_void/m_total):         ',V_void/(m_total*u)*10D0**(0),' cm^3/g'
+  write(6,fmt='(1X a,f10.3,a)') 'Pore volume density (V_acc/m_total):          ',V_accessible/(m_total*u)*10D0**(0),' cm^3/g'
  
   call cpu_time(finish)
   write(6,*) ' '
@@ -946,18 +975,18 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c)
   end if
   write(19,*) ' '
 
-  write(19,777) 'Porosity (void):          ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100,'%'
+  write(19,777) 'Porosity (void):          ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100D0,'%'
   !
   ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
   !
   if (file_exist) then  ! make sure the pore windows were evaluated
     if (probe_r > minval(pore_windows)) then
-      write(19,777) 'Porosity (in-accessible): ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+      write(19,777) 'Porosity (in-accessible): ',real(n_access)/(real(grid_a*grid_b*grid_c))*100D0,'%'
     else
-      write(19,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+      write(19,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100D0,'%'
     end if
   else
-    write(19,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100,'%'
+    write(19,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100D0,'%'
   end if
 
   V_void       = (real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*V_total
@@ -980,14 +1009,22 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c)
 
   write(19,fmt='(1X a,f10.3,a)') 'Unit cell volume (V_total):                   ',V_total,' A^3'
   write(19,fmt='(1X a,f10.3,a)') 'Mass of unit cell (m_total):                  ',m_total*u,' 10**-27 kg'
-  write(19,fmt='(1X a,f10.3,a,f10.3,a)') 'Density of the structure (m_total/V_total):   ',m_total*u/V_total*10**3,' kg/m^3 = ',&
+  write(19,fmt='(1X a,f10.3,a,f10.3,a)') 'Density of the structure (m_total/V_total):   ',m_total*u/V_total*10D0**3,' kg/m^3 = ',&
                                                                                          m_total*u/V_total,' g/cm^3'
-  write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_void/m_total):         ',V_void/(m_total*u)*10**(0),' cm^3/g'
-  write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_acc/m_total):          ',V_accessible/(m_total*u)*10**(0),' cm^3/g'
+  write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_void/m_total):         ',V_void/(m_total*u)*10D0**(0),' cm^3/g'
+  write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_acc/m_total):          ',V_accessible/(m_total*u)*10D0**(0),' cm^3/g'
 
   write(19,*) ' '
   write(19,fmt='(A,2X,F12.3,1X,A)') 'Total CPU time: ',finish-start,'s'
   close(19)
+
+  ! Define return values
+  poro_void  = (real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100.0D0 
+  poro_acc   = real(n_access)/(real(grid_a*grid_b*grid_c))*100.0D0
+  density    = m_total*u/V_total*10.0D0**3
+  poreV_void = V_void/(m_total*u)*10D0**(0)
+  poreV_acc  = V_accessible/(m_total*u)*10D0**(0)
+  return
 
   deallocate(grid_points)
 !  deallocate(list_occupi)
@@ -1016,24 +1053,55 @@ subroutine eval_vol_mass(element,vocc,m)           ! element as input, V_occ and
   real(8), intent(inout)        :: m               ! mass of all atoms
   real(8), parameter            :: pi = 4.0D0*atan(1.0D0)  ! define pi
 
-  character(2)           :: pse(25)                               ! Elements
-  real(8)                :: vdW_radii(25)                         ! vdW radii
-  real(8)                :: mass(25)                              ! atomic mass
+  character(2)           :: pse(86)                               ! Elements
+  real(8)                :: vdW_radii(86)                         ! vdW radii
+  real(8)                :: mass(86)                              ! atomic mass
   integer                :: a                                     ! loop variables
 
   pse = (/ 'H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne',&
            'Na', 'Mg', 'Al', 'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca',&
-           'Co', 'Ni', 'Cu', 'Zn', 'Zr' /)
+           'Co', 'Ni', 'Cu', 'Zn', 'Zr', &
+           'Sc', 'Ti', 'V ', 'Cr', 'Mn', 'Fe', &
+           'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', &
+           'Rb', 'Sr', 'Y ',       'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', &
+           'In', 'Sn', 'Sb', 'Te', 'I ', 'Xe', &
+           'Cs', 'Ba', 'La', 'Hf', 'Ta', 'W ', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', & 
+           'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', &
+           'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn' /)
   vdW_radii = (/ 1.20D0, 1.40D0, 1.82D0, 1.53D0, 1.92D0, 1.70D0, 1.55D0, 1.52D0, 1.47D0, 1.54D0,&
                  2.27D0, 1.73D0, 1.84D0, 2.10D0, 1.80D0, 1.80D0, 1.75D0, 1.88D0, 2.75D0, 2.31D0,&
-                 1.92D0, 1.63D0, 1.40D0, 1.39D0, 2.36D0 /)
-  mass = (/ 1.0079D0,  4.003D0,  6.941D0,  9.012D0, 10.811D0, 12.011D0, 14.007D0, 15.999D0, 18.998D0, 20.180D0,&
-            22.990D0, 24.305D0, 26.982D0, 28.086D0, 30.974D0, 32.066D0, 35.453D0, 39.948D0, 39.099D0, 40.078D0,&
-            58.933D0, 58.693D0, 63.546D0, 65.390D0, 91.224D0 /)
-
-  loop99: do a = 1, 25
+                 1.92D0, 1.63D0, 1.40D0, 1.39D0, 2.36D0, &
+                 2.30D0, 2.15D0, 2.05D0, 2.05D0, 2.05D0, 2.05D0, &
+                 2.10D0, 2.10D0, 2.05D0, 1.90D0, 1.90D0, 2.02D0, &
+                 2.90D0, 2.55D0, 2.40D0,         2.15D0, 2.10D0, 2.05D0, 2.05D0, 2.00D0, 2.05D0, 2.10D0, 2.20D0, &
+                 2.20D0, 2.25D0, 2.20D0, 2.10D0, 2.10D0, 2.16D0, &
+                 3.00D0, 2.70D0, 2.50D0, 2.25D0, 2.20D0, 2.10D0, 2.05D0, 2.00D0, 2.00D0, 2.05D0, 2.10D0, 2.05D0, &
+                 2.48D0,2.47D0,2.45D0,2.43D0,2.42D0,2.40D0,2.38D0,2.37D0,2.35D0,2.33D0,2.32D0,2.30D0,2.28D0,2.27D0, &
+                 2.20D0, 2.30D0, 2.30D0, 2.00D0, 2.00D0, 2.00D0 /)
+  mass = (/  1.0079D0,   4.003D0,   6.941D0,   9.012D0,  10.811D0,  12.011D0,  14.007D0,  15.999D0,  18.998D0,  20.180D0,&
+             22.990D0,  24.305D0,  26.982D0,  28.086D0,  30.974D0,  32.066D0,  35.453D0,  39.948D0,  39.099D0,  40.078D0,&
+             58.933D0,  58.693D0,  63.546D0,  65.390D0,  91.224D0, &
+             44.956D0,  47.867D0,  50.942D0,  51.996D0,  54.938D0,  55.845D0, &
+             69.723D0,  72.610D0,  74.922D0,  78.960D0,  79.904D0,  83.800D0, &
+             85.468D0,  87.620D0,  88.906D0,  92.906D0,  95.940D0,  98.000D0, 101.070D0, 102.906D0, 106.42D0, 107.868D0, 112.412D0,&
+            114.818D0, 118.711D0, 121.760D0, 127.600D0, 126.904D0, 131.290D0, &
+            132.905D0, 137.328D0, 138.906D0, 178.490D0, 180.948D0, 183.840D0, &
+            186.207D0, 190.230D0, 192.217D0, 195.078D0, 196.967D0, 200.590D0, &
+            140.116D0, 140.908D0, 144.240D0, 145.000D0, 150.360D0, 151.964D0, 157.250D0, &
+            158.925D0, 162.500D0, 164.930D0, 167.260D0, 168.934D0, 173.040D0, 174.967D0, &
+            204.383D0, 207.200D0, 208.980D0, 209.000D0, 210.000D0, 222.000D0 /)
+!  pse = (/ 'H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne',&
+!           'Na', 'Mg', 'Al', 'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca',&
+!           'Co', 'Ni', 'Cu', 'Zn', 'Zr' /)
+!  vdW_radii = (/ 1.20D0, 1.40D0, 1.82D0, 1.53D0, 1.92D0, 1.70D0, 1.55D0, 1.52D0, 1.47D0, 1.54D0,&
+!                 2.27D0, 1.73D0, 1.84D0, 2.10D0, 1.80D0, 1.80D0, 1.75D0, 1.88D0, 2.75D0, 2.31D0,&
+!                 1.92D0, 1.63D0, 1.40D0, 1.39D0, 2.36D0 /)
+!  mass = (/ 1.0079D0,  4.003D0,  6.941D0,  9.012D0, 10.811D0, 12.011D0, 14.007D0, 15.999D0, 18.998D0, 20.180D0,&
+!            22.990D0, 24.305D0, 26.982D0, 28.086D0, 30.974D0, 32.066D0, 35.453D0, 39.948D0, 39.099D0, 40.078D0,&
+!            58.933D0, 58.693D0, 63.546D0, 65.390D0, 91.224D0 /)
+  loop99: do a = 1, 86
     if (element == pse(a)) then
-      vocc = vocc + 4.0/3.0*pi*vdW_radii(a)**(3.0)
+      vocc = vocc + 4.0D0/3.0D0*pi*vdW_radii(a)**(3.0D0)
       m    = m    + mass(a)
       exit loop99
     end if
@@ -1048,7 +1116,8 @@ subroutine overlap(r_1, r_2, d_12, V_over)             ! radius of sphere 1, rad
   real(8), intent(in)  :: r_1, r_2, d_12               ! input for the calculation of the overlap of two spheres
   real(8), intent(out) :: V_over                       ! output
   real(8), parameter   :: pi = 4.0D0*atan(1.0D0)       ! define pi
-  V_over = (pi*(d_12**4-6*d_12**2*(r_1**2+r_2**2)+8*d_12*(r_1**3+r_2**3)-3*(r_1**2-r_2**2)**2))/(12*d_12) ! calculate the overlap of two spheres with radii r_1 and r_2 at distance d_12 analytically
+  V_over = (pi*(d_12**4D0-6D0*d_12**2D0*(r_1**2D0+r_2**2D0)+8D0*d_12*(r_1**3D0+r_2**3D0)-3D0*(r_1**2D0-r_2**2D0)**2D0))/(12D0*d_12) 
+                                                       ! calculate the overlap of two spheres with radii r_1 and r_2 at distance d_12 analytically
   return                                               ! return value of overlap
 end subroutine overlap
 
@@ -1062,24 +1131,55 @@ subroutine eval_overlap(element_a, element_b, dist_ab, sub_over)   ! evaluate th
   real(8), intent(out)     :: sub_over                             ! overlap volume (evaluated within the subroutine 'overlap')
  
   ! Some arrays for easier handling of vdW and covalent radii
-  character(2)           :: pse(25)                               ! Elements
-  real(8)                :: vdW_radii(25)                         ! vdW radii
-  real(8)                :: cov_radii(25)                         ! cov radii
+  character(2)           :: pse(86)                               ! Elements
+  real(8)                :: vdW_radii(86)                         ! vdW radii
+  real(8)                :: cov_radii(86)                         ! cov radii
   integer                :: a, b                                  ! loop variables
-  
+
   pse = (/ 'H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne',&
            'Na', 'Mg', 'Al', 'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca',&
-           'Co', 'Ni', 'Cu', 'Zn', 'Zr' /)
+           'Co', 'Ni', 'Cu', 'Zn', 'Zr', &
+           'Sc', 'Ti', 'V ', 'Cr', 'Mn', 'Fe', &
+           'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', &
+           'Rb', 'Sr', 'Y ',       'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', &
+           'In', 'Sn', 'Sb', 'Te', 'I ', 'Xe', &
+           'Cs', 'Ba', 'La', 'Hf', 'Ta', 'W ', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', & 
+           'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', &
+           'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn' /)
   vdW_radii = (/ 1.20D0, 1.40D0, 1.82D0, 1.53D0, 1.92D0, 1.70D0, 1.55D0, 1.52D0, 1.47D0, 1.54D0,&
                  2.27D0, 1.73D0, 1.84D0, 2.10D0, 1.80D0, 1.80D0, 1.75D0, 1.88D0, 2.75D0, 2.31D0,&
-                 1.92D0, 1.63D0, 1.40D0, 1.39D0, 2.36D0 /)
+                 1.92D0, 1.63D0, 1.40D0, 1.39D0, 2.36D0, &
+                 2.30D0, 2.15D0, 2.05D0, 2.05D0, 2.05D0, 2.05D0, &
+                 2.10D0, 2.10D0, 2.05D0, 1.90D0, 1.90D0, 2.02D0, &
+                 2.90D0, 2.55D0, 2.40D0,         2.15D0, 2.10D0, 2.05D0, 2.05D0, 2.00D0, 2.05D0, 2.10D0, 2.20D0, &
+                 2.20D0, 2.25D0, 2.20D0, 2.10D0, 2.10D0, 2.16D0, &
+                 3.00D0, 2.70D0, 2.50D0, 2.25D0, 2.20D0, 2.10D0, 2.05D0, 2.00D0, 2.00D0, 2.05D0, 2.10D0, 2.05D0, &
+                 2.48D0,2.47D0,2.45D0,2.43D0,2.42D0,2.40D0,2.38D0,2.37D0,2.35D0,2.33D0,2.32D0,2.30D0,2.28D0,2.27D0, &
+                 2.20D0, 2.30D0, 2.30D0, 2.00D0, 2.00D0, 2.00D0 /)
   cov_radii = (/ 0.33D0, 0.28D0, 1.28D0, 0.96D0, 0.84D0, 0.76D0, 0.71D0, 0.66D0, 0.57D0, 0.58D0,&
                  1.67D0, 1.42D0, 1.21D0, 1.11D0, 1.07D0, 1.05D0, 1.02D0, 1.06D0, 2.03D0, 1.76D0,&
-                 1.26D0, 1.24D0, 1.30D0, 1.33D0, 1.48D0 /)
+                 1.26D0, 1.24D0, 1.30D0, 1.33D0, 1.48D0, &
+                 1.44D0, 1.47D0, 1.33D0, 1.35D0, 1.35D0, 1.34D0, &
+                 1.22D0, 1.17D0, 1.21D0, 1.22D0, 1.21D0, 1.91D0, &
+                 1.47D0, 1.12D0, 1.78D0,         1.48D0, 1.47D0, 1.35D0, 1.40D0, 1.45D0, 1.50D0, 1.59D0, 1.69D0, &
+                 1.63D0, 1.46D0, 1.46D0, 1.47D0, 1.40D0, 1.98D0, &
+                 1.67D0, 1.34D0, 1.87D0, 1.57D0, 1.43D0, 1.37D0, 1.35D0, 1.37D0, 1.32D0, 1.50D0, 1.50D0, 1.70D0, &
+                 1.83D0, 1.82D0, 1.81D0, 1.80D0, 1.80D0, 1.99D0, 1.79D0, 1.76D0, 1.75D0, 1.74D0, 1.73D0, 1.72D0, 1.94D0, 1.72D0, &
+                 1.55D0, 1.54D0, 1.54D0, 1.68D0, 1.70D0, 2.40D0 /)
 
-  do a = 1, 25
+!  pse = (/ 'H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne',&
+!           'Na', 'Mg', 'Al', 'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca',&
+!           'Co', 'Ni', 'Cu', 'Zn', 'Zr' /)
+!  vdW_radii = (/ 1.20D0, 1.40D0, 1.82D0, 1.53D0, 1.92D0, 1.70D0, 1.55D0, 1.52D0, 1.47D0, 1.54D0,&
+!                 2.27D0, 1.73D0, 1.84D0, 2.10D0, 1.80D0, 1.80D0, 1.75D0, 1.88D0, 2.75D0, 2.31D0,&
+!                 1.92D0, 1.63D0, 1.40D0, 1.39D0, 2.36D0 /)
+!  cov_radii = (/ 0.33D0, 0.28D0, 1.28D0, 0.96D0, 0.84D0, 0.76D0, 0.71D0, 0.66D0, 0.57D0, 0.58D0,&
+!                 1.67D0, 1.42D0, 1.21D0, 1.11D0, 1.07D0, 1.05D0, 1.02D0, 1.06D0, 2.03D0, 1.76D0,&
+!                 1.26D0, 1.24D0, 1.30D0, 1.33D0, 1.48D0 /)
+
+  do a = 1, 86
     if (element_a == pse(a)) then
-      do b = 1, 25
+      do b = 1, 86
         if (element_b == pse(b)) then
           if (dist_ab < cov_radii(a)+cov_radii(b)) then                                       ! Evaluate, if distance between the atoms is smaller than the sum of the covalent radii
             r_vdw1 = vdW_radii(a)
@@ -1108,7 +1208,8 @@ contains
 !
 ! Calculation pore size distribution
 !
-subroutine get_PSD(struct,start_points,cycles) ! structure, number of different starting points, number of MC steps
+subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of different starting points, number of MC steps
+                count_pore,pore_sizes,pore_distribution) ! return values: Lists
 
   implicit none
   ! get PSD
@@ -1145,9 +1246,12 @@ subroutine get_PSD(struct,start_points,cycles) ! structure, number of different 
   real(8)                             :: stepsize                ! step size for MC steps
   real(8), allocatable                :: all_distances(:)        ! store all distances (maybe need another list to separate different distances which occur more often.. PSD and stuff)
   real(8), allocatable                :: all_distances2(:)       ! store all distances, to double check
-  integer(8)                          :: count_pore              ! count how many pores there are
   real(8), allocatable                :: final_eval(:,:)         ! store final evaluated results. Use for sorting
-  
+
+  ! return values
+  real(8), intent(out)                :: pore_sizes(100), pore_distribution(100) ! output values
+  integer(8), intent(out)             :: count_pore              ! count how many pores there are
+
   ! for random seed
   integer                             :: values(1:8), k
   integer, dimension(:), allocatable  :: seed
@@ -1314,6 +1418,69 @@ subroutine get_PSD(struct,start_points,cycles) ! structure, number of different 
         if (elements(n) == 'Cu') vdw = 1.40D0
         if (elements(n) == 'Zn') vdw = 1.39D0
         if (elements(n) == 'Zr') vdw = 2.36D0
+        ! from https://www.re3data.org/repository/r3d100000013
+        if (elements(n) == 'Sc') vdw = 2.30D0
+        if (elements(n) == 'Ti') vdw = 2.15D0
+        if (elements(n) == 'V')  vdw = 2.05D0
+        if (elements(n) == 'Cr') vdw = 2.05D0
+        if (elements(n) == 'Mn') vdw = 2.05D0
+        if (elements(n) == 'Fe') vdw = 2.05D0
+        if (elements(n) == 'Ga') vdw = 2.10D0
+        if (elements(n) == 'Ge') vdw = 2.10D0
+        if (elements(n) == 'As') vdw = 2.05D0
+        if (elements(n) == 'Se') vdw = 1.90D0
+        if (elements(n) == 'Br') vdw = 1.90D0
+        if (elements(n) == 'Kr') vdw = 2.02D0
+        if (elements(n) == 'Rb') vdw = 2.90D0
+        if (elements(n) == 'Sr') vdw = 2.55D0
+        if (elements(n) == 'Y')  vdw = 2.40D0
+        if (elements(n) == 'Nb') vdw = 2.15D0
+        if (elements(n) == 'Mo') vdw = 2.10D0
+        if (elements(n) == 'Tc') vdw = 2.05D0
+        if (elements(n) == 'Ru') vdw = 2.05D0
+        if (elements(n) == 'Rh') vdw = 2.00D0
+        if (elements(n) == 'Pd') vdw = 2.05D0
+        if (elements(n) == 'Ag') vdw = 2.10D0
+        if (elements(n) == 'Cd') vdw = 2.20D0
+        if (elements(n) == 'In') vdw = 2.20D0
+        if (elements(n) == 'Sn') vdw = 2.25D0
+        if (elements(n) == 'Sb') vdw = 2.20D0
+        if (elements(n) == 'Te') vdw = 2.10D0
+        if (elements(n) == 'I')  vdw = 2.10D0
+        if (elements(n) == 'Xe') vdw = 2.16D0
+        if (elements(n) == 'Cs') vdw = 3.00D0
+        if (elements(n) == 'Ba') vdw = 2.70D0
+        if (elements(n) == 'La') vdw = 2.50D0
+        if (elements(n) == 'Hf') vdw = 2.25D0
+        if (elements(n) == 'Ta') vdw = 2.20D0
+        if (elements(n) == 'W')  vdw = 2.10D0
+        if (elements(n) == 'Re') vdw = 2.05D0
+        if (elements(n) == 'Os') vdw = 2.00D0
+        if (elements(n) == 'Ir') vdw = 2.00D0
+        if (elements(n) == 'Pt') vdw = 2.05D0
+        if (elements(n) == 'Au') vdw = 2.10D0
+        if (elements(n) == 'Hg') vdw = 2.05D0
+        if (elements(n) == 'Ce') vdw = 2.48D0
+        if (elements(n) == 'Pr') vdw = 2.47D0
+        if (elements(n) == 'Nd') vdw = 2.45D0
+        if (elements(n) == 'Pm') vdw = 2.43D0
+        if (elements(n) == 'Sm') vdw = 2.42D0
+        if (elements(n) == 'Eu') vdw = 2.40D0
+        if (elements(n) == 'Gd') vdw = 2.38D0
+        if (elements(n) == 'Tb') vdw = 2.37D0
+        if (elements(n) == 'Dy') vdw = 2.35D0
+        if (elements(n) == 'Ho') vdw = 2.33D0
+        if (elements(n) == 'Er') vdw = 2.32D0
+        if (elements(n) == 'Tm') vdw = 2.30D0
+        if (elements(n) == 'Yb') vdw = 2.28D0
+        if (elements(n) == 'Lu') vdw = 2.27D0
+        if (elements(n) == 'Tl') vdw = 2.20D0
+        if (elements(n) == 'Pb') vdw = 2.30D0
+        if (elements(n) == 'Bi') vdw = 2.30D0
+        if (elements(n) == 'Po') vdw = 2.00D0
+        if (elements(n) == 'At') vdw = 2.00D0
+        if (elements(n) == 'Rn') vdw = 2.00D0
+
         do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
           do d = 1,3                                                                             ! here for cell_b
             do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
@@ -1341,11 +1508,11 @@ subroutine get_PSD(struct,start_points,cycles) ! structure, number of different 
   ! Get probe diameter
     if (distance1 > distance2) then
   !    write(6,*) "Start ",a," Final distance ",distance1*2.0   ! write diameter, not radius. Store position as well
-      all_distances(a) = distance1*2.0
+      all_distances(a) = distance1*2.0D0
       coords_all_cart(a,:) = coords2(:)       
     else
   !    write(6,*) "Start ",a," Final distance ",distance2*2.0   ! write diameter, not radius. Store position as well
-      all_distances(a) = distance2*2.0
+      all_distances(a) = distance2*2.0D0
       coords_all_cart(a,:) = coords1(:)
     end if
   end do      ! end starting points
@@ -1465,17 +1632,27 @@ subroutine get_PSD(struct,start_points,cycles) ! structure, number of different 
     write(19,fmt='(F12.6,F8.2,11X,3F12.6,2X,3F12.6)') final_eval(a,:)
   end do
   
-  
-  
   call cpu_time(finish)
   write(6,*) ' '
   write(6,fmt='(A,2X,F12.3,1X,A)') 'Total CPU time: ',finish-start,'s'
   
   write(19,*) ' '
   write(19,fmt='(A,2X,F12.3,1X,A)') 'Total CPU time: ',finish-start,'s'
-  
   close(19)
-  
+ 
+  ! return values
+  !allocate(pore_sizes(count_pore))
+  !allocate(pore_distribution(count_pore))
+  pore_sizes(:)         = 0.0D0
+  pore_distribution(:)  = 0.0D0
+  do a = 1, count_pore
+    pore_sizes(a)   = final_eval(a,1)
+    pore_distribution(a) = final_eval(a,2)
+  end do
+  return 
+
+!  deallocate(pore_sizes)
+!  deallocate(pore_distribution)
   deallocate(coordinates)
   deallocate(elements)
   deallocate(all_distances)
@@ -1500,9 +1677,9 @@ real(8), parameter     :: pi = 3.14159265358979323846
 lenA    = sqrt(vecA(1)**2+vecA(2)**2+vecA(3)**2)
 lenB    = sqrt(vecB(1)**2+vecB(2)**2+vecB(3)**2)
 lenC    = sqrt(vecC(1)**2+vecC(2)**2+vecC(3)**2)
-angleBC = ACOS((vecB(1)*vecC(1) + vecB(2)*vecC(2) + vecB(3)*vecC(3))/(lenB*lenC))*180.0/pi
-angleAC = ACOS((vecA(1)*vecC(1) + vecA(2)*vecC(2) + vecA(3)*vecC(3))/(lenA*lenC))*180.0/pi
-angleAB = ACOS((vecA(1)*vecB(1) + vecA(2)*vecB(2) + vecA(3)*vecB(3))/(lenA*lenB))*180.0/pi
+angleBC = ACOS((vecB(1)*vecC(1) + vecB(2)*vecC(2) + vecB(3)*vecC(3))/(lenB*lenC))*180.0D0/pi
+angleAC = ACOS((vecA(1)*vecC(1) + vecA(2)*vecC(2) + vecA(3)*vecC(3))/(lenA*lenC))*180.0D0/pi
+angleAB = ACOS((vecA(1)*vecB(1) + vecA(2)*vecB(2) + vecA(3)*vecB(3))/(lenA*lenB))*180.0D0/pi
 ! deteminant of the matrix comntaining the cell vectors
 determinant = vecA(1)*vecB(2)*vecC(3)+vecB(1)*vecC(2)*vecA(3)+vecC(1)*vecA(2)*vecB(3) - &
               vecA(3)*vecB(2)*vecC(1)-vecB(3)*vecC(2)*vecA(1)-vecC(3)*vecA(2)*vecB(1)
@@ -1550,9 +1727,15 @@ end module PSD
 program porE_all
   USE porosity
   USE PSD
-  call OSA('../../examples/structures/xyz/uio66.xyz')
-  call get_PSD('../../examples/structures/xyz/uio66.xyz',100,1000)
-  call GPA_FullGrid('../../examples/structures/xyz/uio66.xyz',1.20D0,40,40,40)
-  call GPA_GridPerA('../../examples/structures/xyz/uio66.xyz',1.20D0,2.0D0)
+  real(8) :: poro,dens,porV,V_t, V_o,V_oc
+  real(8) :: poro_void,poro_acc,density,poreV_void,poreV_acc
+  real(8) ::pores(100), distr(100)
+  integer(8) :: no_pores
+  call OSA('../../examples/structures/xyz/uio66.xyz',poro,dens,porV,V_t,V_o,V_oc)
+  call get_PSD('../../examples/structures/xyz/uio66.xyz',100,1000,no_pores,pores,distr)
+  call GPA_FullGrid('../../examples/structures/xyz/uio66.xyz',1.20D0,30,30,30,&
+          poro_void,poro_acc,density,poreV_void,poreV_acc)
+  call GPA_GridPerA('../../examples/structures/xyz/uio66.xyz',1.20D0,2.0D0,&
+          poro_void,poro_acc,density,poreV_void,poreV_acc)
 end program porE_all
 
