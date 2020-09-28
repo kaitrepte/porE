@@ -16,7 +16,7 @@ setup(
    long_description=long_description,
    long_description_content_type="text/markdown",
    include_package_data=True,
-   packages = ['porE/lib','porE/gui','porE/io'],
+   packages = ['porE/lib','porE/gui','porE/io','porE/hea'],
    install_requires=['ase'],
    zip_safe=False,
    ext_modules=[Extension(name='pore', sources=['porE/lib/porE.f90'], f2py_options=['--quiet'])]

@@ -1,0 +1,3 @@
+- Initial structures from Zenodo: 10.5281/zenodo.3986569
+- Redundancies removed as described in "Distinguishing Metal--Organic Frameworks", Barthel et al., Crystal Growth \& Design, 2018
+- Some redunancies were counted twice, which is why we end up at 370 structures instead of the 364 structures bescribed by Barthel et al.

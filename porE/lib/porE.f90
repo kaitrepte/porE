@@ -12,7 +12,7 @@ module porosity
 !                                the vdW surface of these vectors is the pore window!
 !         January 08th, 2020  -- Start final implementation of pore windows, include in evaluation
 ! May 28th, 2020              -- restructuring to make it a python module!
-! Sep 14th, 2020              -- added more elements (up to Rd). 
+! Sep 14th, 2020              -- added more elements (up to Rn). 
 !                             -- Introduce return variable for easier handling with python
 
 
@@ -20,14 +20,14 @@ contains
 subroutine OSA(struct,&
                 porosity,density,poreV,V_total,V_occupied,V_overlap) ! Return values
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  ! Script to evaluate the porosity of a crystal structure. Taking information from xyz file and cell parameters.    
+  ! Evaluate the porosity of a crystal structure. Taking information from xyz file and cell parameters.    
   ! 1. evaluation: calculate total volume, occupied volume (excluding overlap) and void volume -> P = V_void/V_total 
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  character(len=*), intent(in)                :: struct                    ! full path to input structure (xyz type)
-  character(len=200)                          :: name_struct               ! derive name of the structure from the input file
+  character(len=*), intent(in)        :: struct                    ! full path to input structure (xyz type)
+  character(len=200)                  :: name_struct               ! derive name of the structure from the input file
   ! Evaluation method: Overlapping sphere approach (OSA)
-  real(8)     :: sub_overlap                                               ! overlap volume as evaluated by the subroutine
-  real(8)     :: distance_ab, new_distance                                 ! distance between two atoms, distance evaluated due to PBC
+  real(8)                             :: sub_overlap               ! overlap volume as evaluated by a subroutine
+  real(8)                             :: distance_ab, new_distance ! distance between two atoms, distance evaluated due to PBC
   integer(8)                          :: number_of_atoms
   real(8)                             :: cell_a(3)           ! array for the cell vector in the a direction. Vector.
   real(8)                             :: cell_b(3)           ! array for the cell vector in the b direction. Vector.
@@ -35,13 +35,12 @@ subroutine OSA(struct,&
   real(8), allocatable                :: coordinates(:,:)    ! array for the coordinates. Matrix.
   character(2), allocatable           :: elements(:)         ! array for the elements. Vector.
   real(8)                             :: m_total             ! total mass of unit cell
- ! real(8)                             :: V_occupied          ! total occupied volume of the atoms in the cell
   real(8)                             :: start, finish       ! evaluate the time
   
   real(8), parameter                  :: pi = 4.0D0*atan(1.0D0)      ! define pi
   real(8), parameter                  ::  u = 1.660539D0             ! define atomic mass unit (in 10**-27 kg)
   ! Evaluation
-  integer(8)  :: a,b,c,d,e,f,n,t,v,w,x                                     ! loop parameter
+  integer(8)  :: a,b,c,d,e,n,t                                       ! loop parameter
 
   ! Return values
   real(8),intent(out) :: porosity, density, poreV
@@ -49,7 +48,7 @@ subroutine OSA(struct,&
 
   ! Initial value
   name_struct = 'User-defined system'
-  open(unit=15,file=struct,status='old',action='read')                     ! read in the xyz file
+  open(unit=15,file=struct,status='old',action='read')               ! read in the xyz file
   ! Extract name of file name
   do a = 1, len(struct)-3
     if ((struct(a+1:a+3).eq.'xyz').and.(struct(a:a).eq.'.')) then
@@ -63,17 +62,17 @@ subroutine OSA(struct,&
   !
   ! Read in the number of atoms and cell vectors
   !
-  read(unit=15,fmt='(I13.0)') number_of_atoms                               ! first entry is the number of atoms
-  read(unit=15,fmt=*) cell_a(1:3), cell_b(1:3), cell_c(1:3)                 ! second entry contains the cell vectors. Read them in individually (makes it easier later on)
+  read(unit=15,fmt='(I13.0)') number_of_atoms                        ! first entry is the number of atoms
+  read(unit=15,fmt=*) cell_a(1:3), cell_b(1:3), cell_c(1:3)          ! second entry contains the cell vectors. Read them in individually (makes it easier later on)
   !
   ! Store elements and coordinates
   !
-  allocate(elements(number_of_atoms))                                                         ! allocate (number_of_atoms) fields for elements. There is one elements each.
-  allocate(coordinates(number_of_atoms,3))                                                    ! allocate (number_of_atoms) fields for coordinates. There are 3 coordinates per entry. 
-  do n = 1,number_of_atoms                                                                      ! go through all atoms 
-    read(unit=15,fmt=*) elements(n), coordinates(n,1:3)                                         ! storing element and coordinates
+  allocate(elements(number_of_atoms))                                ! allocate (number_of_atoms) fields for elements. There is one elements each.
+  allocate(coordinates(number_of_atoms,3))                           ! allocate (number_of_atoms) fields for coordinates. There are 3 coordinates per entry. 
+  do n = 1,number_of_atoms                                           ! go through all atoms 
+    read(unit=15,fmt=*) elements(n), coordinates(n,1:3)              ! storing element and coordinates
   end do
-  close(unit=15)                                                                                ! close the file (no longer necessary)
+  close(unit=15)                                                     ! close the file (no longer necessary)
   !
   ! Output file
   ! 
@@ -81,6 +80,8 @@ subroutine OSA(struct,&
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! Calculate the total unit cell volume using the triple product V = a . (b x c) . In A^3 !
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  call cpu_time(start)                                                                         ! initialize time measurement
+
   V_total = (cell_a(1)*cell_b(2)*cell_c(3) + cell_a(2)*cell_b(3)*cell_c(1) + cell_a(3)*cell_b(1)*cell_c(2) - &
              cell_a(3)*cell_b(2)*cell_c(1) - cell_a(1)*cell_b(3)*cell_c(2) - cell_a(2)*cell_b(1)*cell_c(3))
   !
@@ -158,9 +159,9 @@ subroutine OSA(struct,&
   ! 
   ! Define return values
   !
-  porosity = (V_total - (V_occupied - V_overlap))/V_total*100
-  density  = m_total*u/V_total*10**3
-  poreV    = (V_total - (V_occupied - V_overlap))/(m_total*u)*10**(0)
+  porosity = (V_total - (V_occupied - V_overlap))/V_total*100.0D0
+  density  = m_total*u/V_total*10.0D0**3
+  poreV    = (V_total - (V_occupied - V_overlap))/(m_total*u)*10.0D0**(0)
   return
 
 666 format(I5.0,1X,A,I5.0,1X,A,A,F10.5,A,F10.5,A)
@@ -171,13 +172,13 @@ end subroutine OSA
 subroutine GPA_FullGrid(struct,probe_r,grid_a,grid_b,grid_c,&
                 poro_void,poro_acc,density,poreV_void,poreV_acc) ! return variables
   ! Use the GPA, providing the total grid points per cell vector
-  character(len=*), intent(in)                :: struct                    ! full path to input structure (xyz type)
+  character(len=*), intent(in)   :: struct                    ! full path to input structure (xyz type)
 
-  real(8), intent(in)   :: probe_r        ! probe radius
-  integer, intent(in)   :: grid_a, grid_b, grid_c
+  real(8), intent(in)            :: probe_r                   ! probe radius
+  integer, intent(in)            :: grid_a, grid_b, grid_c
 
   ! dummy arguments for return values
-  real(8), intent(out) :: poro_void,poro_acc,density,poreV_void,poreV_acc
+  real(8), intent(out)           :: poro_void,poro_acc,density,poreV_void,poreV_acc
 
   ! Call actual GPA, with the given grid
   call do_GPA(struct,probe_r,grid_a,grid_b,grid_c,&
@@ -189,18 +190,18 @@ end subroutine GPA_FullGrid
 subroutine GPA_GridPerA(struct,probe_r,g,&
                 poro_void,poro_acc,density,poreV_void,poreV_acc) ! return values
   ! Use the GPA, providing the approximate number of points per angstrom
-  character(len=*), intent(in)                :: struct                    ! full path to input structure (xyz type)
+  character(len=*), intent(in)   :: struct                    ! full path to input structure (xyz type)
 
-  real(8), intent(in)   :: probe_r, g        ! probe radius
-  integer               :: grid_a, grid_b, grid_c
-  real(8)               :: cell_a(3), cell_b(3), cell_c(3)
+  real(8), intent(in)            :: probe_r, g        ! probe radius
+  integer                        :: grid_a, grid_b, grid_c
+  real(8)                        :: cell_a(3), cell_b(3), cell_c(3)
 
   ! dummy arguments for return values
-  real(8), intent(out) :: poro_void,poro_acc,density,poreV_void,poreV_acc
+  real(8), intent(out)           :: poro_void,poro_acc,density,poreV_void,poreV_acc
 
   open(unit=15,file=struct,status='old',action='read')                     ! read in the xyz file
   read(unit=15,fmt=*) 
-  read(unit=15,fmt=*) cell_a(1:3), cell_b(1:3), cell_c(1:3)                 ! second entry contains the cell vectors. Read them in individually (makes it easier later on)
+  read(unit=15,fmt=*) cell_a(1:3), cell_b(1:3), cell_c(1:3)                ! second entry contains the cell vectors. Read them in individually (makes it easier later on)
   close(unit=15)
   !
   ! For number of grid point per Angtrom
@@ -1053,10 +1054,10 @@ subroutine eval_vol_mass(element,vocc,m)           ! element as input, V_occ and
   real(8), intent(inout)        :: m               ! mass of all atoms
   real(8), parameter            :: pi = 4.0D0*atan(1.0D0)  ! define pi
 
-  character(2)           :: pse(86)                               ! Elements
-  real(8)                :: vdW_radii(86)                         ! vdW radii
-  real(8)                :: mass(86)                              ! atomic mass
-  integer                :: a                                     ! loop variables
+  character(2)                  :: pse(86)         ! Elements
+  real(8)                       :: vdW_radii(86)   ! vdW radii
+  real(8)                       :: mass(86)        ! atomic mass
+  integer                       :: a               ! loop variables
 
   pse = (/ 'H ', 'He', 'Li', 'Be', 'B ', 'C ', 'N ', 'O ', 'F ', 'Ne',&
            'Na', 'Mg', 'Al', 'Si', 'P ', 'S ', 'Cl', 'Ar', 'K ', 'Ca',&
@@ -1210,7 +1211,6 @@ contains
 !
 subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of different starting points, number of MC steps
                 count_pore,pore_sizes,pore_distribution) ! return values: Lists
-
   implicit none
   ! get PSD
   ! pore_finder
@@ -1601,7 +1601,7 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
   end do
   
   !
-  ! Sort the output, from smallest to largest pore. TBD
+  ! Sort the output, from smallest to largest pore.
   !
   do a = 1, count_pore
     do b = 1, count_pore
@@ -1646,7 +1646,7 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
   pore_sizes(:)         = 0.0D0
   pore_distribution(:)  = 0.0D0
   do a = 1, count_pore
-    pore_sizes(a)   = final_eval(a,1)
+    pore_sizes(a)        = final_eval(a,1)
     pore_distribution(a) = final_eval(a,2)
   end do
   return 
@@ -1672,7 +1672,7 @@ real(8)                :: trans_matrix(3,3)
 real(8)                :: determinant
 real(8)                :: lenA, lenB, lenC, angleBC, angleAC, angleAB
 integer                :: t,f
-real(8), parameter     :: pi = 3.14159265358979323846
+real(8), parameter     :: pi = 4.0D0*atan(1.0D0)
 
 lenA    = sqrt(vecA(1)**2+vecA(2)**2+vecA(3)**2)
 lenB    = sqrt(vecB(1)**2+vecB(2)**2+vecB(3)**2)
@@ -1721,6 +1721,9 @@ return
 end subroutine cart_to_frac
 
 end module PSD
+
+
+
 
 
 ! Make the fortran routine executable

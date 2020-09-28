@@ -1,22 +1,13 @@
-import pore
+from porE.hea.HEA import HEA
+from pore import porosity as p
+from pore import psd 
 from porE.io.ase2pore import *
-# two modules: porosity and psd
-
-# define some abbreviations
-osa          = pore.porosity.osa
-gpa_FullGrid = pore.porosity.gpa_fullgrid
-gpa_GridPerA = pore.porosity.gpa_gridpera
-get_PSD      = pore.psd.get_psd
-#
-# Structure of porE xyz file:
-#   number of atoms
-#   cell vectors as   a_x a_y a_z  b_x b_y b_z  c_x c_y c_z
-#   Element specifiers and coordinates
-##
-# see folder 'structures_xyz' as well
-#
 # start from a cif file 
 cif = 'structures/cif/uio66_vesta.cif'
+#
+# Execute HEA, using the cif file
+#
+Phi_HEA = HEA(cif)[0]
 # convertes cif to porE xyz (i.e., pypore.xyz) 
 ase2pore(cif)
 structure = 'pypore.xyz'
@@ -26,7 +17,7 @@ structure = 'pypore.xyz'
 print('-----------')
 print('\nRun OSA\n')
 print('-----------')
-Phi, density, poreV, V_total, V_vdwSum, V_overlap = osa(structure)
+Phi, density, poreV, V_total, V_vdwSum, V_overlap = p.osa(structure)
 #
 # Execute an analyis of the pore size distribution (PSD)
 # First number   -> Number of starting points
@@ -35,7 +26,7 @@ Phi, density, poreV, V_total, V_vdwSum, V_overlap = osa(structure)
 print('-----------')
 print('\nRun PSD\n')
 print('-----------')
-no_pores,tmp1,tmp2 = get_PSD(structure,200,1000)
+no_pores,tmp1,tmp2 = psd.get_psd(structure,200,1000)
 pores = tmp1[0:no_pores]
 distr = tmp2[0:no_pores]
 #
@@ -46,13 +37,11 @@ probe_R = 1.20
 #
 # Here, explicitly provide the full grid (grid points along each cell vector)
 # FullGrid
-grid_a  = 30
-grid_b  = 30
-grid_c  = 30
+grid_a = grid_b = grid_c = 30
 print('-----------------------------------')
 print('\nRun GPA: grid_a, grid_b, grid_c\n')
 print('-----------------------------------')
-Phi_void, Phi_acc, density, poreV_void, poreV_acc = gpa_FullGrid(structure,probe_R,grid_a,grid_b,grid_c)
+Phi_void, Phi_acc, density, poreV_void, poreV_acc = p.gpa_fullgrid(structure,probe_R,grid_a,grid_b,grid_c)
 #
 # Here, a grid point density per A is provided instead
 # GridPerA
@@ -60,5 +49,4 @@ grid_density = 2.0
 print('-------------------------')
 print('\nRun GPA: grid_density\n')
 print('-------------------------')
-Phi_void, Phi_acc, density, poreV_void, poreV_acc = gpa_GridPerA(structure,probe_R,grid_density)
-
+Phi_void, Phi_acc, density, poreV_void, poreV_acc = p.gpa_gridpera(structure,probe_R,grid_density)
