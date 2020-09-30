@@ -1540,47 +1540,27 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
   write(19,*) 'Pore size distribution for ',name_struct
   write(19,*) ' '
   write(19,*) '  Pore size   Distribution [%]   coordinate (cartesian)                 coordinate (fractional)'
-  
-  !
-  ! Go thorugh all points once. Evaluate how many pores there are
-  !
-  count_pore = 0
-  do a = 1, start_points
-    distribution = 0.0D0
-    do b = 1, start_points
-      if (abs(all_distances(a) - all_distances2(b)) < 0.10D0) then    ! collect data which is within this range of the value
-        distribution = distribution + 1.0D0
-        all_distances2(b) = 1000.0D0                  ! do not evaluate this point again
-      end if
-    end do
-    distribution = distribution/start_points*100.D0  ! distribution in %
-    if (distribution > 5.0D0) then      ! if less than 5 % -> do not evaluate
-      count_pore = count_pore + 1
-    end if
-  end do
-  !
-  ! Restore all distances in a second array -> use for final evaluation
-  !
-  all_distances2(:) = all_distances(:)
   !
   ! Allocate final evaluation array
   !
-  allocate(final_eval(count_pore+1,8)) ! diameter, distribution, 3x cartesian coords, 3x fractional coords. Count_pore + 1 for sorting (last entry can be used as temporary storage)
+  allocate(final_eval(100,8)) ! diameter, distribution, 3x cartesian coords, 3x fractional coords.
+  final_eval(:,:) = 0.0D0
   !
-  ! Go through all point again. Write final results into array
+  ! Go through all points. Write final results into array
   !
   count_pore = 0
   do a = 1, start_points
+    distance1    = all_distances(a)
     distribution = 0.0D0
     do b = 1, start_points
       if (abs(all_distances(a) - all_distances2(b)) < 0.10D0) then    ! collect data which is within this range of the value
         distribution = distribution + 1.0D0
         !
-        ! If all_distance2 larger than all_distances -> store the former
+        ! If all_distance2 larger than all_distances -> wait til this distance is evaluated
         ! -> ensure that always the largest values is taken
         !
-        if (all_distances2(b) > all_distances(a)) then
-          all_distances(a) = all_distances2(b)
+        if (all_distances2(b) > distance1) then
+          distance1            = all_distances2(b)
           coords_all_cart(a,:) = coords_all_cart(b,:)
           coords_all_frac(a,:) = coords_all_frac(b,:)
         end if
@@ -1590,7 +1570,7 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
     distribution = distribution/start_points*100.D0  ! distribution in %
     if (distribution > 5.0D0) then      ! if less than 5 % -> do not evaluate
       count_pore = count_pore + 1
-      final_eval(count_pore,1) = all_distances(a)
+      final_eval(count_pore,1) = distance1
       final_eval(count_pore,2) = distribution
       final_eval(count_pore,3) = coords_all_cart(a,1)
       final_eval(count_pore,4) = coords_all_cart(a,2)
@@ -1600,7 +1580,9 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
       final_eval(count_pore,8) = coords_all_frac(a,3)
     end if
   end do
-  
+  !
+  ! Maybe check whether center are explicitely symmetry-equivalent or not... 
+  !
   !
   ! Sort the output, from smallest to largest pore.
   !
@@ -1617,13 +1599,100 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
           !
           ! Change entries
           !
+          ! set a temporary space to the entries of b
           final_eval(count_pore+1,:) = final_eval(b,:)
+          ! set the values of b to the values of a
           final_eval(b,:) = final_eval(a,:)
-          final_eval(a,:) = final_eval(count_pore+1,:) 
+          ! Set the values of a to the ones of the temporary space
+          final_eval(a,:) = final_eval(count_pore+1,:)
         end if
       end if
     end do
   end do
+
+!!!  !
+!!!  ! Go thorugh all points once. Evaluate how many pores there are
+!!!  !
+!!!  count_pore = 0
+!!!  do a = 1, start_points
+!!!    distribution = 0.0D0
+!!!    do b = 1, start_points
+!!!      if (abs(all_distances(a) - all_distances2(b)) < 0.10D0) then    ! collect data which is within this range of the value
+!!!        distribution = distribution + 1.0D0
+!!!        all_distances2(b) = 1000.0D0                  ! do not evaluate this point again
+!!!      end if
+!!!    end do
+!!!    distribution = distribution/start_points*100.D0  ! distribution in %
+!!!    if (distribution > 5.0D0) then      ! if less than 5 % -> do not evaluate
+!!!      count_pore = count_pore + 1
+!!!    end if
+!!!  end do
+!!!  !
+!!!  ! Restore all distances in a second array -> use for final evaluation
+!!!  !
+!!!  all_distances2(:) = all_distances(:)
+!!!  !
+!!!  ! Allocate final evaluation array
+!!!  !
+!!!  allocate(final_eval(count_pore+1,8)) ! diameter, distribution, 3x cartesian coords, 3x fractional coords. Count_pore + 1 for sorting (last entry can be used as temporary storage)
+!!!  !
+!!!  ! Go through all point again. Write final results into array
+!!!  !
+!!!  count_pore = 0
+!!!  do a = 1, start_points
+!!!    distribution = 0.0D0
+!!!    do b = 1, start_points
+!!!      if (abs(all_distances(a) - all_distances2(b)) < 0.10D0) then    ! collect data which is within this range of the value
+!!!        distribution = distribution + 1.0D0
+!!!        !
+!!!        ! If all_distance2 larger than all_distances -> store the former
+!!!        ! -> ensure that always the largest values is taken
+!!!        !
+!!!        if (all_distances2(b) > all_distances(a)) then
+!!!          all_distances(a) = all_distances2(b)
+!!!          coords_all_cart(a,:) = coords_all_cart(b,:)
+!!!          coords_all_frac(a,:) = coords_all_frac(b,:)
+!!!        end if
+!!!        all_distances2(b) = 1000.0D0                  ! do not evaluate this point again
+!!!      end if
+!!!    end do
+!!!    distribution = distribution/start_points*100.D0  ! distribution in %
+!!!    if (distribution > 5.0D0) then      ! if less than 5 % -> do not evaluate
+!!!      count_pore = count_pore + 1
+!!!      final_eval(count_pore,1) = all_distances(a)
+!!!      final_eval(count_pore,2) = distribution
+!!!      final_eval(count_pore,3) = coords_all_cart(a,1)
+!!!      final_eval(count_pore,4) = coords_all_cart(a,2)
+!!!      final_eval(count_pore,5) = coords_all_cart(a,3)
+!!!      final_eval(count_pore,6) = coords_all_frac(a,1)
+!!!      final_eval(count_pore,7) = coords_all_frac(a,2)
+!!!      final_eval(count_pore,8) = coords_all_frac(a,3)
+!!!    end if
+!!!  end do
+!!!  
+!!!  !
+!!!  ! Sort the output, from smallest to largest pore.
+!!!  !
+!!!  do a = 1, count_pore
+!!!    do b = 1, count_pore
+!!!      !
+!!!      ! If pore a is smaller than pore b
+!!!      !
+!!!      if (final_eval(a,1) <= final_eval(b,1)) then
+!!!        !
+!!!        ! If entry b comes before entry a
+!!!        !
+!!!        if (b < a) then
+!!!          !
+!!!          ! Change entries
+!!!          !
+!!!          final_eval(count_pore+1,:) = final_eval(b,:)
+!!!          final_eval(b,:) = final_eval(a,:)
+!!!          final_eval(a,:) = final_eval(count_pore+1,:) 
+!!!        end if
+!!!      end if
+!!!    end do
+!!!  end do
   
   !
   ! Write output
