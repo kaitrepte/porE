@@ -1210,7 +1210,7 @@ contains
 ! Calculation pore size distribution
 !
 subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of different starting points, number of MC steps
-                count_pore,pore_sizes,pore_distribution) ! return values: Lists
+                count_pore,pore_sizes,pore_distribution,pore_pos_cart,pore_pos_frac) ! return values: Lists
   implicit none
   ! get PSD
   ! pore_finder
@@ -1250,6 +1250,7 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
 
   ! return values
   real(8), intent(out)                :: pore_sizes(100), pore_distribution(100) ! output values
+  real(8), intent(out)                :: pore_pos_cart(100,3), pore_pos_frac(100,3) ! output values, coordinates of the pores
   integer(8), intent(out)             :: count_pore              ! count how many pores there are
 
   ! for random seed
@@ -1645,9 +1646,17 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
   !allocate(pore_distribution(count_pore))
   pore_sizes(:)         = 0.0D0
   pore_distribution(:)  = 0.0D0
+  pore_pos_cart(:,:)    = 0.0D0
+  pore_pos_frac(:,:)    = 0.0D0
   do a = 1, count_pore
     pore_sizes(a)        = final_eval(a,1)
     pore_distribution(a) = final_eval(a,2)
+    pore_pos_cart(a,1)   = final_eval(a,3)
+    pore_pos_cart(a,2)   = final_eval(a,4)
+    pore_pos_cart(a,3)   = final_eval(a,5)
+    pore_pos_frac(a,1)   = final_eval(a,6)
+    pore_pos_frac(a,2)   = final_eval(a,7)
+    pore_pos_frac(a,3)   = final_eval(a,8)
   end do
   return 
 
@@ -1732,10 +1741,10 @@ program porE_all
   USE PSD
   real(8) :: poro,dens,porV,V_t, V_o,V_oc
   real(8) :: poro_void,poro_acc,density,poreV_void,poreV_acc
-  real(8) ::pores(100), distr(100)
+  real(8) ::pores(100), distr(100), center_cart(100,3), center_frac(100,3)
   integer(8) :: no_pores
   call OSA('../../examples/structures/xyz/uio66.xyz',poro,dens,porV,V_t,V_o,V_oc)
-  call get_PSD('../../examples/structures/xyz/uio66.xyz',100,1000,no_pores,pores,distr)
+  call get_PSD('../../examples/structures/xyz/uio66.xyz',100,1000,no_pores,pores,distr,center_cart,center_frac)
   call GPA_FullGrid('../../examples/structures/xyz/uio66.xyz',1.20D0,30,30,30,&
           poro_void,poro_acc,density,poreV_void,poreV_acc)
   call GPA_GridPerA('../../examples/structures/xyz/uio66.xyz',1.20D0,2.0D0,&

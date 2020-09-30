@@ -26,9 +26,11 @@ Phi, density, poreV, V_total, V_vdwSum, V_overlap = p.osa(structure)
 print('-----------')
 print('\nRun PSD\n')
 print('-----------')
-no_pores,tmp1,tmp2 = psd.get_psd(structure,200,1000)
-pores = tmp1[0:no_pores]
-distr = tmp2[0:no_pores]
+no_pores,tmp1,tmp2,tmp3,tmp4 = psd.get_psd(structure,200,1000)
+pores           = tmp1[0:no_pores]
+distr           = tmp2[0:no_pores]
+pore_pos_cart   = tmp3[0:no_pores]
+pore_pos_frac   = tmp4[0:no_pores]
 #
 # Execute porosity evaluation, using the grid point apporach (GPA)
 # a probe radius for the accessible porosity needs to be provided
