@@ -1511,10 +1511,14 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
   !    write(6,*) "Start ",a," Final distance ",distance1*2.0   ! write diameter, not radius. Store position as well
       all_distances(a) = distance1*2.0D0
       coords_all_cart(a,:) = coords2(:)       
-    else
+    else if (distance1 < distance2) then
   !    write(6,*) "Start ",a," Final distance ",distance2*2.0   ! write diameter, not radius. Store position as well
       all_distances(a) = distance2*2.0D0
       coords_all_cart(a,:) = coords1(:)
+    ! If both are the exact same -> both are still 100.0D0 -> store 0.0D0
+    else
+      all_distances(a) = 0.0D0
+      coords_all_cart(a,:) = (/ 0.0D0, 0.0D0, 0.0D0 /)
     end if
   end do      ! end starting points
   
@@ -1528,7 +1532,6 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
   ! store all distances in a second array -> use for double-checking
   !
   all_distances2(:) = all_distances(:)
-  
   
   ! Get distribution
   write(6,*) ' '
@@ -1553,7 +1556,7 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
     distance1    = all_distances(a)
     distribution = 0.0D0
     do b = 1, start_points
-      if (abs(all_distances(a) - all_distances2(b)) < 0.10D0) then    ! collect data which is within this range of the value
+      if ((abs(all_distances(a) - all_distances2(b)) < 0.10D0).and.(all_distances(a).ne.0.0D0)) then    ! collect data which is within this range of the value
         distribution = distribution + 1.0D0
         !
         ! If all_distance2 larger than all_distances -> wait til this distance is evaluated
@@ -1812,11 +1815,6 @@ program porE_all
   real(8) :: poro_void,poro_acc,density,poreV_void,poreV_acc
   real(8) ::pores(100), distr(100), center_cart(100,3), center_frac(100,3)
   integer(8) :: no_pores
-  call OSA('../../examples/structures/xyz/uio66.xyz',poro,dens,porV,V_t,V_o,V_oc)
-  call get_PSD('../../examples/structures/xyz/uio66.xyz',100,1000,no_pores,pores,distr,center_cart,center_frac)
-  call GPA_FullGrid('../../examples/structures/xyz/uio66.xyz',1.20D0,30,30,30,&
-          poro_void,poro_acc,density,poreV_void,poreV_acc)
-  call GPA_GridPerA('../../examples/structures/xyz/uio66.xyz',1.20D0,2.0D0,&
-          poro_void,poro_acc,density,poreV_void,poreV_acc)
+  call get_PSD('pypore.xyz',100,1000,no_pores,pores,distr,center_cart,center_frac)
 end program porE_all
 
