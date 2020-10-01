@@ -1556,7 +1556,7 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
     distance1    = all_distances(a)
     distribution = 0.0D0
     do b = 1, start_points
-      if ((abs(all_distances(a) - all_distances2(b)) < 0.10D0).and.(all_distances(a).ne.0.0D0)) then    ! collect data which is within this range of the value
+      if ((abs(all_distances(a) - all_distances2(b)) < 0.15D0).and.(all_distances(a).ne.0.0D0)) then    ! collect data which is within this range of the value
         distribution = distribution + 1.0D0
         !
         ! If all_distance2 larger than all_distances -> wait til this distance is evaluated
@@ -1584,7 +1584,7 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
     end if
   end do
   !
-  ! Maybe check whether center are explicitely symmetry-equivalent or not... 
+  ! If any sizes are very close to each other -> add their values up 
   !
   !
   ! Sort the output, from smallest to largest pore.
