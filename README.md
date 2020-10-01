@@ -27,8 +27,9 @@ $ pip3 install -e .
 ```
 
 ### Running the code
-There are three calculations types one can choose from:
+There are several calculations types one can choose from:
 
+* HEA : He approach. Calculates the He void fraction using a cell list approach.
 * OSA : Overlapping sphere approach. Calculates the porosity via two-body overlaps of spheres.
 * GPA : Grid point approach. Void and accessible porosity are calculated using a grid in the unit cell.
 * PSD : Pore size distribution. Using a Monte-Carlo scheme, the pore size distribution is calculated.
@@ -40,15 +41,11 @@ The file run_GUI.py will execute the graphical user interface, including all fun
 Special thanks goes to Sebastian Schwalbe for writing the GUI and for many other useful discussions.    
 
 ## Additional information
-Limitations: Some elements regarding their vdW radii are not implemented yet.    
-More will be done in the future.
-
 The basic outline of the porE code and its applications are summarized in 
 
 - [K. Trepte and S. Schwalbe, Systematic Analysis of Porosities in Metal-Organic Frameworks](https://chemrxiv.org/articles/Systematic_Analysis_of_Porosities_in_Metal-Organic_Frameworks/10060331)
 - ChemRxiv, DOI: 10.26434/chemrxiv.10060331.v1, 2019
 - ChemRxiv, DOI: 10.26434/chemrxiv.10060331.v2, 2020
-
 
 
 ## Reference results
