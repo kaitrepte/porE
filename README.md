@@ -1,4 +1,5 @@
 # porE
+![GitHub Logo](/images/porE_logo_v1.png)
 ## PORosity Evaluation tool
 
 [![license](https://img.shields.io/badge/license-APACHE2-green)](https://www.apache.org/licenses/LICENSE-2.0)
@@ -18,7 +19,6 @@ Main developer:
 ```bash 
 $ pip3 install porE
 ```
-
 ## Installation (local pip installation)
 ```bash 
 $ git clone https://github.com/kaitrepte/porE
@@ -36,7 +36,8 @@ There are several calculations types one can choose from:
 
 To run the code, go to the *examples* folder.     
 The file run_porE.py contains examples for the execution on the non-GUI level.    
-The file run_GUI.py will execute the graphical user interface, including the OSA, GPA and PSD functionalities. The HEA will be implemented soon.
+The file run_GUI.py will execute the graphical user interface, including the OSA, GPA and PSD functionalities.     
+The HEA will be implemented soon.
 
 Special thanks goes to Sebastian Schwalbe for writing the GUI and for many other useful discussions.
 
