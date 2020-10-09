@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setup(
    name="porE",
-   version="1.0.2",
+   version="1.0.3",
    author="Kai Trepte",
    author_email="kai.trepte1987@gmail.com",
    description="Porosity Evaluation tool",

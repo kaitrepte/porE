@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import make_interp_spline, BSpline
 
-structs = ['DUT8Ni_open_exp','UiO66',    'UiO67','UiO68','IRMOF10','MOF5','HKUST1_open_Cu_sites']
-tags    = ['DUT-8(Ni) open', 'UiO-66',    'UiO-67','UiO-68','IRMOF-10','MOF-5',  'HKUST1']
-colors  = ['red',           'darkblue','purple', 'cornflowerblue', 'gray',                'green',  'gold']
+structs = ['DUT8Ni_open_exp',           'UiO66',   'UiO67', 'IRMOF10', 'MOF5',   'HKUST1_open_Cu_sites','MOF210'] # UiO-68
+tags    = [r'DUT-8(Ni)$_{\mathrm{o}}$', 'UiO-66',  'UiO-67','IRMOF-10','MOF-5',  'HKUST-1',             'MOF-210']
+colors  = ['blue',                      'green',   'orange','red',     'yellow', 'purple',              'gray']
 
 pores = []
 distr = []
@@ -62,7 +62,7 @@ for a in range(len(structs)):
     plt.ylabel(r'Distribution [%]',fontsize=25)
     plt.xticks(fontsize=25)
     plt.yticks(fontsize=25)
-    plt.xlim([4.0,19])
+    plt.xlim([4.0,29])
     plt.ylim([-0.05,100.5])
-    plt.legend(prop={'size':25},loc=2)
+    plt.legend(prop={'size':25},loc=1)
 plt.show()

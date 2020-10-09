@@ -36,9 +36,9 @@ There are several calculations types one can choose from:
 
 To run the code, go to the *examples* folder.     
 The file run_porE.py contains examples for the execution on the non-GUI level.    
-The file run_GUI.py will execute the graphical user interface, including all functionalities.   
+The file run_GUI.py will execute the graphical user interface, including the OSA, GPA and PSD functionalities. The HEA will be implemented soon.
 
-Special thanks goes to Sebastian Schwalbe for writing the GUI and for many other useful discussions.    
+Special thanks goes to Sebastian Schwalbe for writing the GUI and for many other useful discussions.
 
 ## Additional information
 The basic outline of the porE code and its applications are summarized in 

@@ -1,0 +1,18 @@
+ Starting points   (recommended: >= 200)   :          200
+ Monte-Carlo steps (recommended: >= 1000)  :       250000
+  
+Until step    62500, step size a_step =    7.10716
+Until step   125000, step size a_step =    0.71072
+Until step   187500, step size a_step =    0.07107
+Until step   250000, step size a_step =    0.00711
+  
+  
+ Pore size distribution for User-defined system                                                                                 
+  
+   Pore size   Distribution [%]   coordinate (cartesian)                 coordinate (fractional)
+   19.579713   17.50             121.421997   49.992315   28.344622      0.640265    0.772320    0.661280
+   19.969291   13.50              33.517419   15.202363    6.083817      0.172031    0.260115    0.141936
+   27.654143   26.50              88.491525   33.819958   21.431624      0.500000    0.500000    0.500000
+   27.977082   41.00              79.185802   30.263459   19.177868      0.447421    0.447421    0.447420
+  
+Total CPU time:      33653.557 s

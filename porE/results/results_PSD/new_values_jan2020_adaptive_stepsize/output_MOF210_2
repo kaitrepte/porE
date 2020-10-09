@@ -1,0 +1,23 @@
+-----------
+
+Run PSD
+
+-----------
+ Starting points   (recommended: >= 200)   :          200
+ Monte-Carlo steps (recommended: >= 1000)  :        10000
+  
+Until step     2500, step size a_step =    7.10716
+Until step     5000, step size a_step =    0.71072
+Until step     7500, step size a_step =    0.07107
+Until step    10000, step size a_step =    0.00711
+  
+  
+ Pore size distribution for User-defined system                                                                                 
+  
+   Pore size   Distribution [%]   coordinate (cartesian)                 coordinate (fractional)
+   19.579670   20.00             121.421777   49.991944   28.345435      0.640260    0.772304    0.661299
+   19.969156   11.50             144.010584   54.221768   31.712783      0.858060    0.827996    0.739860
+   27.653943   20.50              88.491659   33.820066   21.431624      0.500000    0.500003    0.500000
+   27.976864   40.00              97.797276   37.376250   23.685401      0.552583    0.552576    0.552581
+  
+Total CPU time:       1555.026 s
