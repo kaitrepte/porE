@@ -49,6 +49,9 @@ The basic outline of the porE code and its applications are summarized in
 - ChemRxiv, DOI: 10.26434/chemrxiv.10060331.v2, 2020
 - ChemRxiv, DOI: 10.26434/chemrxiv.10060331.v3, 2020
 
+Also, we create some YouTube videos to introduce and explain the porE code
+
+- [Introduction](https://www.youtube.com/watch?v=yp4IgFnDf9E)
 
 ## Reference results
 Several results from porE are summarized in the *porE/results* folder.
