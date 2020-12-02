@@ -1344,13 +1344,14 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
   
   ! LOOP OVER START POINTS
   do a = 1, start_points
+    ! make random number between 0.1 and 0.9. Points are inside the unit cell and not at a boundary
     call random_number(rand1)
     call random_number(rand2)
     call random_number(rand3)
     ! make random number between 0.1 and 0.9. Points are inside the unit cell and not at a boundary
-    rand1 = 0.1 + 0.8*rand1
-    rand2 = 0.1 + 0.8*rand2
-    rand3 = 0.1 + 0.8*rand3
+    !!!rand1 = 0.1 + 0.8*rand1
+    !!!rand2 = 0.1 + 0.8*rand2
+    !!!rand3 = 0.1 + 0.8*rand3
     coords1(:) = cell_a(:)*rand1 + cell_b(:)*rand2 + cell_c(:)*rand3
   
   ! LOOP MC
@@ -1556,7 +1557,7 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
     distance1    = all_distances(a)
     distribution = 0.0D0
     do b = 1, start_points
-      if ((abs(all_distances(a) - all_distances2(b)) < 0.15D0).and.(all_distances(a).ne.0.0D0)) then    ! collect data which is within this range of the value
+      if ((abs(all_distances(a) - all_distances2(b)) < 0.10D0).and.(all_distances(a).ne.0.0D0)) then    ! collect data which is within this range of the value
         distribution = distribution + 1.0D0
         !
         ! If all_distance2 larger than all_distances -> wait til this distance is evaluated
