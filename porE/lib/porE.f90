@@ -1344,7 +1344,7 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
   
   ! LOOP OVER START POINTS
   do a = 1, start_points
-    ! make random number between 0.1 and 0.9. Points are inside the unit cell and not at a boundary
+    ! make random number between 0 and 1.0. 
     call random_number(rand1)
     call random_number(rand2)
     call random_number(rand3)
