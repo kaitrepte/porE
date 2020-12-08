@@ -270,13 +270,13 @@ def calc_error(L, M, d_target):
 
 def HEA(f_file, verbose=3):
     """ Helium approach
-          Calculate He void fraction using celllist
+          Calculate porosity using celllist
           f_file  ... file name
           verbose ... verbosity
       """
-    print('-----------------------------')
-    print('He-Void fraction: calculation')
-    print('-----------------------------')
+    print('----------------')
+    print('HEA: calculation')
+    print('----------------')
     print('f_file : {}'.format(f_file))
     t1 = time.time()
     # read the structure
@@ -332,7 +332,7 @@ def HEA(f_file, verbose=3):
     print('f_calc: {}'.format(f_calc))
     P_volume = V_insert / (V_framework * f_calc)
     print('----------------------')
-    print('He-Void-Fraction P [%]')
+    print('HEA porosity P [%]')
     print('----------------------')
     print('P_subcell : {}'.format(P_subcell*100.0))
     print('P_points : {}'.format(P_points*100.0))
