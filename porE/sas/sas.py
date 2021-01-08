@@ -145,7 +145,7 @@ def sas(atoms, r_probe=1.4, n_points=960, verbose=3, name='SAS'):
       if verbose > 3: 
           print('area = {} n = {} radius = {}'.format(area,n_accessible_point,radius))
       areas.append(area)
-    
+
     A = numpy.array(areas)
     # Sum all atomic ASA contributions 
     SAS = A.sum()
@@ -182,9 +182,16 @@ def vdw(atoms,n_points,verbose=3):
 if __name__ == '__main__':
 
     f_file ='../../examples/structures/cif/porE8/uio66_vesta.cif'
-    r_probe = 1.2
-    n_points = 9 
+    #f_file = 'chb.sdf'
+    #f_file = '1j4m.pdb'
+    #f_file = '236.mol'
+    #f_file = 'test.xyz'
+    r_probe = 1.4
+    n_points = 9 # 96 
     mof = read(f_file)
+    #mof.center(axis=0,vacuum=5) 
+    #mof.center(axis=1,vacuum=5) 
+    #mof.center(axis=2,vacuum=5)
     write_points_on_sphere_xyz(n_points=n_points)
     A_sas = sas(mof, r_probe=r_probe, n_points=n_points)
     A_vdw = vdw(mof, n_points=n_points)
