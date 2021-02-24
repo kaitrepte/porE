@@ -49,6 +49,11 @@ The basic outline of the porE code and its applications are summarized in
 - ChemRxiv, DOI: 10.26434/chemrxiv.10060331.v2, 2020
 - ChemRxiv, DOI: 10.26434/chemrxiv.10060331.v3, 2020
 
+Please see also the published version in the Journal of Computational Chemistry (JCC)
+
+-[JCC link](https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.26484)
+- Trepte, K, Schwalbe, S. porE: A code for deterministic and systematic analyses of porosities. J Comput Chem. 2021; 42: 630-643. https://doi.org/10.1002/jcc.26484
+
 Also, we create some YouTube videos to introduce and explain the porE code
 
 - [Introduction](https://www.youtube.com/watch?v=yp4IgFnDf9E)
