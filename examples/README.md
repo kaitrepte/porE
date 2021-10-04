@@ -11,3 +11,11 @@ Run porE as GUI.
 ```bash
 $ python3 run_GUI.py 
 ```
+
+
+# Example 3 
+Run only the PSD evaluation using porE. 
+
+```bash
+$ python3 run_PSD.py 
+```
