@@ -897,7 +897,9 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c,&
 
   write(6,fmt='(1X a,7X f7.3,1X a)') 'Probe radius:                ',probe_r,'A'
   if (file_exist) then  ! make sure the pore windows were evaluated
-    write(6,fmt='(1X a,7X f7.3,1X a)') 'Smallest pore window:        ',minval(pore_windows),'A'
+    if (minval(pore_windows).ne.5000.0D0) then
+      write(19,fmt='(1X a,7X f7.3,1X a)') 'Smallest pore window:        ',minval(pore_windows),'A'
+    end if
   end if
   write(6,*) ' '
  
@@ -906,7 +908,8 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c,&
   ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
   !
   if (file_exist) then  ! make sure the pore windows were evaluated
-    if (probe_r > minval(pore_windows)) then
+    ! If probe_r is larger than the smallest pore window; or there are no pore windows -> inaccessible
+    if ((probe_r > minval(pore_windows)).or.(minval(pore_windows)==5000.0D0)) then
       write(6,777) 'Porosity (in-accessible): ',real(n_access)/(real(grid_a*grid_b*grid_c))*100D0,'%'
     else
       write(6,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100D0,'%'
@@ -961,7 +964,8 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c,&
   ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
   !
   if (file_exist) then  ! make sure the pore windows were evaluated
-    if (probe_r > minval(pore_windows)) then
+    ! If probe_r is larger than the smallest pore window; or there are no pore windows -> inaccessible
+    if ((probe_r > minval(pore_windows)).or.(minval(pore_windows)==5000.0D0)) then
       write(19,fmt='(1X a,I15)') 'Points IN-ACCESSIBLE:        ',n_access
     else
       write(19,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
@@ -972,7 +976,9 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c,&
 
   write(19,fmt='(1X a,7X f7.3,1X a)') 'Probe radius:                ',probe_r,'A'
   if (file_exist) then  ! make sure the pore windows were evaluated
-    write(19,fmt='(1X a,7X f7.3,1X a)') 'Smallest pore window:        ',minval(pore_windows),'A'
+    if (minval(pore_windows).ne.5000.0D0) then
+      write(19,fmt='(1X a,7X f7.3,1X a)') 'Smallest pore window:        ',minval(pore_windows),'A'
+    end if
   end if
   write(19,*) ' '
 
@@ -1128,8 +1134,9 @@ end subroutine overlap
 subroutine eval_overlap(element_a, element_b, dist_ab, sub_over)   ! evaluate the overlap according to the elements and their distance
   character(2), intent(in) :: element_a, element_b                 ! elements involved
   real(8), intent(in)      :: dist_ab                              ! distance between the elements
-  real(8)                  :: r_vdw1, r_vdw2                       ! vdW radii of the atoms
-  real(8), intent(out)     :: sub_over                             ! overlap volume (evaluated within the subroutine 'overlap')
+  real(8)                  :: r_1, r_2                             ! vdW radii of the atoms
+  real(8), intent(inout)   :: sub_over                             ! overlap volume (evaluated within the subroutine 'overlap')
+  real(8), parameter       :: pi = 4.0D0*atan(1.0D0)               ! define pi
  
   ! Some arrays for easier handling of vdW and covalent radii
   character(2)           :: pse(86)                               ! Elements
@@ -1183,9 +1190,13 @@ subroutine eval_overlap(element_a, element_b, dist_ab, sub_over)   ! evaluate th
       do b = 1, 86
         if (element_b == pse(b)) then
           if (dist_ab < cov_radii(a)+cov_radii(b)) then                                       ! Evaluate, if distance between the atoms is smaller than the sum of the covalent radii
-            r_vdw1 = vdW_radii(a)
-            r_vdw2 = vdW_radii(b)
-            call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)                                   ! evaluate overlap between the vdW spheres
+            r_1 = vdW_radii(a)
+            r_2 = vdW_radii(b)
+            ! Analytic equation for overlap of two spheres
+            sub_over = &
+            & (pi*(dist_ab**4D0-6D0*dist_ab**2D0*(r_1**2D0+r_2**2D0)+8D0*dist_ab*(r_1**3D0+r_2**3D0)-3D0*(r_1**2D0-r_2**2D0)**2D0))&
+            & /(12D0*dist_ab)
+            !call overlap(r_vdw1, r_vdw2, dist_ab, sub_over)                                   ! evaluate overlap between the vdW spheres
           end if
         end if
       end do
@@ -1614,6 +1625,45 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
     end do
   end do
 
+
+  ! KT: Oct. 4th, 2021
+  ! Now, if the largest pore size within a given pore
+  ! is close to other pore centers within this pore
+  ! -> remove the smaller pore sizes within the same pore!
+  !  Also, add the distribution to the larger pore size
+  !
+  do a = 1, count_pore
+    do b = 1, count_pore
+      if (a.ne.b) then
+        ! If the first pore is smaller than the next pore
+        if (final_eval(a,1) <= final_eval(b,1)) then
+          ! If the first pore center is within the pore radius of the larger pore
+          ! Do this with PBCs
+          distance1 = 10000.0D0
+          do c = 1,3                                                                               ! PBCs in all direction. Here for cell_a (-1,0,+1)
+            do d = 1,3                                                                             ! here for cell_b
+              do e = 1,3                                                                           ! here for cell_c. Taking all surrounding unit cells into account
+                tmp_dist = sqrt(sum((final_eval(a,3:5)-final_eval(b,3:5)+(c-2)*cell_a(:)+(d-2)*cell_b(:)+(e-2)*cell_c(:))**2))   ! evaluate new distance due to PBC
+                if (tmp_dist < distance1) then                                                     ! if distance is smaller -> use this one !
+                  distance1 = tmp_dist
+                end if
+              end do
+            end do
+          end do
+          ! If distance between pore centers is smaller than the larger pore radius = 0.5*pore size
+          if (distance1 < 0.5*final_eval(b,1)) then
+            ! remove the smaller pore from the evaluation. Add distribution to larger pore
+            ! Set the smaller pore distribution to 0; sort it out when printing
+            final_eval(b,2) = final_eval(b,2) + final_eval(a,2)
+            final_eval(a,2) = 0.0D0
+          end if
+        end if
+      end if
+    end do
+  end do
+
+
+
 !!!  !
 !!!  ! Go thorugh all points once. Evaluate how many pores there are
 !!!  !
@@ -1702,8 +1752,12 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
   ! Write output
   !
   do a = 1, count_pore
-    write(6,fmt='(F12.6,F8.2,11X,3F12.6,2X,3F12.6)') final_eval(a,:)
-    write(19,fmt='(F12.6,F8.2,11X,3F12.6,2X,3F12.6)') final_eval(a,:)
+    ! Checking that the pore has not been excluded due to proximity to 
+    ! a larger pore size within the same pore
+    if (final_eval(a,2) > 0.0D0) then
+      write(6,fmt='(F12.6,F8.2,11X,3F12.6,2X,3F12.6)') final_eval(a,:)
+      write(19,fmt='(F12.6,F8.2,11X,3F12.6,2X,3F12.6)') final_eval(a,:)
+    end if
   end do
   
   call cpu_time(finish)
@@ -1722,14 +1776,16 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
   pore_pos_cart(:,:)    = 0.0D0
   pore_pos_frac(:,:)    = 0.0D0
   do a = 1, count_pore
-    pore_sizes(a)        = final_eval(a,1)
-    pore_distribution(a) = final_eval(a,2)
-    pore_pos_cart(a,1)   = final_eval(a,3)
-    pore_pos_cart(a,2)   = final_eval(a,4)
-    pore_pos_cart(a,3)   = final_eval(a,5)
-    pore_pos_frac(a,1)   = final_eval(a,6)
-    pore_pos_frac(a,2)   = final_eval(a,7)
-    pore_pos_frac(a,3)   = final_eval(a,8)
+    if (final_eval(a,2) > 0.0D0) then
+      pore_sizes(a)        = final_eval(a,1)
+      pore_distribution(a) = final_eval(a,2)
+      pore_pos_cart(a,1)   = final_eval(a,3)
+      pore_pos_cart(a,2)   = final_eval(a,4)
+      pore_pos_cart(a,3)   = final_eval(a,5)
+      pore_pos_frac(a,1)   = final_eval(a,6)
+      pore_pos_frac(a,2)   = final_eval(a,7)
+      pore_pos_frac(a,3)   = final_eval(a,8)
+    end if
   end do
   return 
 
