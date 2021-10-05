@@ -1775,18 +1775,22 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
   pore_distribution(:)  = 0.0D0
   pore_pos_cart(:,:)    = 0.0D0
   pore_pos_frac(:,:)    = 0.0D0
+  n = 0
   do a = 1, count_pore
     if (final_eval(a,2) > 0.0D0) then
-      pore_sizes(a)        = final_eval(a,1)
-      pore_distribution(a) = final_eval(a,2)
-      pore_pos_cart(a,1)   = final_eval(a,3)
-      pore_pos_cart(a,2)   = final_eval(a,4)
-      pore_pos_cart(a,3)   = final_eval(a,5)
-      pore_pos_frac(a,1)   = final_eval(a,6)
-      pore_pos_frac(a,2)   = final_eval(a,7)
-      pore_pos_frac(a,3)   = final_eval(a,8)
+      n = n + 1
+      pore_sizes(n)        = final_eval(a,1)
+      pore_distribution(n) = final_eval(a,2)
+      pore_pos_cart(n,1)   = final_eval(a,3)
+      pore_pos_cart(n,2)   = final_eval(a,4)
+      pore_pos_cart(n,3)   = final_eval(a,5)
+      pore_pos_frac(n,1)   = final_eval(a,6)
+      pore_pos_frac(n,2)   = final_eval(a,7)
+      pore_pos_frac(n,3)   = final_eval(a,8)
     end if
   end do
+  ! reset the pore counter to the actual number of pores in the returned values
+  count_pore = n
   return 
 
 !  deallocate(pore_sizes)
