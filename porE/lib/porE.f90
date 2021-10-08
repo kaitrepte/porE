@@ -52,11 +52,11 @@ subroutine OSA(struct,&
   ! Extract name of file name
   do a = 1, len(struct)-3
     if ((struct(a+1:a+3).eq.'xyz').and.(struct(a:a).eq.'.')) then
-      do b = 1, len(struct)-3
-        if (struct(b:b)=='/') then
-          name_struct = struct(b+1:a-1)
-        end if
-      end do
+      !!do b = 1, len(struct)-3
+      !!  if (struct(b:b)=='/') then
+      name_struct = struct(1:a-1)
+      !!  end if
+      !!end do
     end if
   end do
   !
@@ -76,7 +76,7 @@ subroutine OSA(struct,&
   !
   ! Output file
   ! 
-  open(unit=19,file='output_OSA',status='unknown',action='write')
+  !!!open(unit=19,file='output_OSA',status='unknown',action='write')
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! Calculate the total unit cell volume using the triple product V = a . (b x c) . In A^3 !
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -116,7 +116,7 @@ subroutine OSA(struct,&
 
       if (sub_overlap > 0.0D0) then
         write(6,666) a,elements(a),b,elements(b),'  d =', distance_ab,' A    with V_overlap = ', sub_overlap,' A^3'
-        write(19,666) a,elements(a),b,elements(b),'  d =', distance_ab,' A    with V_overlap = ', sub_overlap,' A^3'
+        !!!write(19,666) a,elements(a),b,elements(b),'  d =', distance_ab,' A    with V_overlap = ', sub_overlap,' A^3'
       end if
     end do
   end do
@@ -136,22 +136,22 @@ subroutine OSA(struct,&
   write(6,fmt='(1X a,f10.3,1X a)') 'Mass of the unit cell is                        : ',m_total*u,'10**-27 kg'
   call cpu_time(finish)
   write(6,fmt='(A,2X,F12.3,1X,A)') 'Total CPU time: ',finish-start,'s'
-  !
-  ! Write to file
-  !
-  write(19,*) name_struct
-  write(19,fmt='(1X a,f10.3,1X a)') 'V_total     = ',V_total,'A^3'
-  write(19,fmt='(1X a,f10.3,1X a)') 'V_vdW,atoms = ',V_occupied,'A^3'
-  write(19,fmt='(1X a,f10.3,1X a)') 'V_overlap   = ',V_overlap,'A^3'
-  write(19,fmt='(1X a,f10.3,1X a)') 'V_occupied  = ',V_occupied - V_overlap,'A^3'
-  write(19,fmt='(1X a,f10.3,1X a)') 'V_void      = ',V_total - (V_occupied - V_overlap),'A^3'
-  write(19,fmt='(1X a,f10.3,1X a)') 'Porosity    = ',(V_total - (V_occupied - V_overlap))/V_total*100,' %'
-  write(19,fmt='(1X a,f10.3,1X a)') 'Density of the structure is (m_total/V_total)   : ',m_total*u/V_total*10**3,'kg/m^3'
-  write(19,fmt='(1X a,f10.3,1X a)') 'Pore volume density is (V_void/m_total)         : ' &
-             ,(V_total - (V_occupied - V_overlap))/(m_total*u)*10**(0),'cm^3/g'
-  write(19,fmt='(1X a,f10.3,1X a)') 'Mass of the unit cell is                        : ',m_total*u,'10**-27 kg'
-  write(19,fmt='(A,2X,F12.3,1X,A)') 'Total CPU time: ',finish-start,'s'
-  close(19)
+  !!!!
+  !!!! Write to file
+  !!!!
+  !!!write(19,*) name_struct
+  !!!write(19,fmt='(1X a,f10.3,1X a)') 'V_total     = ',V_total,'A^3'
+  !!!write(19,fmt='(1X a,f10.3,1X a)') 'V_vdW,atoms = ',V_occupied,'A^3'
+  !!!write(19,fmt='(1X a,f10.3,1X a)') 'V_overlap   = ',V_overlap,'A^3'
+  !!!write(19,fmt='(1X a,f10.3,1X a)') 'V_occupied  = ',V_occupied - V_overlap,'A^3'
+  !!!write(19,fmt='(1X a,f10.3,1X a)') 'V_void      = ',V_total - (V_occupied - V_overlap),'A^3'
+  !!!write(19,fmt='(1X a,f10.3,1X a)') 'Porosity    = ',(V_total - (V_occupied - V_overlap))/V_total*100,' %'
+  !!!write(19,fmt='(1X a,f10.3,1X a)') 'Density of the structure is (m_total/V_total)   : ',m_total*u/V_total*10**3,'kg/m^3'
+  !!!write(19,fmt='(1X a,f10.3,1X a)') 'Pore volume density is (V_void/m_total)         : ' &
+  !!!           ,(V_total - (V_occupied - V_overlap))/(m_total*u)*10**(0),'cm^3/g'
+  !!!write(19,fmt='(1X a,f10.3,1X a)') 'Mass of the unit cell is                        : ',m_total*u,'10**-27 kg'
+  !!!write(19,fmt='(A,2X,F12.3,1X,A)') 'Total CPU time: ',finish-start,'s'
+  !!!close(19)
 
   deallocate(elements)
   deallocate(coordinates)
@@ -325,11 +325,11 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c,&
   ! Extract name of file name
   do a = 1, len(struct)-3
     if ((struct(a+1:a+3).eq.'xyz').and.(struct(a:a).eq.'.')) then
-      do b = 1, len(struct)-3
-        if (struct(b:b)=='/') then
-          name_struct = struct(b+1:a-1)
-        end if
-      end do
+      !!do b = 1, len(struct)-3
+      !!  if (struct(b:b)=='/') then
+      name_struct = struct(1:a-1)
+      !!  end if
+      !!end do
     end if
   end do
   !
@@ -380,7 +380,7 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c,&
   !
   ! Output file
   ! 
-  open(unit=19,file='output_GPA',status='unknown',action='write')
+  !!!open(unit=19,file='output_GPA',status='unknown',action='write')
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! Calculate the total unit cell volume using the triple product V = a . (b x c) . In A^3 !
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -552,10 +552,10 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c,&
     close(20)
 
     write(6,*) 'Pore  Pore radius  Pore diameter       coordinates of pore center'
-    write(19,*) 'Pore  Pore radius  Pore diameter       coordinates of pore center'
+    !!!write(19,*) 'Pore  Pore radius  Pore diameter       coordinates of pore center'
     do a = 1, n_pore
       write(6,fmt='(I5,F13.4,F15.4,7X,3F11.6)') a, pore_size(a), pore_size(a)*2.0D0, pore_center(a,:)
-      write(19,fmt='(I5,F13.4,F15.4,7X,3F11.6)') a, pore_size(a), pore_size(a)*2.0D0, pore_center(a,:)
+      !!!write(19,fmt='(I5,F13.4,F15.4,7X,3F11.6)') a, pore_size(a), pore_size(a)*2.0D0, pore_center(a,:)
     end do
 
     !
@@ -678,8 +678,8 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c,&
           !!!&    (abs((new_point_atom-pore_size(b))/pore_size(b)) < 0.30D0)).or.&
           !!!&   ((abs((dist_point_atom-pore_size(a))/pore_size(a)) > 0.90D0).or.&
           !!!&    (abs((new_point_atom-pore_size(b))/pore_size(b)) > 0.90D0))) then
-          write(6,fmt='(A,I3,A,I3,A,F10.5,A)') 'PORE WINDOW between pore                     ',a,' and pore ',b,' is ',dist1,' A'
-          write(19,fmt='(A,I3,A,I3,A,F10.5,A)') 'PORE WINDOW between pore                     ',a,' and pore ',b,' is ',dist1,' A'
+          write(6,fmt='(A,I3,A,I3,A,F10.5,A)') 'Pore window between pore                     ',a,' and pore ',b,' is ',dist1,' A'
+          !!!write(19,fmt='(A,I3,A,I3,A,F10.5,A)') 'PORE WINDOW between pore                     ',a,' and pore ',b,' is ',dist1,' A'
           !
           ! Only store values which are physically meaningful (everything larger than H)
           !
@@ -702,7 +702,7 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c,&
     !
   else
     write(6,*) 'No output_PSD found => no evaluation of pore windows'
-    write(19,*) 'No output_PSD found => no evaluation of pore windows'
+    !!!write(19,*) 'No output_PSD found => no evaluation of pore windows'
   end if
 
 
@@ -808,13 +808,13 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c,&
   write(6,*) 'N_acc after 1st loop                ',n_access
   write(6,*) '  Total number of unoccupied points ',n_noOccu
   write(6,*) '  Sum of sub-grid points            ',sum(sub_division(:)%sub_grid_points)
-  !
-  ! Write to file
-  !
-  write(19,*) ' '
-  write(19,*) 'N_acc after 1st loop                ',n_access
-  write(19,*) '  Total number of unoccupied points ',n_noOccu
-  write(19,*) '  Sum of sub-grid points            ',sum(sub_division(:)%sub_grid_points)
+  !!!!
+  !!!! Write to file
+  !!!!
+  !!!write(19,*) ' '
+  !!!write(19,*) 'N_acc after 1st loop                ',n_access
+  !!!write(19,*) '  Total number of unoccupied points ',n_noOccu
+  !!!write(19,*) '  Sum of sub-grid points            ',sum(sub_division(:)%sub_grid_points)
 
 ! HERE -> restructure like
 ! 1. loop: atoms
@@ -870,7 +870,7 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c,&
   end do                                                                                     ! end do full grid
 
   write(6,*) 'N_acc after 2nd loop                ', n_access
-  write(19,*) 'N_acc after 2nd loop                ', n_access
+  !!!write(19,*) 'N_acc after 2nd loop                ', n_access
   !
   ! Write to screen
   !
@@ -901,7 +901,7 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c,&
   write(6,fmt='(1X a,7X f7.3,1X a)') 'Probe radius:                ',probe_r,'A'
   if (file_exist) then  ! make sure the pore windows were evaluated
     if (minval(pore_windows).ne.5000.0D0) then
-      write(19,fmt='(1X a,7X f7.3,1X a)') 'Smallest pore window:        ',minval(pore_windows),'A'
+      write(6,fmt='(1X a,7X f7.3,1X a)') 'Smallest pore window:        ',minval(pore_windows),'A'
     end if
   end if
   write(6,*) ' '
@@ -949,84 +949,84 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c,&
   call cpu_time(finish)
   write(6,*) ' '
   write(6,fmt='(A,2X,F12.3,1X,A)') 'Total CPU time: ',finish-start,'s'
-  ! 
-  ! Write to file
-  ! 
-  write(19,*) ' '
-  write(19,*) '#######################################################################################################'
-  write(19,*) '###############################################  OUTPUT ###############################################'
-  write(19,*) '#######################################################################################################'
-  write(19,*) 'Structure : ',name_struct
-  write(19,fmt='(1X a,7X I4,1X a,1X I4,1X a,1x I4)') 'Grid which was used:         ',grid_a,'x',grid_b,'x',grid_c                              ! 1X -> 1 space, 7X -> 7 spaces
-  write(19,fmt='(1X,a,I15)') 'Total number of grid points: ',grid_a*grid_b*grid_c
-  write(19,fmt='(1X,a,f15.3,a,3(f10.3,2X,a),a)') 'Grid point density:         ',grid_a*grid_b*grid_c/V_total, &
-              ' grid points per A^3, with ',grid_per_A_x,' x ',grid_per_A_y,' x ',grid_per_A_z,' grid points per A'                           ! (grid_a*grid_b*grid_c/V_total)**(1./3.)
-  write(19,fmt='(1X a,I15)') 'Points OCCUPIED:             ',n_occ
-  write(19,fmt='(1X a,I15)') 'Points NOT OCCUPIED (void):  ',grid_a*grid_b*grid_c - n_occ
-  !
-  ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
-  !
-  if (file_exist) then  ! make sure the pore windows were evaluated
-    ! If probe_r is larger than the smallest pore window; or there are no pore windows -> inaccessible
-    if ((probe_r > minval(pore_windows)).or.(minval(pore_windows)==5000.0D0)) then
-      write(19,fmt='(1X a,I15)') 'Points IN-ACCESSIBLE:        ',n_access
-    else
-      write(19,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
-    end if
-  else
-    write(19,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
-  end if
+  !!!! 
+  !!!! Write to file
+  !!!! 
+  !!!write(19,*) ' '
+  !!!write(19,*) '#######################################################################################################'
+  !!!write(19,*) '###############################################  OUTPUT ###############################################'
+  !!!write(19,*) '#######################################################################################################'
+  !!!write(19,*) 'Structure : ',name_struct
+  !!!write(19,fmt='(1X a,7X I4,1X a,1X I4,1X a,1x I4)') 'Grid which was used:         ',grid_a,'x',grid_b,'x',grid_c                              ! 1X -> 1 space, 7X -> 7 spaces
+  !!!write(19,fmt='(1X,a,I15)') 'Total number of grid points: ',grid_a*grid_b*grid_c
+  !!!write(19,fmt='(1X,a,f15.3,a,3(f10.3,2X,a),a)') 'Grid point density:         ',grid_a*grid_b*grid_c/V_total, &
+  !!!            ' grid points per A^3, with ',grid_per_A_x,' x ',grid_per_A_y,' x ',grid_per_A_z,' grid points per A'                           ! (grid_a*grid_b*grid_c/V_total)**(1./3.)
+  !!!write(19,fmt='(1X a,I15)') 'Points OCCUPIED:             ',n_occ
+  !!!write(19,fmt='(1X a,I15)') 'Points NOT OCCUPIED (void):  ',grid_a*grid_b*grid_c - n_occ
+  !!!!
+  !!!! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
+  !!!!
+  !!!if (file_exist) then  ! make sure the pore windows were evaluated
+  !!!  ! If probe_r is larger than the smallest pore window; or there are no pore windows -> inaccessible
+  !!!  if ((probe_r > minval(pore_windows)).or.(minval(pore_windows)==5000.0D0)) then
+  !!!    write(19,fmt='(1X a,I15)') 'Points IN-ACCESSIBLE:        ',n_access
+  !!!  else
+  !!!    write(19,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
+  !!!  end if
+  !!!else
+  !!!  write(19,fmt='(1X a,I15)') 'Points ACCESSIBLE:           ',n_access
+  !!!end if
 
-  write(19,fmt='(1X a,7X f7.3,1X a)') 'Probe radius:                ',probe_r,'A'
-  if (file_exist) then  ! make sure the pore windows were evaluated
-    if (minval(pore_windows).ne.5000.0D0) then
-      write(19,fmt='(1X a,7X f7.3,1X a)') 'Smallest pore window:        ',minval(pore_windows),'A'
-    end if
-  end if
-  write(19,*) ' '
+  !!!write(19,fmt='(1X a,7X f7.3,1X a)') 'Probe radius:                ',probe_r,'A'
+  !!!if (file_exist) then  ! make sure the pore windows were evaluated
+  !!!  if (minval(pore_windows).ne.5000.0D0) then
+  !!!    write(19,fmt='(1X a,7X f7.3,1X a)') 'Smallest pore window:        ',minval(pore_windows),'A'
+  !!!  end if
+  !!!end if
+  !!!write(19,*) ' '
 
-  write(19,777) 'Porosity (void):          ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100D0,'%'
-  !
-  ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
-  !
-  if (file_exist) then  ! make sure the pore windows were evaluated
-    if (probe_r > minval(pore_windows)) then
-      write(19,777) 'Porosity (in-accessible): ',real(n_access)/(real(grid_a*grid_b*grid_c))*100D0,'%'
-    else
-      write(19,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100D0,'%'
-    end if
-  else
-    write(19,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100D0,'%'
-  end if
+  !!!write(19,777) 'Porosity (void):          ',(real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100D0,'%'
+  !!!!
+  !!!! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
+  !!!!
+  !!!if (file_exist) then  ! make sure the pore windows were evaluated
+  !!!  if (probe_r > minval(pore_windows)) then
+  !!!    write(19,777) 'Porosity (in-accessible): ',real(n_access)/(real(grid_a*grid_b*grid_c))*100D0,'%'
+  !!!  else
+  !!!    write(19,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100D0,'%'
+  !!!  end if
+  !!!else
+  !!!  write(19,777) 'Porosity (accessible):    ',real(n_access)/(real(grid_a*grid_b*grid_c))*100D0,'%'
+  !!!end if
 
-  V_void       = (real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*V_total
-  V_accessible = real(n_access)/(real(grid_a*grid_b*grid_c))*V_total
+  !!!V_void       = (real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*V_total
+  !!!V_accessible = real(n_access)/(real(grid_a*grid_b*grid_c))*V_total
 
-  write(19,777) 'Volume (void):            ',V_void,'A^3'
-  !
-  ! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
-  !
-  if (file_exist) then  ! make sure the pore windows were evaluated
-    if (probe_r > minval(pore_windows)) then
-      write(19,777) 'Volume (in-accessible):   ',V_accessible,'A^3'
-    else
-      write(19,777) 'Volume (accessible):      ',V_accessible,'A^3'
-    end if
-  else
-    write(19,777) 'Volume (accessible):      ',V_accessible,'A^3'
-  end if
-  write(19,*) ' '
+  !!!write(19,777) 'Volume (void):            ',V_void,'A^3'
+  !!!!
+  !!!! Pore window evaluation. If smallest pore window is smaller than the probe radius -> unoccupied, but inaccessible!!
+  !!!!
+  !!!if (file_exist) then  ! make sure the pore windows were evaluated
+  !!!  if (probe_r > minval(pore_windows)) then
+  !!!    write(19,777) 'Volume (in-accessible):   ',V_accessible,'A^3'
+  !!!  else
+  !!!    write(19,777) 'Volume (accessible):      ',V_accessible,'A^3'
+  !!!  end if
+  !!!else
+  !!!  write(19,777) 'Volume (accessible):      ',V_accessible,'A^3'
+  !!!end if
+  !!!write(19,*) ' '
 
-  write(19,fmt='(1X a,f10.3,a)') 'Unit cell volume (V_total):                   ',V_total,' A^3'
-  write(19,fmt='(1X a,f10.3,a)') 'Mass of unit cell (m_total):                  ',m_total*u,' 10**-27 kg'
-  write(19,fmt='(1X a,f10.3,a,f10.3,a)') 'Density of the structure (m_total/V_total):   ',m_total*u/V_total*10D0**3,' kg/m^3 = ',&
-                                                                                         m_total*u/V_total,' g/cm^3'
-  write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_void/m_total):         ',V_void/(m_total*u)*10D0**(0),' cm^3/g'
-  write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_acc/m_total):          ',V_accessible/(m_total*u)*10D0**(0),' cm^3/g'
+  !!!write(19,fmt='(1X a,f10.3,a)') 'Unit cell volume (V_total):                   ',V_total,' A^3'
+  !!!write(19,fmt='(1X a,f10.3,a)') 'Mass of unit cell (m_total):                  ',m_total*u,' 10**-27 kg'
+  !!!write(19,fmt='(1X a,f10.3,a,f10.3,a)') 'Density of the structure (m_total/V_total):   ',m_total*u/V_total*10D0**3,' kg/m^3 = ',&
+  !!!                                                                                       m_total*u/V_total,' g/cm^3'
+  !!!write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_void/m_total):         ',V_void/(m_total*u)*10D0**(0),' cm^3/g'
+  !!!write(19,fmt='(1X a,f10.3,a)') 'Pore volume density (V_acc/m_total):          ',V_accessible/(m_total*u)*10D0**(0),' cm^3/g'
 
-  write(19,*) ' '
-  write(19,fmt='(A,2X,F12.3,1X,A)') 'Total CPU time: ',finish-start,'s'
-  close(19)
+  !!!write(19,*) ' '
+  !!!write(19,fmt='(A,2X,F12.3,1X,A)') 'Total CPU time: ',finish-start,'s'
+  !!!close(19)
 
   ! Define return values
   poro_void  = (real(grid_a*grid_b*grid_c) - real(n_occ))/(real(grid_a*grid_b*grid_c))*100.0D0 
@@ -1291,11 +1291,11 @@ subroutine get_PSD(struct,start_points,cycles,&  ! structure, number of differen
   ! Extract name of file name
   do a = 1, len(struct)-3
     if ((struct(a+1:a+3).eq.'xyz').and.(struct(a:a).eq.'.')) then
-      do b = 1, len(struct)-3
-        if (struct(b:b)=='/') then
-          name_struct = struct(b+1:a-1)
-        end if
-      end do
+      !!do b = 1, len(struct)-3
+      !!  if (struct(b:b)=='/') then
+      name_struct = struct(1:a-1)
+      !!  end if
+      !!end do
     end if
   end do
   !

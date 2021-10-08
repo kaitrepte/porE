@@ -5,8 +5,6 @@ from ase.visualize import view
 # from pybff.uff_bonds import ATOM_data, ATOM_key2idx
 import time
 
-output_file = open('output_HEA','w')
-
 ATOM_key2idx = {
     'r': 0,
     'max_coord': 1
@@ -123,7 +121,6 @@ def get_subcells(cell, M, p, verbose=3):
     Ly = numpy.linalg.norm(cell[1, :])
     Lz = numpy.linalg.norm(cell[2, :])
     print('L: {} {} {}'.format(Lx, Ly, Lz))
-    output_file.write('L: {} {} {}'.format(Lx, Ly, Lz)+'\n')
     Mx = M[0]
     My = M[1]
     Mz = M[2]
@@ -145,13 +142,9 @@ def get_subcells(cell, M, p, verbose=3):
                         print('cell: {}/{} {}/{} {}/{}'.format(cellx_l, cellx_h, celly_l, celly_h, cellz_l, cellz_h))
                         print('m: {} {} {}'.format(mx, my, mz))
                         print('p: {} {} {}'.format(x, y, z))
-                        output_file.write('cell: {}/{} {}/{} {}/{}'.format(cellx_l, cellx_h, celly_l, celly_h, cellz_l, cellz_h)+'\n')
-                        output_file.write('m: {} {} {}'.format(mx, my, mz)+'\n')
-                        output_file.write('p: {} {} {}'.format(x, y, z)+'\n')
                     if cellx_l <= x <= cellx_h and celly_l <= y <= celly_h and cellz_l <= z <= cellz_h:
                         if verbose > 3:
                             print('check', x, cellx_h, y, celly_h, z, cellz_h, n)
-                            output_file.write('check', x, cellx_h, y, celly_h, z, cellz_h, n+'\n')
                         Celllist[mx, my, mz, i] = 1
     return Celllist
 
@@ -272,7 +265,6 @@ def calc_error(L, M, d_target):
     d_calc = L / M
     e = abs(d_calc - d_target)
     print('spacing error(|d_calc-d_target|): {}'.format(e))
-    output_file.write('spacing error(|d_calc-d_target|): {}'.format(e)+'\n')
     return e
 
 
@@ -286,7 +278,6 @@ def HEA(f_file, verbose=3):
     #print('HEA: calculation')
     #print('----------------')
     print('f_file : {}'.format(f_file))
-    output_file.write('f_file : {}'.format(f_file)+'\n')
     t1 = time.time()
     # read the structure
     struct = read(f_file)
@@ -311,7 +302,6 @@ def HEA(f_file, verbose=3):
     # Remove atoms an the insertion grid overlapping with the framework
     ropt = dopt / 2.
     print('r_opt:            {:10.5f} A'.format(ropt))
-    output_file.write('r_opt:            {:10.5f} A'.format(ropt)+'\n')
     p_insert_red, s_insert_red = prune_points(p_framework=p_framework, p_insert=p_insert, s_framework=s_framework,
                                               s_insert=s_insert, r_i=ropt)
     # Calculate number of atoms
@@ -320,8 +310,6 @@ def HEA(f_file, verbose=3):
     P_points = N_insert_red / N_insert
     print('N_insert:         {:10d}'.format(N_insert))
     print('N_insert_reduced: {:10d}'.format(N_insert_red))
-    output_file.write('N_insert:         {:10d}'.format(N_insert)+'\n')
-    output_file.write('N_insert_reduced: {:10d}'.format(N_insert_red)+'\n')
     # Calculate volumes
     struct_subcell = Atoms(cell=cell)
     cell_subcell = struct_subcell.get_cell()
@@ -334,7 +322,6 @@ def HEA(f_file, verbose=3):
     V_framework = struct.get_volume()
     P_subcell = V_subcell / V_framework
     print('optimal M:        {:10d} {:10d} {:10d}'.format(Mx, My, Mz))
-    output_file.write('optimal M:        {:10d} {:10d} {:10d}'.format(Mx, My, Mz)+'\n')
     # simple cubic packing
     f_sc = 0.52
     f_calc = V_insert / V_subcell
@@ -359,28 +346,6 @@ def HEA(f_file, verbose=3):
     t2 = time.time()
     print('Total CPU time:   {:15.5f} s'.format(t2-t1))
     print('\n')
-
-    output_file.write('------------------'+'\n')
-    output_file.write('packing fraction f'+'\n')
-    output_file.write('------------------'+'\n')
-    output_file.write('f_sc:             {:15.5f}'.format(f_sc)+'\n')
-    output_file.write('f_calc:           {:15.5f}'.format(f_calc)+'\n')
-    output_file.write('----------------------'+'\n')
-    output_file.write('HEA porosity P [%]'+'\n')
-    output_file.write('----------------------'+'\n')
-    output_file.write('P_subcell:        {:15.5f}'.format(P_subcell*100.0)+'\n')
-    output_file.write('P_points:         {:15.5f}'.format(P_points*100.0)+'\n')
-    output_file.write('P_volume:         {:15.5f}'.format(P_volume*100.0)+'\n')
-    output_file.write('---------------'+'\n')
-    output_file.write(' Volume V [A^3]'+'\n')
-    output_file.write('---------------'+'\n')
-    output_file.write('V_framework:      {:15.5f}'.format(V_framework)+'\n')
-    output_file.write('V_subcell:        {:15.5f}'.format(V_subcell)+'\n')
-    output_file.write('V_He:             {:15.5f}'.format(V_insert)+'\n')
-    output_file.write('Total CPU time:   {:15.5f} s'.format(t2-t1)+'\n')
-    output_file.write('\n')
-    output_file.close()
-
 
     if verbose > 3:
         get_ase(f_file, p_insert_red, s_insert_red)
