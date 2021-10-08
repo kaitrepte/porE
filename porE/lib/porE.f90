@@ -668,29 +668,32 @@ subroutine do_GPA(struct,probe_r,grid_a,grid_b,grid_c,&
           !
           ! Compare to pore sizes. If they are very different -> NOT A PORE WINDOW
           ! Check whether distance is within 30% of the pore size
-          ! To be checked whether thsi is accurate
+          ! To be checked whether this is accurate
+          !  Oct. 8th, 2021: This might be obsolete. Any diameter between the pores 
+          !                  that is not zero is technically a pore window. 
+          !                  Only if it is smaller than the probe radius, this channel 
+          !                  becomes inaccessible
           !
-          if ((abs((dist_point_atom-pore_size(a))/pore_size(a)) < 0.30D0).and.&
-          &    (abs((new_point_atom-pore_size(b))/pore_size(b)) < 0.30D0)) then
-            !
-            ! If this is all true -> pore window!
-            !
-            write(6,fmt='(A,I3,A,I3,A,F10.5,A)') 'PORE WINDOW between pore                     ',a,' and pore ',b,' is ',dist1,' A'
-            write(19,fmt='(A,I3,A,I3,A,F10.5,A)') 'PORE WINDOW between pore                     ',a,' and pore ',b,' is ',dist1,' A'
-            !
-            ! Only store values which are physically meaningful (everything larger than H)
-            !
-            if (dist1 > 1.20D0) then
-              counter_1 = counter_1 + 1
-              pore_windows(counter_1) = dist1
-            end if
+          !!!if (((abs((dist_point_atom-pore_size(a))/pore_size(a)) < 0.30D0).and.&
+          !!!&    (abs((new_point_atom-pore_size(b))/pore_size(b)) < 0.30D0)).or.&
+          !!!&   ((abs((dist_point_atom-pore_size(a))/pore_size(a)) > 0.90D0).or.&
+          !!!&    (abs((new_point_atom-pore_size(b))/pore_size(b)) > 0.90D0))) then
+          write(6,fmt='(A,I3,A,I3,A,F10.5,A)') 'PORE WINDOW between pore                     ',a,' and pore ',b,' is ',dist1,' A'
+          write(19,fmt='(A,I3,A,I3,A,F10.5,A)') 'PORE WINDOW between pore                     ',a,' and pore ',b,' is ',dist1,' A'
           !
-          ! In any other case -> not a pore window. Just print window size in between the pores 
+          ! Only store values which are physically meaningful (everything larger than H)
           !
-          else
-            write(6,fmt='(A,I3,A,I3,A,F10.5,A)') 'Minimum radius (NO pore window) between pore ',a,' and pore ',b,' is ',dist1,' A'
-            write(19,fmt='(A,I3,A,I3,A,F10.5,A)') 'Minimum radius (NO pore window) between pore ',a,' and pore ',b,' is ',dist1,' A'
+          if (dist1 > 1.20D0) then
+            counter_1 = counter_1 + 1
+            pore_windows(counter_1) = dist1
           end if
+          !!!!
+          !!!! In any other case -> not a pore window. Just print window size in between the pores 
+          !!!!
+          !!!else
+          !!!  write(6,fmt='(A,I3,A,I3,A,F10.5,A)') 'Minimum radius (NO pore window) between pore ',a,' and pore ',b,' is ',dist1,' A'
+          !!!  write(19,fmt='(A,I3,A,I3,A,F10.5,A)') 'Minimum radius (NO pore window) between pore ',a,' and pore ',b,' is ',dist1,' A'
+          !!!end if
         end if
       end do
     end do
