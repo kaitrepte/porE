@@ -221,7 +221,7 @@ def main(cif,do_HEA,do_OSA,do_GPA,do_PSD):
 
 if __name__ == '__main__':
     # start from a cif file
-    cif = 'structures/cif/uio66_vesta.cif'
+    cif = 'nu1000.cif'
     # Choose which calculation to perform
     do_HEA = True
     do_OSA = True

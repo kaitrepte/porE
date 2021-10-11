@@ -57,6 +57,7 @@ Please see also the published version in the Journal of Computational Chemistry 
 Also, we create some YouTube videos to introduce and explain the porE code
 
 - [Introduction](https://www.youtube.com/watch?v=yp4IgFnDf9E)
+- [Tutorial](https://www.youtube.com/watch?v=O3YEVIZIXR8&t=86s)
 
 ## Reference results
 Several results from porE are summarized in the *porE/results* folder.
