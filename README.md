@@ -9,7 +9,7 @@
 [![researchgate](https://img.shields.io/static/v1?label=researchgate&message=MOFs&style=social&logo=researchgate)](https://www.researchgate.net/project/Systematic-and-efficient-theoretical-investigations-of-metal-organic-frameworks-MOFs)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4075260.svg)](https://doi.org/10.5281/zenodo.4075260)
 
-Attention: This version as of October 21th, 2021. Current development are carried out at GitLab (https://gitlab.com/kaitrepte/porE).
+Attention: This is the version as of October 21th, 2021. Current development are carried out at GitLab (https://gitlab.com/kaitrepte/porE).
 
 
 Main developer: 
